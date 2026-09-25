@@ -5,7 +5,7 @@ pages in Google Colab.
 
 This folder is the local working copy of the public notebook repository. The course pages link to
 `codey-m/cv_nlp`, a working name that has not been created yet. If the repository gets a different
-name, change the links in `CV_NLP/6.8600.*x/html/*_prac_text.html` and `*_lab_ov_text.html` to match.
+name, change the links in `CV_NLP/6.4600.*x/html/*_prac_text.html` and `*_lab_ov_text.html` to match.
 
 | Notebook | Course page |
 |---|---|
