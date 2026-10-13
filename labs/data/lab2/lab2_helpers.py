@@ -64,6 +64,33 @@ def cached_weight_bytes(group_size):
             "fp16": report["fp16"], "int4": report["int4"], "ratio": report["ratio"]}
 
 
+def personal_panel(data, code, count=200):
+    """The fixed test panel issued to one learner.
+
+    Codes 2000 to 2019 define the twenty course variants. Every system in a
+    learner's live comparison must use the same ordered IDs so the comparison
+    remains paired. The full 1,269-problem record stays separate.
+    """
+    if not isinstance(code, int) or not 2000 <= code < 2020:
+        raise ValueError("copy the four-digit PANEL_CODE from checkpoint 1")
+    if not 1 <= count <= len(data["full"]):
+        raise ValueError("panel size must fit inside the fixed test set")
+    return sorted(random.Random(460_000 + code).sample(list(data["full"]), count))
+
+
+def panel_fingerprint(ids):
+    """A short order-sensitive check that the issued panel was copied correctly."""
+    return sum((i + 1) * problem_id for i, problem_id in enumerate(ids)) % 1_000_000
+
+
+def checklist(conditions):
+    """Return a pass flag and specific feedback for a notebook contract."""
+    unmet = [name for name, ok in conditions.items() if not ok]
+    if not unmet:
+        return 1, "  every requirement met"
+    return 0, "\n".join(f"  not yet: {name}" for name in unmet)
+
+
 # ------------------------------------------------------------------------------------------------ files
 
 def fetch(name, sha256, base=None):

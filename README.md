@@ -20,9 +20,11 @@ links live in `CV_NLP/6.4600.*x/html/*_prac_text.html` and `*_lab_ov_text.html`.
 ## Lab runtime notes
 
 - **Lab 1** runs on a CPU. Its slowest cell takes under a minute.
-- **Lab 2** has a complete graded path without a GPU: it uses saved model outputs for the full-model comparisons.
-  Select a T4 GPU in Colab if you want to run its live fine-tuning and quantization demonstrations; the notebook
-  gives a pilot estimate of about 35 minutes of GPU compute.
+- **Lab 2** requires a supported GPU session. Each learner receives a code for a 200-problem panel and runs the
+  prompting, LoRA, plain-int4 and calibrated-int4 conditions on those same problems. Saved outputs remain available
+  when a session is interrupted, but they are labeled as recovery evidence and do not satisfy the execution contract.
+  Scaling the measured full-record stages to the 200-problem panel gives a provisional 12 to 15 T4 minutes; a fresh
+  learner run must confirm that estimate. Course instructions will name the supported service.
 
 Lab 2 loads its checked support bundle from `labs/data/lab2/`. Keep that directory and the notebook at their current
 paths so the course links and notebook setup continue to work.
