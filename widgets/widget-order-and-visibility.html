@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Order and visibility</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Georgia,'Times New Roman',serif;background:#FAFAF8;color:#1A1A1A;padding:16px}
+  #app{max-width:640px;margin:0 auto}
+  h1{font-size:20px;font-weight:600;margin-bottom:4px}
+  h2{font-size:15px;font-weight:600;margin:14px 0 4px}
+  .sub{font-size:13px;color:#595959;margin-bottom:14px}
+  .ctrl{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+  .control-label,.ctrl label{font-size:12px;font-family:'Courier New',monospace;color:#444;margin-right:6px;min-width:128px}
+  .seg button{font-family:'Courier New',monospace;font-size:12px;padding:5px 10px;border:1px solid #767676;background:#fff;color:#1A1A1A;cursor:pointer;border-radius:4px;margin:0 4px 4px 0}
+  .seg button.on{background:#A31F34;color:#fff;border-color:#A31F34}
+  select{font-family:'Courier New',monospace;font-size:12px;padding:4px 6px;border:1px solid #767676;border-radius:4px;background:#fff;color:#1A1A1A}
+  button:focus-visible,select:focus-visible{outline:3px solid #1D4ED8;outline-offset:3px}
+  .readout{font-size:13px;background:#fff;border:1px solid #767676;border-radius:6px;padding:10px 14px;margin:6px 0 4px;line-height:1.55;min-height:3.4em}
+  .v{font-weight:700;font-family:'Courier New',monospace;color:#A31F34}
+  .cap{font-size:12px;color:#444;margin-bottom:6px}
+  table{border-collapse:collapse;width:100%;font-size:12px;background:#fff;margin-bottom:6px}
+  th,td{border:1px solid #B5B5B5;padding:5px 6px;text-align:center;font-family:'Courier New',monospace}
+  th{background:#F2F2EF;font-weight:600}
+  th[scope=row]{text-align:left}
+  td.masked{background:repeating-linear-gradient(45deg,#E6ECF2 0 3px,#fff 3px 7px);color:#16456B}
+  td.out{text-align:left;white-space:nowrap}
+  td.same{color:#16456B}
+  td.diff{color:#A31F34;font-weight:700}
+  .note{font-size:12px;color:#444;line-height:1.6;margin-top:8px}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Order and visibility</h1>
+  <p class="sub">Reorder the words, switch on position vectors or the mask, and change the last word. Watch which outputs change.</p>
+
+  <div class="ctrl"><span id="ordLabel" class="control-label">word order</span><span class="seg" id="segOrder" role="group" aria-labelledby="ordLabel"></span></div>
+  <div class="ctrl"><span id="posLabel" class="control-label">position vectors</span><span class="seg" id="segPos" role="group" aria-labelledby="posLabel"></span></div>
+  <div class="ctrl"><span id="maskLabel" class="control-label">mask later words</span><span class="seg" id="segMask" role="group" aria-labelledby="maskLabel"></span></div>
+  <div class="ctrl"><label for="last">last word</label><select id="last"></select></div>
+
+  <div class="readout" id="summary"></div>
+
+  <h2>Attention weights</h2>
+  <p class="cap">Each row is a word attending; each column is a word it attends to. Every row sums to 1.</p>
+  <table><caption class="sr-only">Attention weights: row word attends to column word</caption>
+    <thead id="aHead"></thead><tbody id="aBody"></tbody></table>
+
+  <h2>Each word's output</h2>
+  <p class="cap">The weighted average of the value vectors, four numbers per word, compared with the same word before your last change.</p>
+  <table><caption class="sr-only">Each word's output vector and whether it changed</caption>
+    <thead><tr><th scope="col">word</th><th scope="col">output</th><th scope="col">since your last change</th></tr></thead>
+    <tbody id="zBody"></tbody></table>
+
+  <p class="note">One attention head with made-up weights and four numbers per word. With position vectors on, the
+    sinusoidal vector for each position is added to the word's embedding before the head sees it. With the mask on,
+    each word attends only to itself and the words before it.</p>
+  <div class="sr-only" id="announcement" role="status" aria-live="polite" aria-atomic="true"></div>
+</div>
+
+<script>
+(function(){
+  // Weights chosen by search (seed 176) so attention spreads across words and every effect is visible.
+  const E={old:[-0.2,0.43,-0.54,1.67],dog:[-0.59,-2.71,-0.75,-0.5],bites:[-0.78,-0.69,0.72,-0.3],
+           man:[0.68,-1.61,-1.06,1.27],cat:[-1.57,-0.98,0.26,1.46],boy:[-1.51,0.24,-2.06,-0.44]};
+  const WQ=[[-0.21,0.58,1.32,0.65],[0.1,-0.52,0.58,0.03],[-0.01,0.68,-0.0,0.38],[-0.35,0.02,0.16,1.26]];
+  const WK=[[0.23,0.0,0.12,-0.22],[-0.25,-0.14,0.27,-0.35],[-0.76,-0.75,0.82,0.07],[0.27,-0.61,-0.18,-0.69]];
+  const WV=[[0.11,-0.43,0.19,-1.38],[1.35,0.08,0.59,-0.54],[0.57,0.74,-0.97,0.19],[0.16,-1.24,-1.29,0.13]];
+  const D=4, ORDERS=[['old','dog','bites','man'],['old','man','bites','dog'],['man','bites','old','dog']];
+  const PE=p=>[Math.sin(p),Math.cos(p),Math.sin(p/100),Math.cos(p/100)];
+  const mv=(x,W)=>W[0].map((_,j)=>x.reduce((s,xi,i)=>s+xi*W[i][j],0));
+
+  function head(words,pos,mask){
+    const X=words.map((w,p)=>E[w].map((v,i)=>v+(pos?PE(p)[i]:0)));
+    const Q=X.map(x=>mv(x,WQ)), K=X.map(x=>mv(x,WK)), V=X.map(x=>mv(x,WV));
+    const A=Q.map((q,i)=>{ const s=K.map((k,j)=>(mask&&j>i)?-Infinity:q.reduce((a,qi,t)=>a+qi*k[t],0)/Math.sqrt(D));
+      const m=Math.max(...s), e=s.map(x=>Math.exp(x-m)), z=e.reduce((a,b)=>a+b,0); return e.map(x=>x/z); });
+    const Z=A.map(a=>V[0].map((_,t)=>a.reduce((s,aj,j)=>s+aj*V[j][t],0)));
+    return {A,Z};
+  }
+
+  let order=0, pos=false, mask=false, last=ORDERS[0][3], prev=null, prevWords=null, lastChange='start';
+  const words=()=>ORDERS[order].slice(0,3).concat([last]);
+  const fmt=x=>(x<0?'−':'')+Math.abs(x).toFixed(2);
+  const SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+  const tiny=x=>{ if(x===0) return '0'; const e=Math.floor(Math.log10(x)); return (x/Math.pow(10,e)).toFixed(1)+' × 10'+String(e).split('').map(c=>SUP[c]).join(''); };
+  const SAME=1e-9;     // reordering changes the order of the sums, so equal outputs agree to float precision, not bit for bit
+
+  function fillLast(){
+    const sel=document.getElementById('last'), first=ORDERS[order].slice(0,3);
+    const opts=['man','dog','cat','boy'].filter(w=>!first.includes(w));
+    if(!opts.includes(last)) last=ORDERS[order][3];
+    sel.innerHTML=opts.map(w=>`<option value="${w}"${w===last?' selected':''}>${w}</option>`).join('');
+  }
+
+  function render(announce){
+    const w=words(), {A,Z}=head(w,pos,mask);
+    document.getElementById('aHead').innerHTML='<tr><th scope="col"><span class="sr-only">attending word</span></th>'+w.map(x=>`<th scope="col">${x}</th>`).join('')+'</tr>';
+    document.getElementById('aBody').innerHTML=A.map((row,i)=>`<tr><th scope="row">${w[i]}</th>`+row.map((a,j)=>
+      (mask&&j>i)?'<td class="masked">0<span class="sr-only"> (masked)</span></td>'
+                 :`<td style="background:rgba(163,31,52,${(0.75*a).toFixed(3)})">${a.toFixed(2)}</td>`).join('')+'</tr>').join('');
+    const now={}; w.forEach((x,i)=>now[x]=Z[i]);
+    const diffs=w.map(x=>prev&&prev[x]?Math.max(...Z[w.indexOf(x)].map((v,t)=>Math.abs(v-prev[x][t]))):null);
+    document.getElementById('zBody').innerHTML=w.map((x,i)=>{
+      const d=diffs[i]; let cell='<td>—</td>';
+      if(prev) cell = d===null ? '<td>new word</td>' : (d<SAME ? '<td class="same">unchanged</td>' : `<td class="diff">changed by up to ${d.toFixed(2)}</td>`);
+      return `<tr><th scope="row">${x}</th><td class="out">${Z[i].map(fmt).join('&nbsp; ')}</td>${cell}</tr>`; }).join('');
+    const earlier=w.slice(0,3).map((x,i)=>diffs[i]), kept=diffs.filter(d=>d!==null);
+    const nSame=kept.filter(d=>d<SAME).length, worstSame=Math.max(0,...kept.filter(d=>d<SAME));
+    let t='Make a change and the table below compares each word with how it was before.';
+    const permuted=prevWords && [...prevWords].sort().join() === [...w].sort().join();
+    if(lastChange==='order' && !permuted) t='The sentence now has a different set of words, so only the words it shares with the last one can be compared.';
+    else if(lastChange==='order') t = pos
+      ? `You reordered the words. With position vectors on, <span class="v">${kept.length-nSame}</span> of 4 outputs changed.`
+      : `You reordered the words. <span class="v">${nSame}</span> of 4 outputs are unchanged` + (nSame ? ` (they agree to ${tiny(worstSame)}, which is float rounding).` : '.');
+    else if(lastChange==='last') { const moved=earlier.filter(d=>d!==null&&d>=SAME).length;
+      t = `You changed the last word. <span class="v">${moved}</span> of the 3 earlier words' outputs changed` + (mask ? ', with the mask on.' : ', with the mask off.'); }
+    else if(lastChange==='pos') t=`Position vectors are now <span class="v">${pos?'on':'off'}</span>. ${kept.length-nSame} of 4 outputs changed.`;
+    else if(lastChange==='mask') t=`The mask is now <span class="v">${mask?'on':'off'}</span>. ${kept.length-nSame} of 4 outputs changed.`;
+    document.getElementById('summary').innerHTML=t;
+    if(announce) document.getElementById('announcement').textContent=document.getElementById('summary').textContent;
+    prev=now; prevWords=w;
+  }
+
+  function seg(id,opts,get,set,change){ const host=document.getElementById(id);
+    opts.forEach(([val,lab])=>{ const b=document.createElement('button'); b.type='button'; b.textContent=lab; b.dataset.val=String(val);
+      b.onclick=()=>{ if(String(get())===String(val)) return; set(val); lastChange=change; sync(host,get()); render(true); }; host.appendChild(b); });
+    sync(host,get()); }
+  function sync(host,val){ [...host.children].forEach(b=>{ const on=b.dataset.val===String(val); b.className=on?'on':''; b.setAttribute('aria-pressed',on?'true':'false'); }); }
+  seg('segOrder',ORDERS.map((o,i)=>[i,o.join(' ')]),()=>order,v=>{ order=v; last=ORDERS[v][3]; fillLast(); },'order');
+  seg('segPos',[[false,'off'],[true,'on']],()=>pos,v=>{pos=v;},'pos');
+  seg('segMask',[[false,'off'],[true,'on']],()=>mask,v=>{mask=v;},'mask');
+  document.getElementById('last').onchange=e=>{ last=e.target.value; lastChange='last'; render(true); };
+  window.__widget={head,words,get:()=>({order,pos,mask,last})};
+  fillLast(); render(false);
+})();
+</script>
+</body>
+</html>

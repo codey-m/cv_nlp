@@ -1,7 +1,7 @@
-# CV & NLP notebooks
+# CV & NLP learner materials
 
-Learner notebooks for the Computer Vision and Natural Language Processing courses, 6.4600.1x to
-6.4600.5x, opened from the course pages in Google Colab.
+Learner notebooks and browser-based interactives for the Computer Vision and Natural Language
+Processing courses, 6.4600.1x to 6.4600.5x.
 
 Open a notebook from its course page, then make a copy in Drive before working. You do not need to clone this
 repository or download its data files.
@@ -29,8 +29,18 @@ links live in `CV_NLP/6.4600.*x/html/*_prac_text.html` and `*_lab_ov_text.html`.
 Lab 2 loads its checked support bundle from `labs/data/lab2/`. Keep that directory and the notebook at their current
 paths so the course links and notebook setup continue to work.
 
+## Interactive course pages
+
+The course loads the self-contained pages in `widgets/` through GitHub Pages. Open edX course
+assets no longer run their scripts, so moving or renaming this repository or the `widgets/`
+directory would break the embedded activities. The generated [widget index](widgets/README.md)
+lists each activity and its location in the course.
+
 ## For maintainers
 
 Do not edit these notebooks or Lab 2's support bundle by hand. `CV_NLP/_workfiles/practice/build_practice.py` writes
 each notebook together with its solved reference copy, and the reference copies stay in the private course repository.
 Nothing with a solution in it belongs here.
+
+Do not edit `widgets/` by hand either. `CV_NLP/docs/publish_widgets.py` copies the canonical
+course assets here, rewrites the course iframes, and regenerates the widget index.

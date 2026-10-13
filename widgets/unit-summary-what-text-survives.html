@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>What text survives?</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html{background:#FAFAF8}
+  body{margin:0;padding:16px 12px 24px;background:#FAFAF8;color:#1A1A1A;font-family:Arial,Helvetica,sans-serif;line-height:1.45}
+  button,summary{font:inherit}
+  button:focus-visible,summary:focus-visible,h2:focus-visible{outline:3px solid #1472AE;outline-offset:3px}
+  #essay{max-width:760px;margin:0 auto}
+  .eyebrow{margin:0 0 2px;color:#A31F34;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(28px,5vw,39px);font-weight:500;line-height:1.08}
+  .guiding{margin:7px 0 14px;color:#444;font-family:Georgia,'Times New Roman',serif;font-size:17px}
+  .guiding code{padding:1px 4px;background:#F3D8A6;color:#1A1A1A;font-size:.9em}
+  .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:0 0 12px}
+  .step{display:flex;align-items:center;justify-content:center;gap:6px;min-height:43px;padding:6px;border:0;border-top:3px solid #C7C7C2;background:transparent;color:#555;cursor:pointer}
+  .step[aria-selected="true"]{border-color:#A31F34;background:#F6F2EF;color:#1A1A1A;font-weight:700}
+  .step-no{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#E7E7E2;font-family:'Courier New',monospace;font-size:11px;font-weight:700}
+  .step[aria-selected="true"] .step-no{background:#A31F34;color:#FFF}
+  .step-label{font-size:11px;line-height:1.1}
+  .stage{padding:20px;border:1px solid #C8C8C2;border-radius:7px;background:#FFF}
+  .stage[hidden]{display:none}
+  .kicker{margin:0 0 3px;color:#A31F34;font-family:'Courier New',monospace;font-size:11px;font-weight:700;text-transform:uppercase}
+  h2{margin:0 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:clamp(23px,4vw,27px);font-weight:500;line-height:1.18}
+  .task{margin:0 0 12px;color:#444;font-size:14px}
+  .task strong{color:#A31F34}
+  .visual{padding:14px;background:#F7F7F4}
+  .visual-label{margin:0 0 7px;color:#666;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .phrase-focus{margin:0 0 11px;text-align:center;font-family:Georgia,'Times New Roman',serif;font-size:17px}
+  mark{padding:2px 4px;border-radius:3px;background:#F3D8A6;color:#1A1A1A}
+  .token-row,.pieces,.boundary-demo{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px}
+  .token,.piece,.prefix-token,.window-token{padding:5px 7px;border-radius:3px;background:#E9EFF3;font-family:'Courier New',monospace;font-size:12px}
+  .token.focus,.prefix-token.focus,.window-token.focus{background:#F3D8A6}
+  .measure{display:flex;justify-content:center;gap:10px;margin:10px 0}
+  .measure span{padding:4px 8px;border-radius:999px;background:#FFF;color:#555;font-size:11px}
+  .measure strong{color:#A31F34;font-family:'Courier New',monospace;font-size:13px}
+  .bpe-panel{margin-top:11px;padding-top:11px;border-top:1px solid #D2D2CC}
+  .mini-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}
+  .mini-head strong{font-family:Georgia,'Times New Roman',serif;font-size:16px;font-weight:500}
+  .mini-head span{color:#555;font-family:'Courier New',monospace;font-size:11px}
+  .pieces{justify-content:flex-start;min-height:38px;margin:6px 0}
+  .piece{background:#FFF;border:1px solid #C8C8C2;font-size:13px}
+  #bpe-status{display:inline;margin:0;color:#555;font-size:12px}
+  .merge-actions{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:8px}
+  .merge-actions button,.switches button{min-height:37px;padding:6px 10px;border:1px solid #777;border-radius:4px;background:#FFF;color:#222;cursor:pointer}
+  .merge-actions button:disabled{cursor:default;opacity:.45}
+  .boundary-demo{justify-content:flex-start;margin-top:10px;color:#555;font-family:'Courier New',monospace;font-size:11px}
+  .boundary{height:24px;border-left:3px solid #A31F34}
+  .takeaway{margin:12px 0 0;padding:10px 12px;border-left:4px solid #A31F34;background:#FFF8F5;font-family:Georgia,'Times New Roman',serif;font-size:15px}
+  .takeaway span{display:block;margin-bottom:2px;color:#A31F34;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  details.detail{margin:10px 0 0;color:#4A4A4A;font-size:12px}
+  details.detail summary{min-height:32px;padding:6px 2px;color:#245A7A;cursor:pointer;font-weight:700}
+  details.detail blockquote{margin:7px 0;padding:9px 11px;border-left:3px solid #A31F34;background:#F6F2EF;font-family:Georgia,'Times New Roman',serif;font-size:14px}
+  .source{margin:6px 0 0;color:#666;font-size:11px}
+  .switches{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 11px}
+  .switches button[aria-pressed="true"]{border-color:#A31F34;background:#A31F34;color:#FFF}
+  .representation-visual{min-height:185px}
+  .phrase-sources{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .phrase-box{padding:10px;border-top:3px solid #A31F34;background:#FFF;font-family:'Courier New',monospace;font-size:12px;text-align:center}
+  .phrase-box.b{border-color:#245A7A}
+  .phrase-box b{display:block;margin-bottom:3px;font-family:Arial,Helvetica,sans-serif;font-size:10px}
+  .mapping{margin:8px 0;text-align:center;color:#666;font-size:11px}
+  .shared-vector{display:flex;justify-content:center;flex-wrap:wrap;gap:6px}
+  .shared-vector span{padding:6px 8px;background:#FFF;font-family:'Courier New',monospace;font-size:12px}
+  .pair-rows{display:grid;gap:9px}
+  .pair-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;padding:9px;background:#FFF;font-family:'Courier New',monospace;font-size:12px}
+  .pair-row b{font-family:Arial,Helvetica,sans-serif;font-size:10px}
+  .link-word{padding:5px 6px;background:#F1F1ED}.arrow{color:#777}.changed{color:#A31F34;font-weight:700}
+  .readout{margin:10px 0 0;color:#222;font-size:13px;text-align:center}
+  .readout strong{color:#A31F34}
+  .lm-visual{display:grid;gap:10px}
+  .formula{padding:8px;background:#FFF;text-align:center;font-family:'Courier New',monospace;font-size:13px}
+  .prediction-row{display:grid;grid-template-columns:28px 1fr 22px minmax(70px,auto);align-items:center;gap:7px}
+  .row-key{font-size:11px;font-weight:700;text-align:center}
+  .prediction-row.a .row-key,.prediction-row.a .target{color:#A31F34}
+  .prediction-row.b .row-key,.prediction-row.b .target{color:#245A7A}
+  .context-line{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:5px;padding:9px;background:#FFF}
+  .prefix-token.earlier{background:#EEE;color:#555;font-family:Arial,Helvetica,sans-serif;font-size:10px}
+  .target{font-family:'Courier New',monospace;font-size:13px;font-weight:700}
+  .assumption{margin:0;padding:8px 10px;border-left:3px solid #245A7A;background:#FFF;color:#444;font-size:11px}
+  .assumption b{margin-right:6px;color:#245A7A;text-transform:uppercase}
+  .probability-visual{display:grid;gap:11px}
+  .prob-row{display:grid;grid-template-columns:90px 1fr;align-items:center;gap:10px}
+  .prob-name{font-size:11px;font-weight:700}
+  .prob-track{display:flex;height:38px;background:#E5E5E0;overflow:hidden}
+  .prob-seg{display:flex;align-items:center;justify-content:center;min-width:0;color:#FFF;font-family:'Courier New',monospace;font-size:11px;font-weight:700}
+  .prob-seg.facts{background:#A31F34}.prob-seg.theories{background:#245A7A}.prob-seg.data{background:#C17A00;box-shadow:inset 0 0 0 2px #FFF}
+  .prob-seg.other{background:repeating-linear-gradient(135deg,#777 0 4px,#8A8A86 4px 8px)}
+  .prob-callouts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .prob-callouts div{padding:7px;background:#FFF;text-align:center;font-size:11px}
+  .prob-callouts .key-change{border:2px solid #C17A00;background:#FFF9EF}
+  .prob-callouts strong{display:block;font-family:'Courier New',monospace;font-size:13px}
+  .math-line{margin:0;text-align:center;color:#555;font-size:11px}
+  .window-board{display:grid;gap:9px}
+  .window-row{display:grid;grid-template-columns:24px minmax(160px,1fr) 20px 74px 20px minmax(62px,auto);align-items:center;gap:5px}
+  .window-row.a .row-key,.window-row.a .observed{color:#A31F34}
+  .window-row.b .row-key,.window-row.b .observed{color:#245A7A}
+  .window-input{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:5px;min-height:47px;padding:7px;background:#FFF}
+  .window-token.distinguishing{border:2px solid currentColor;padding:3px 5px}
+  .model-pill{padding:7px 5px;border-radius:4px;background:#272727;color:#FFF;font-size:9px;text-align:center}
+  .observed{font-family:'Courier New',monospace;font-size:12px;font-weight:700}
+  .model-note{margin:8px 0 0;color:#666;font-size:10px;text-align:center}
+  .synthesis-strip{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;margin:11px 0 0;color:#666;font-size:10px}
+  .synthesis-strip b{color:#A31F34}.synthesis-strip i{font-style:normal;color:#AAA}
+  .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 0}
+  .pager button{min-height:38px;padding:6px 10px;border:1px solid #777;border-radius:4px;background:#FFF;color:#222;cursor:pointer;font-size:12px}
+  .pager button:disabled{cursor:default;opacity:.45}.page-status{color:#666;font-family:'Courier New',monospace;font-size:11px;text-align:center}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @media(max-width:620px){
+    body{padding:12px 8px 20px}.stage{padding:16px 12px}.step{gap:0}.step-label{display:none}
+    .phrase-sources,.prob-callouts{grid-template-columns:1fr}.prediction-row{grid-template-columns:22px 1fr 18px minmax(58px,auto)}
+    .window-row{grid-template-columns:18px minmax(80px,1fr) 12px 54px 12px minmax(48px,auto);gap:3px}.model-pill{font-size:8px}.observed{font-size:10px}
+    .prob-row{grid-template-columns:72px 1fr}.visual{padding:11px}.pager button{max-width:40%}
+  }
+  @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<main id="essay">
+  <p class="eyebrow">Unit 1 synthesis</p>
+  <h1>What text survives?</h1>
+  <p class="guiding">What does a model know when it predicts after <code>suit</code>?</p>
+
+  <div class="steps" role="tablist" aria-label="Five pages in the synthesis">
+    <button class="step" id="tab-1" type="button" role="tab" aria-controls="stage-1" aria-selected="true" aria-label="Step 1 of 5: units"><span class="step-no">1</span><span class="step-label">Units</span></button>
+    <button class="step" id="tab-2" type="button" role="tab" aria-controls="stage-2" aria-selected="false" aria-label="Step 2 of 5: evidence"><span class="step-no">2</span><span class="step-label">Evidence</span></button>
+    <button class="step" id="tab-3" type="button" role="tab" aria-controls="stage-3" aria-selected="false" aria-label="Step 3 of 5: task"><span class="step-no">3</span><span class="step-label">Task</span></button>
+    <button class="step" id="tab-4" type="button" role="tab" aria-controls="stage-4" aria-selected="false" aria-label="Step 4 of 5: estimate"><span class="step-no">4</span><span class="step-label">Estimate</span></button>
+    <button class="step" id="tab-5" type="button" role="tab" aria-controls="stage-5" aria-selected="false" aria-label="Step 5 of 5: context"><span class="step-no">5</span><span class="step-label">Context</span></button>
+  </div>
+
+  <section class="stage" id="stage-1" role="tabpanel" aria-labelledby="tab-1">
+    <p class="kicker">1 · Units</p>
+    <h2 tabindex="-1">What counts as one token?</h2>
+    <p class="task"><strong>Try:</strong> Apply the illustrative BPE merges to <code>theories</code>.</p>
+    <div class="visual">
+      <p class="phrase-focus">… twist <mark>facts to suit theories</mark> … <mark>theories to suit facts</mark> …</p>
+      <p class="visual-label">Frozen word-token view</p>
+      <div class="token-row" aria-label="facts, to, suit, theories as four word tokens">
+        <span class="token">facts</span><span class="token">to</span><span class="token focus">suit</span><span class="token">theories</span>
+      </div>
+      <div class="measure"><span><strong id="token-count">29</strong> tokens</span><span><strong id="vocab-count">21</strong> distinct</span></div>
+      <div class="bpe-panel">
+        <div class="mini-head"><strong>BPE close-up: theories</strong><span id="bpe-progress">Step 0 of 4</span></div>
+      <div class="pieces" id="bpe-pieces" aria-label="Current BPE pieces for theories"></div>
+        <div class="merge-actions"><button type="button" id="bpe-reset" disabled>Reset</button><button type="button" id="bpe-next">Next merge</button><p id="bpe-status" aria-live="polite"></p></div>
+        <div class="boundary-demo" aria-label="This pre-tokenization pipeline places boundaries between theories, comma, and instead"><span>theories</span><span class="boundary" aria-hidden="true"></span><span>,</span><span class="boundary" aria-hidden="true"></span><span>instead</span></div>
+      </div>
+    </div>
+    <div class="takeaway"><span>Keep</span>Tokenization chooses the pieces. The next four pages hold this word-token rule fixed.</div>
+    <details class="detail"><summary>Source passage</summary><blockquote>“It is a capital mistake to theorise before one has data. Insensibly one begins to twist facts to suit theories, instead of theories to suit facts.”</blockquote><p class="source">Arthur Conan Doyle, “A Scandal in Bohemia,” in <i>The Adventures of Sherlock Holmes</i> (1892). Public-domain text from Project Gutenberg, normalized as in Lab 1.</p></details>
+  </section>
+
+  <section class="stage" id="stage-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+    <p class="kicker">2 · Evidence</p>
+    <h2 tabindex="-1">Which representation keeps the difference?</h2>
+    <p class="task"><strong>Try:</strong> Switch from word counts to adjacent pairs.</p>
+    <div class="switches" role="group" aria-label="Representation view">
+      <button type="button" data-view="counts" aria-pressed="true">Word counts</button>
+      <button type="button" data-view="pairs" aria-pressed="false">Adjacent pairs</button>
+    </div>
+    <div class="visual representation-visual" id="representation-visual"></div>
+    <div class="readout" id="representation-readout" aria-live="polite"></div>
+    <div class="takeaway"><span>Keep</span>Weights cannot recover a relationship that the representation discarded.</div>
+    <details class="detail"><summary>Why TF-IDF does not help here</summary>With fixed unigram IDF weights, identical unigram count vectors remain identical after coordinate-by-coordinate weighting.</details>
+  </section>
+
+  <section class="stage" id="stage-3" role="tabpanel" aria-labelledby="tab-3" hidden>
+    <p class="kicker">3 · Task</p>
+    <h2 tabindex="-1">What is the model asked to predict?</h2>
+    <p class="task"><strong>Look:</strong> Read each exact factor, then note the bigram assumption used next.</p>
+    <div class="visual lm-visual">
+      <div class="formula">P(sequence) = ∏ P(next token | all earlier tokens)</div>
+      <div class="prediction-row a">
+        <span class="row-key">A</span>
+        <div class="context-line"><span class="prefix-token earlier">earlier …</span><span class="prefix-token">facts</span><span class="prefix-token">to</span><span class="prefix-token focus">suit</span></div>
+        <span aria-hidden="true">→</span><span class="target">theories</span>
+      </div>
+      <div class="prediction-row b">
+        <span class="row-key">B</span>
+        <div class="context-line"><span class="prefix-token earlier">earlier …</span><span class="prefix-token">theories</span><span class="prefix-token">to</span><span class="prefix-token focus">suit</span></div>
+        <span aria-hidden="true">→</span><span class="target">facts</span>
+      </div>
+      <p class="assumption"><b>Bigram assumption</b>P(next | all earlier tokens) ≈ P(next | previous token)</p>
+    </div>
+    <div class="takeaway"><span>Keep</span>The chain rule defines the next-token task. Limiting its history is a later model choice.</div>
+  </section>
+
+  <section class="stage" id="stage-4" role="tabpanel" aria-labelledby="tab-4" hidden>
+    <p class="kicker">4 · Estimate</p>
+    <h2 tabindex="-1">Where does smoothing move the probability?</h2>
+    <p class="task"><strong>Compare:</strong> <code>data</code> is in the 21-token vocabulary, but it never follows <code>suit</code> here.</p>
+    <div class="visual probability-visual" role="img" aria-describedby="prob-description">
+      <div class="prob-row"><div class="prob-name">Count only</div><div class="prob-track" id="prob-raw-track"></div></div>
+      <div class="prob-row"><div class="prob-name">Add one</div><div class="prob-track" id="prob-smooth-track"></div></div>
+      <div class="prob-callouts">
+        <div>facts / theories<strong>1/2 → 2/23</strong></div>
+        <div class="key-change">data<strong>0 → 1/23</strong></div>
+        <div>18 other unseen<strong>0 → 18/23</strong></div>
+      </div>
+      <p class="math-line">Add one: (count + 1) / (2 observed + 21 vocabulary)</p>
+    </div>
+    <p class="sr-only" id="prob-description"></p>
+    <div class="takeaway"><span>Keep</span>Smoothing reserves probability for unseen continuations. It does not widen the context.</div>
+  </section>
+
+  <section class="stage" id="stage-5" role="tabpanel" aria-labelledby="tab-5" hidden>
+    <p class="kicker">5 · Context</p>
+    <h2 tabindex="-1">What changes when the input window widens?</h2>
+    <p class="task"><strong>Try:</strong> Give the same feedforward model one input slot, then three.</p>
+    <div class="switches" role="group" aria-label="Context window size">
+      <button type="button" data-window="1" aria-pressed="true">1 input slot</button>
+      <button type="button" data-window="3" aria-pressed="false">3 input slots</button>
+    </div>
+    <div class="visual">
+      <div class="window-board">
+        <div class="window-row a"><span class="row-key">A</span><div class="window-input" data-window-input="a"></div><span class="flow" aria-hidden="true">→</span><span class="model-pill">shared model</span><span class="flow" aria-hidden="true">→</span><span class="observed">theories</span></div>
+        <div class="window-row b"><span class="row-key">B</span><div class="window-input" data-window-input="b"></div><span class="flow" aria-hidden="true">→</span><span class="model-pill">shared model</span><span class="flow" aria-hidden="true">→</span><span class="observed">facts</span></div>
+      </div>
+      <div class="readout" id="window-readout" aria-live="polite"></div>
+      <p class="model-note">fixed token slots → shared embeddings and feedforward network → next-token distribution</p>
+    </div>
+    <div class="synthesis-strip" aria-label="Unit 1 decisions: units, evidence, task, estimate, context"><b>units</b><i>→</i><b>evidence</b><i>→</i><b>task</b><i>→</i><b>estimate</b><i>→</i><b>context</b></div>
+    <div class="takeaway"><span>Unit 1 in one line</span>A model can use only the distinctions preserved in its input and visible context.</div>
+  </section>
+
+  <div class="pager">
+    <button type="button" id="previous" disabled>Previous</button>
+    <span class="page-status" id="page-status" aria-live="polite">Page 1 of 5</span>
+    <button type="button" id="next">Next: keep evidence</button>
+  </div>
+</main>
+
+<script>
+(function(){
+  const QUOTE="It is a capital mistake to theorise before one has data. Insensibly one begins to twist facts to suit theories, instead of theories to suit facts.";
+  const TOKENS=QUOTE.toLowerCase().match(/[a-z0-9]+|[^\sa-z0-9]/g);
+  const VOCAB=[...new Set(TOKENS)];
+  const PHRASES={a:['facts','to','suit','theories'],b:['theories','to','suit','facts']};
+  const BPE_STEPS=[
+    {label:'Start with characters.',pieces:['t','h','e','o','r','i','e','s']},
+    {label:'Applied t + h → th.',pieces:['th','e','o','r','i','e','s']},
+    {label:'Applied th + e → the.',pieces:['the','o','r','i','e','s']},
+    {label:'Applied i + e → ie.',pieces:['the','o','r','ie','s']},
+    {label:'Applied ie + s → ies.',pieces:['the','o','r','ies']}
+  ];
+  const PAIRS={};
+  const CONTEXT={};
+  for(let i=0;i<TOKENS.length-1;i++){
+    const key=TOKENS[i]+'\u0000'+TOKENS[i+1];
+    PAIRS[key]=(PAIRS[key]||0)+1;
+    CONTEXT[TOKENS[i]]=(CONTEXT[TOKENS[i]]||0)+1;
+  }
+  const pair=(a,b)=>PAIRS[a+'\u0000'+b]||0;
+  if(TOKENS.length!==29||VOCAB.length!==21||CONTEXT.suit!==2||pair('suit','facts')!==1||pair('suit','theories')!==1||BPE_STEPS.some(s=>s.pieces.join('')!=='theories')){
+    throw new Error('The frozen excerpt no longer agrees with its displayed evidence.');
+  }
+
+  document.getElementById('token-count').textContent=TOKENS.length;
+  document.getElementById('vocab-count').textContent=VOCAB.length;
+
+  let bpeStep=0;
+  function drawBPE(){
+    const current=BPE_STEPS[bpeStep];
+    const host=document.getElementById('bpe-pieces'); host.innerHTML='';
+    current.pieces.forEach(piece=>{
+      const span=document.createElement('span'); span.className='piece'; span.textContent=piece; host.appendChild(span);
+    });
+    document.getElementById('bpe-status').textContent=current.label;
+    document.getElementById('bpe-progress').textContent='Step '+bpeStep+' of '+(BPE_STEPS.length-1);
+    document.getElementById('bpe-reset').disabled=bpeStep===0;
+    document.getElementById('bpe-next').disabled=bpeStep===BPE_STEPS.length-1;
+    document.getElementById('bpe-next').textContent=bpeStep===BPE_STEPS.length-1?'Complete':'Next merge';
+  }
+  document.getElementById('bpe-reset').addEventListener('click',()=>{bpeStep=0;drawBPE()});
+  document.getElementById('bpe-next').addEventListener('click',()=>{bpeStep=Math.min(BPE_STEPS.length-1,bpeStep+1);drawBPE()});
+  drawBPE();
+
+  let stage=0;
+  const tabs=[...document.querySelectorAll('.step')];
+  const stages=[...document.querySelectorAll('.stage')];
+  const nextLabels=['Next: keep evidence','Next: define prediction','Next: estimate probability','Next: widen context','Summary complete'];
+  function setStage(index,focusTarget){
+    const changed=index!==stage;
+    stage=Math.max(0,Math.min(stages.length-1,index));
+    tabs.forEach((tab,i)=>{
+      const active=i===stage;
+      tab.setAttribute('aria-selected',active?'true':'false');
+      tab.tabIndex=active?0:-1;
+      stages[i].hidden=!active;
+    });
+    document.getElementById('previous').disabled=stage===0;
+    document.getElementById('next').disabled=stage===stages.length-1;
+    document.getElementById('next').textContent=nextLabels[stage];
+    document.getElementById('page-status').textContent='Page '+(stage+1)+' of '+stages.length;
+    if(focusTarget==='tab') tabs[stage].focus();
+    if(focusTarget==='heading') stages[stage].querySelector('h2').focus({preventScroll:true});
+    if(changed&&focusTarget) window.scrollTo(0,0);
+  }
+  tabs.forEach((tab,i)=>{
+    tab.addEventListener('click',()=>setStage(i,'tab'));
+    tab.addEventListener('keydown',event=>{
+      if(event.key==='ArrowRight'){event.preventDefault();setStage((i+1)%tabs.length,'tab')}
+      if(event.key==='ArrowLeft'){event.preventDefault();setStage((i-1+tabs.length)%tabs.length,'tab')}
+      if(event.key==='Home'){event.preventDefault();setStage(0,'tab')}
+      if(event.key==='End'){event.preventDefault();setStage(tabs.length-1,'tab')}
+    });
+  });
+  document.getElementById('previous').addEventListener('click',()=>setStage(stage-1,'heading'));
+  document.getElementById('next').addEventListener('click',()=>setStage(stage+1,'heading'));
+
+  function counts(words){
+    const c={};
+    words.forEach(w=>c[w]=(c[w]||0)+1);
+    return c;
+  }
+  function drawRepresentation(view){
+    document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===view?'true':'false'));
+    const host=document.getElementById('representation-visual'); host.innerHTML='';
+    if(view==='counts'){
+      const sources=document.createElement('div'); sources.className='phrase-sources';
+      sources.innerHTML='<div class="phrase-box"><b>A</b>facts to suit theories</div><div class="phrase-box b"><b>B</b>theories to suit facts</div>';
+      const mapping=document.createElement('div'); mapping.className='mapping'; mapping.textContent='both map to the same count vector ↓';
+      const vector=document.createElement('div'); vector.className='shared-vector';
+      Object.keys(counts(PHRASES.a)).sort().forEach(word=>{
+        const item=document.createElement('span'); item.textContent=word+' : 1'; vector.appendChild(item);
+      });
+      host.append(sources,mapping,vector);
+      host.setAttribute('aria-label','Both phrases map to the same unigram count vector.');
+    }else{
+      const rows=document.createElement('div'); rows.className='pair-rows';
+      Object.entries(PHRASES).forEach(([key,words])=>{
+        const row=document.createElement('div'); row.className='pair-row';
+        const label=document.createElement('b'); label.textContent=key.toUpperCase(); row.appendChild(label);
+        words.forEach((word,i)=>{
+          const w=document.createElement('span'); w.className='link-word'; w.textContent=word; row.appendChild(w);
+          if(i<words.length-1){
+            const arrow=document.createElement('span');
+            arrow.className='arrow'+(i===1?'':' changed');
+            arrow.setAttribute('aria-label','followed by'); arrow.textContent='→'; row.appendChild(arrow);
+          }
+        });
+        rows.appendChild(row);
+      });
+      host.appendChild(rows);
+      host.setAttribute('aria-label','The phrases share to followed by suit, but their first and last adjacent pairs differ.');
+    }
+    document.getElementById('representation-readout').innerHTML=view==='counts'
+      ? '<strong>Same evidence:</strong> unigram counts erase the reversal.'
+      : '<strong>Different evidence:</strong> the first and last links expose the reversal.';
+  }
+  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>drawRepresentation(b.dataset.view)));
+  drawRepresentation('counts');
+
+  const successors={facts:pair('suit','facts'),theories:pair('suit','theories'),data:pair('suit','data')};
+  function drawProbability(trackId,values,labels){
+    const track=document.getElementById(trackId); track.innerHTML='';
+    ['facts','theories','data','other'].forEach(key=>{
+      const seg=document.createElement('div');
+      seg.className='prob-seg '+key;
+      seg.style.width=(values[key]*100)+'%';
+      if(values[key]>.12) seg.textContent=labels[key];
+      track.appendChild(seg);
+    });
+  }
+  const denominator=CONTEXT.suit+VOCAB.length;
+  drawProbability('prob-raw-track',{facts:successors.facts/CONTEXT.suit,theories:successors.theories/CONTEXT.suit,data:0,other:0},{facts:'facts 1/2',theories:'theories 1/2',data:'',other:''});
+  drawProbability('prob-smooth-track',{facts:(successors.facts+1)/denominator,theories:(successors.theories+1)/denominator,data:(successors.data+1)/denominator,other:(VOCAB.length-3)/denominator},{facts:'facts',theories:'theories',data:'',other:'other unseen'});
+  document.getElementById('prob-description').textContent='Without smoothing: facts one half, theories one half, data zero. With add-one smoothing: facts two twenty-thirds, theories two twenty-thirds, data one twenty-third, and the other eighteen unseen successors eighteen twenty-thirds.';
+
+  const WINDOWS={a:['facts','to','suit'],b:['theories','to','suit']};
+  function drawWindow(size){
+    document.querySelectorAll('[data-window]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.window===size?'true':'false'));
+    Object.entries(WINDOWS).forEach(([key,words])=>{
+      const host=document.querySelector('[data-window-input="'+key+'"]'); host.innerHTML='';
+      words.slice(size==='1'?-1:-3).forEach((word,i)=>{
+        const span=document.createElement('span'); span.className='window-token';
+        if(word==='suit') span.classList.add('focus');
+        if(size==='3'&&i===0) span.classList.add('distinguishing');
+        span.textContent=word; host.appendChild(span);
+      });
+    });
+    const wider=size==='3';
+    document.getElementById('window-readout').innerHTML=wider
+      ? '<strong>Different inputs:</strong> this feedforward model can produce different distributions.'
+      : '<strong>Same input:</strong> with only this slot, this feedforward model must produce the same distribution.';
+  }
+  document.querySelectorAll('[data-window]').forEach(b=>b.addEventListener('click',()=>drawWindow(b.dataset.window)));
+  drawWindow('1');
+  setStage(0,false);
+})();
+</script>
+<noscript><p>This visual essay requires JavaScript to reveal and compare its five views.</p></noscript>
+</body>
+</html>

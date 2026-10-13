@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en" data-mode="course">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Robot Theatre</title><style>/* Robot Theatre in the MIT Learn game format. The chrome rules are a local copy of the arcade standard
+   (pilots/src/pilot.css, body.gameformat, taken from "Guide the Robot Home"); swap for a shared file if one is agreed.
+   Scene colours: the neutral slate family from the Deep Learning card palette, gold as the single accent for
+   linked pairs, ink for lines and marks, green and red only for outcomes. */
+:root{color-scheme:light;--ink:#0C0C0D;--ink-2:#40464C;--body:#212326;--muted:#626A73;--line:#DDE1E6;--rule:#E6E9EE;--ground:#F3F4F8;--red:#750014;--red-dark:#5A0010;--button-line:#B8C2CC;
+  --win:#216044;--over:#B45309;--lose:#A31F34;
+  --s-base:#7A9FBF;--s-body:#ADC3D7;--s-line:#4B7293;--s-wash:#DCE6EF;--gold:#E9A83C;--gold-wash:#FBF0DC;--art-ink:#111827;--art-ground:#F9FAFB;--frame:#CBD2DB;
+  --dog:#EEAA87;--cat:#BB9CF0;--robot:#CBD2DB;--ghost:#FFFFFF;--heart:#E4763E}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--body);font:16px/1.55 "neue-haas-grotesk-text","Helvetica Neue",Helvetica,Arial,sans-serif}
+a{color:var(--red);text-underline-offset:3px}button,input{font:inherit}button,summary{cursor:pointer}
+button{border:1px solid var(--button-line);border-radius:4px;padding:10px 15px;background:#fff;color:var(--ink-2);font-weight:500;min-height:44px;touch-action:manipulation}
+button:focus-visible,a:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid #1472ae;outline-offset:3px}
+[hidden]{display:none!important}
+
+/* Page chrome */
+.gamebar{background:#fff;display:grid;grid-template-columns:52px 1fr 52px;align-items:center;padding:12px 24px;border-bottom:1px solid var(--rule)}
+.gamebar .back{display:flex;align-items:center;justify-content:center;width:44px;height:44px;color:var(--ink);border-radius:4px}.gamebar .back svg{width:26px;height:26px}
+.gamebar h1{grid-column:2;text-align:center;margin:0;font-size:clamp(26px,3vw,38px);font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+main{max-width:1240px;margin:auto;padding:28px 24px 56px}
+.gamewrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:start}
+.playcard,.howto,.explainer{background:#fff;border-radius:6px;box-shadow:0 1px 2px rgba(16,24,40,.05),0 3px 10px rgba(16,24,40,.05)}
+.playcard{overflow:hidden}
+.gamestatus{display:flex;justify-content:center;gap:12px 40px;flex-wrap:wrap;padding:26px 24px 4px;font-size:18px;color:var(--muted)}
+.gamestatus b{color:var(--body);font-weight:600}.gamestatus b.win{color:var(--win)}.gamestatus b.over{color:var(--over)}.gamestatus b.lose{color:var(--lose)}
+.gameprompt{text-align:center;color:var(--muted);font-size:17px;margin:8px 24px 18px}.gameprompt strong{color:var(--body);font-weight:600}
+.gameplay{padding:0 24px}
+.reason{text-align:center;min-height:3.2em;margin:10px 0 0;font-size:15px;color:var(--muted)}.reason strong{color:var(--body);font-weight:600}
+.gamecontrols{display:grid;grid-template-columns:1fr;gap:20px;padding:14px 24px 24px}
+.gamefoot{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:18px 24px 22px;border-top:1px solid var(--rule);background:linear-gradient(#FBFBFC,#F6F7F9)}
+.gamefoot p{margin:0 0 12px;font-size:16px;color:var(--muted)}.gamefoot strong{color:var(--body);font-weight:600}
+.gamefoot button{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--button-line);border-radius:4px;padding:10px 22px;font-weight:500;color:var(--ink-2)}.gamefoot button svg{width:22px;height:22px}
+.howto{padding:24px}.howto h2{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:500;margin:0 0 16px;color:var(--ink)}.howto h2 svg{width:28px;height:20px;flex:none}
+.howto p{font-size:15px;line-height:1.6;color:var(--body);margin:0 0 14px}.howto strong{font-weight:700}
+.explainer{margin-top:28px;padding:24px}.explainer h2{font-size:19px;margin:0 0 10px;letter-spacing:-.015em;color:var(--ink)}.explainer h3{font-size:16px;margin:16px 0 6px;color:var(--ink)}
+.explainer p,.explainer li{font-size:15px;line-height:1.65;margin:0 0 12px}.explainer ul{margin:0 0 12px;padding-left:22px}.explainer li{margin:0 0 4px}
+.explainer .explainer-link{color:var(--muted);font-size:14px}.explainer .explainer-note{color:var(--muted);font-size:13px}
+.review-about{margin-top:24px}details summary{min-height:40px;padding:8px 0;font-size:14px;font-weight:600;color:var(--ink-2)}.review-about p{font-size:13px;color:var(--muted)}
+body.embedded .gamebar,body.embedded .review-about{display:none}body.embedded main{padding-top:20px}
+
+/* Play area: one stage that performs the play act by act, and the script below it */
+.theatre{position:relative;border:1px solid var(--line);border-radius:4px;background:#fff;overflow:hidden;transition:box-shadow .2s}
+.theatre.outcome-win{box-shadow:0 0 0 3px var(--win)}.theatre.outcome-over{box-shadow:0 0 0 3px var(--over)}.theatre.outcome-lose{box-shadow:0 0 0 3px var(--lose)}
+.bigstage{position:relative;background:var(--s-wash);border-bottom:1px solid var(--line)}
+.bigstage .stage{display:block;width:100%;height:auto;max-height:360px;aspect-ratio:2/1}
+.corner{position:absolute;top:10px;font:12px/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;padding:4px 8px;border-radius:3px;background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+.corner-left{left:10px}.corner-right{right:10px;font-weight:600}.corner-right:empty{display:none}
+.corner-right.win{color:#fff;background:var(--win);border-color:var(--win)}.corner-right.over{color:#fff;background:var(--over);border-color:var(--over)}.corner-right.lose{color:#fff;background:var(--lose);border-color:var(--lose)}
+.acts{list-style:none;margin:0;padding:0}
+.act{display:grid;grid-template-columns:200px minmax(0,1fr);gap:14px;padding:12px 14px;border-top:1px solid var(--rule);transition:background-color .2s}
+.act:first-child{border-top:0}.act.on-stage{background:#F7F9FB;box-shadow:inset 3px 0 0 var(--s-line)}
+.act-side b{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.sketch-box{border:1px solid var(--frame);border-radius:3px;overflow:hidden;background:var(--s-wash)}
+.sketch-box svg{display:block;width:100%;height:auto;aspect-ratio:2/1}
+.act-main{display:flex;flex-direction:column;gap:8px;min-width:0}
+.act-top{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:30px}
+.act-state{font-size:13px;color:var(--muted)}.act-state.todo{color:var(--lose)}
+button.mark{min-height:32px;padding:3px 10px;font-size:13px;display:inline-flex;align-items:center;gap:6px;border-radius:16px}
+button.mark span{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;color:#fff;font-weight:700;font-size:12px}
+button.mark.right span{background:var(--win)}button.mark.wrong span{background:var(--lose)}
+.line{display:flex;flex-wrap:wrap;align-items:center;row-gap:6px}
+.space{width:6px}
+.word{display:inline-flex;align-items:center;min-height:36px;padding:4px 9px;border:1px solid var(--line);border-radius:4px;background:#fff;font-size:16px;color:var(--ink);font-weight:500;user-select:none;-webkit-user-select:none}
+.word.linked{background:var(--gold-wash);border-color:var(--gold)}
+button.word{min-height:36px;padding:4px 9px;border-color:var(--s-base);cursor:grab;touch-action:none;color:var(--ink)}
+button.word[aria-pressed=true]{outline:3px solid var(--s-line);outline-offset:1px}button.word.drop{background:var(--s-wash)}
+.gap{position:relative;width:18px;min-height:36px;padding:0;border:0;background:none;display:inline-flex;align-items:center;justify-content:center;touch-action:manipulation}
+.gap::before{content:"";width:8px;height:8px;border-radius:50%;border:1.5px solid var(--button-line);background:#fff;transition:transform .12s}
+.gap:hover::before{transform:scale(1.4);border-color:var(--s-line)}
+.gap[aria-pressed=true]::before{width:18px;height:6px;border-radius:3px;background:var(--gold);border-color:var(--gold)}
+.reads{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:13px;color:var(--muted)}
+.reads .chip{font:12px/1.3 ui-monospace,SFMono-Regular,Consolas,monospace;padding:3px 6px;border-radius:3px;background:var(--s-wash);color:var(--art-ink)}
+.reads .chip.pair{background:var(--gold-wash);box-shadow:inset 0 0 0 1px var(--gold)}
+.rehearse-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.rehearse-row button{min-width:210px}.rehearse-row button:disabled{opacity:.55;cursor:default}
+#rehearse-note{margin:0;font-size:14px;color:var(--muted)}
+button.primary{background:var(--red);border-color:var(--red);color:#fff}button.primary:hover:enabled{background:var(--red-dark);border-color:var(--red-dark)}
+.drag-ghost{position:fixed;z-index:50;transform:translate(-50%,-130%);background:var(--art-ink);color:#fff;padding:6px 12px;border-radius:4px;font-size:15px;font-weight:600;pointer-events:none;box-shadow:0 6px 14px rgba(0,0,0,.2)}body.dragging,body.dragging *{cursor:grabbing!important}
+
+/* Stage art */
+.wall{fill:var(--s-wash)}.boards{fill:var(--s-body)}.board-line{stroke:var(--s-base);stroke-width:1}
+.valance{fill:var(--s-line)}.drape{fill:var(--s-base)}
+.ch .skin,.ch .limb,.ch .ear,.ch .tail{stroke:var(--art-ink);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.ch .limb,.ch .tail{fill:none}.ch .ink{fill:var(--art-ink)}.ch .mouth{fill:none;stroke:var(--art-ink);stroke-width:2;stroke-linecap:round}
+.robot .skin{fill:var(--robot)}.dog .skin{fill:var(--dog)}.dog .ear{fill:#D98A62}.cat .skin{fill:var(--cat)}.cat .ear{fill:var(--cat)}.ghost .skin{fill:var(--ghost)}
+.heart{fill:var(--heart)}.mark-happy .trail{fill:#EEAA87}
+/* Mood marks spring in, then bob. */
+.pop{transform-box:fill-box;transform-origin:center;animation:springIn .8s .25s cubic-bezier(.34,1.7,.5,1) both}
+/* The icon and each trail dot bob and sway on their own rhythm (cycle lengths that never line up), so nothing
+   moves as one swinging shape. Plain keyframes only: Safari does not animate CSS variables inside keyframes. */
+.bob{animation-timing-function:ease-in-out;animation-iteration-count:infinite}
+.b1{animation-name:bob1;animation-duration:2.3s}.b2{animation-name:bob2;animation-duration:2.8s;animation-delay:-.9s}.b3{animation-name:bob3;animation-duration:3.2s;animation-delay:-1.7s}
+.b4{animation-name:bob4;animation-duration:3.6s;animation-delay:-.4s;transform-box:fill-box;transform-origin:center}
+@keyframes bob1{0%,100%{transform:translate(0,0)}30%{transform:translate(1px,-2.2px)}45%{transform:translate(.6px,-1.4px)}70%{transform:translate(-.8px,-2px)}}
+@keyframes bob2{0%,100%{transform:translate(0,0)}25%{transform:translate(-1px,-2px)}50%{transform:translate(-.4px,-2.8px)}75%{transform:translate(.9px,-1px)}}
+@keyframes bob3{0%,100%{transform:translate(0,0)}35%{transform:translate(1.2px,-2.6px)}55%{transform:translate(.2px,-1.8px)}80%{transform:translate(-1px,-2.4px)}}
+@keyframes bob4{0%,100%{transform:translate(0,0) rotate(0)}20%{transform:translate(1.5px,-3.5px) rotate(4deg)}40%{transform:translate(.8px,-2px) rotate(-2deg)}65%{transform:translate(-1.4px,-3px) rotate(-4deg)}85%{transform:translate(-.4px,-.8px) rotate(1deg)}}
+@keyframes springIn{from{transform:scale(0)}to{transform:scale(1)}}
+.mark-happy .spark{fill:var(--heart)}.mark-sad .trail{fill:var(--s-body)}.mark-sad .cloud{fill:#fff;stroke:var(--s-line);stroke-width:2}.mark-sad .drop{stroke:var(--s-line);stroke-width:2.2}.speed{stroke:var(--s-line);stroke-width:2;stroke-linecap:round;opacity:.7}.cloud{fill:#fff;stroke:var(--s-line);stroke-width:1.5}.drop{stroke:var(--s-line);stroke-width:2;stroke-linecap:round}.spark{fill:var(--heart)}
+
+/* Final poses (shown at once with reduced motion), then the moves that reach them. */
+.v-chases .actor .mv{transform:translate(100px,0);animation:chaseA 1.7s ease-in-out both}
+.v-chases .target .mv{transform:translate(32px,0);animation:chaseT 1.7s ease-in-out both}
+.v-hugs .actor .mv{transform:translate(100px,0);animation:walkTo100 1.2s ease-out both}
+.v-hugs .heart{transform-box:fill-box;transform-origin:center;animation:pop .5s 1.1s ease-out both}
+.still .mv{transform:none!important}.still *:not(.bob){animation:none!important}.still .heart-g{display:none}
+.v-pushes .actor .mv{transform:translate(84px,0);animation:walkTo84 1s ease-in both}
+.v-pushes .target .mv{transform:translate(30px,0) rotate(9deg);animation:shove .7s .9s ease-out both}
+.v-lifts .actor .mv{transform:translate(92px,0);animation:walkTo92 1.1s ease-out both}
+.v-lifts .target .mv{transform:translate(0,-30px) rotate(-6deg);animation:rise .6s 1.1s ease-out both}
+.m-happy .who .mv{animation:jump .5s ease-out 3 both}.m-happy .spark{transform-box:fill-box;transform-origin:center;animation:pop .4s .3s ease-out both}
+.m-sad .who .mv{transform:translate(0,3px);animation:droop 1.2s ease-in-out both}.m-sad .cloud-g{animation:drift 1.2s ease-out both}
+@keyframes chaseA{0%{transform:translate(0,0)}25%{transform:translate(25px,-7px)}50%{transform:translate(50px,0)}75%{transform:translate(75px,-7px)}100%{transform:translate(100px,0)}}
+@keyframes chaseT{0%{transform:translate(0,0)}20%{transform:translate(6px,-9px)}45%{transform:translate(20px,0)}70%{transform:translate(22px,-9px)}100%{transform:translate(32px,0)}}
+@keyframes walkTo100{from{transform:translate(0,0)}to{transform:translate(100px,0)}}
+@keyframes walkTo84{from{transform:translate(0,0)}to{transform:translate(84px,0)}}
+@keyframes walkTo92{from{transform:translate(0,0)}to{transform:translate(92px,0)}}
+@keyframes shove{from{transform:translate(0,0) rotate(0)}60%{transform:translate(25px,0) rotate(14deg)}to{transform:translate(30px,0) rotate(9deg)}}
+@keyframes rise{from{transform:translate(0,0) rotate(0)}70%{transform:translate(0,-36px) rotate(-8deg)}to{transform:translate(0,-30px) rotate(-6deg)}}
+@keyframes pop{from{transform:scale(0)}70%{transform:scale(1.3)}to{transform:scale(1)}}
+@keyframes jump{0%,100%{transform:translate(0,0)}45%{transform:translate(0,-26px)}}
+@keyframes droop{from{transform:translate(0,-6px)}to{transform:translate(0,3px)}}
+@keyframes drift{from{transform:translate(-30px,0);opacity:0}to{transform:translate(0,0);opacity:1}}
+.sketch *{animation:none!important}.stage.sketch .spark{animation:none!important}
+
+@media(max-width:900px){.gamewrap{grid-template-columns:1fr}}
+@media(max-width:560px){main{padding:20px 12px 40px}.gamestatus{gap:6px 18px;font-size:16px}.gameprompt{font-size:15px}.gameplay,.gamecontrols,.gamefoot{padding-left:14px;padding-right:14px}
+  .corner{font-size:11px;top:6px;padding:3px 6px}.corner-left{left:6px}.corner-right{right:6px}.gamebar{padding:10px 12px}
+  .act{grid-template-columns:96px minmax(0,1fr);gap:10px;padding:10px}.word,button.word{font-size:15px;padding:3px 7px}.gap{width:15px}.rehearse-row button{width:100%}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+/* Course pages (course mode): course-only copy shown; arcade-only copy and links hidden. */
+body:not(.course) .course-only{display:none}
+body.course .arcade-only,body.course .explainer-link{display:none}
+body.course main{padding:12px 12px 16px}
+
+/* The explainer is a drop-down. Arcade: closed under the game from the start, whatever the round, so the page always
+   carries it. Course: no summary row; it stays hidden until play and then opens, as before. */
+details.explainer>summary{display:flex;align-items:center;gap:12px;min-height:44px;padding:16px 24px;cursor:pointer;list-style:none;font-size:17px;font-weight:600;line-height:1.3}
+details.explainer>summary::-webkit-details-marker{display:none}
+details.explainer>summary::before{content:"";flex:none;width:7px;height:7px;margin:0 3px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg)}
+details.explainer[open]>summary::before{transform:rotate(45deg)}
+body:not(.course) details.explainer{padding:0}
+body:not(.course) details.explainer[hidden]{display:block!important}
+body:not(.course) .explainer-body{padding:4px 24px 24px}
+body.course details.explainer>summary{display:none}
+</style></head>
+<body class="gameformat">
+<header class="gamebar"><a class="back" href="index.html" aria-label="Back to the arcade"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a><h1 id="title">Robot Theatre</h1></header>
+<main>
+  <div class="gamewrap">
+    <section class="playcard" aria-label="Game">
+      <div class="gamestatus"><span>Play: <b id="st-play">The Chase</b></span><span>Status: <b id="st-status">Write Act 2</b></span><span id="st-links-wrap" hidden>Links: <b id="st-links">0 / par 1</b></span></div>
+      <p class="gameprompt" id="prompt"></p>
+      <div class="gameplay">
+        <div class="theatre" id="theatre">
+          <div class="bigstage"><div id="stage"></div><span class="corner corner-left" id="act-label">Act 1</span><span class="corner corner-right" id="outcome-label" aria-hidden="true"></span></div>
+          <ol class="acts" id="acts"></ol>
+        </div>
+        <p id="feedback" class="reason" role="status" aria-live="polite" aria-atomic="true"><strong id="feedback-title"></strong> <span id="feedback-text"></span></p>
+      </div>
+      <div class="gamecontrols">
+        <div class="rehearse-row"><button type="button" id="rehearse" class="primary">Rehearse the play</button><p id="rehearse-note"></p></div>
+      </div>
+      <div class="gamefoot">
+        <div class="foot-left"><p><strong>New show</strong> <span>- a new cast and new lines</span></p><div class="foot-buttons"><button id="new-show" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18M5 5v14M19 5v14M5 5c3 4 4 6 4 14M19 5c-3 4-4 6-4 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>New show</button></div></div>
+        <div class="foot-right"><button id="reset" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Start over</button></div>
+      </div>
+    </section>
+    <aside class="howto" aria-labelledby="howto-title">
+      <h2 id="howto-title"><svg viewBox="0 0 28 20" aria-hidden="true"><rect x="1.5" y="1.5" width="25" height="17" rx="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 7v6M5 10h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="18.5" cy="8" r="1.4" fill="currentColor"/><circle cx="21.5" cy="11.5" r="1.4" fill="currentColor"/></svg>How to play</h2>
+      <p><strong>The goal</strong> is a play where every act comes out the way its sketch shows, with as few linked pairs as you can. Par is the fewest that work.</p>
+      <p id="howto-mine"><strong>Write</strong> the acts after Act 1. Each starts as a copy of Act 1's words. Drag a word onto another to swap them, or press one word and then the other. Arrow keys move a focused word.</p>
+      <p><strong>Rehearse</strong> to watch the actors perform the play, act by act. Each act gets a tick or a cross.</p>
+      <p><strong>The director</strong> stages whatever it reads in each line. After the first rehearsal, the row under each line shows what it reads.</p>
+      <p><strong>Link</strong> two neighbouring words by pressing the gap between them. The director then also reads that pair, in every act where it appears. Press the gap again to unlink.</p>
+    </aside>
+  </div>
+  <details class="explainer" id="explainer"><summary>The idea behind the game</summary><div class="explainer-body">
+    <h2 id="explainer-title">Counting words loses who did what</h2>
+    <p>The director reads a line as a bag of words: which words appear and how many times, with the order thrown away. Every act in a play uses the same words, so every act makes the same bag. Anything the director learns for one act it must also stage for the others, so no choice of word points can tell them apart.</p>
+    <p>A linked pair is a bigram: two neighbouring words read as one feature. A pair only helps if it appears in some acts and not others. When the tables turn, “dog chases” becomes “robot chases”, while “happy dog” stays in both acts. When only the moods swap, it is the other way round: “dog chases” is in both acts and “happy dog” is in one. The useful pair is whichever one differs.</p>
+    <p id="explainer-negation" hidden>Negation is a different problem. “Is happy”, “is not happy”, “is sad” and “is not sad” all read differently, but the word not has to push toward sad after happy and toward happy after sad. One point per word cannot do both, so rehearsal never fits all four. A pair such as “not happy” gives the director a feature of its own for the flipped meaning.</p>
+    <p class="course-only">The director is a linear classifier over these features, like the one in the lecture: for each decision it adds up a weight for every word and linked pair the line contains, and stages the option with the highest total. Lines with the same features get the same totals, whatever weights it learns.</p>
+    <p>Reading every pair of neighbouring words, or longer runs of words (n-grams), is the classic fix. It keeps some local order, and the number of features grows quickly.</p>
+    <p class="explainer-link">Explore in CV+NLP: bag-of-words features, n-grams and why word order matters.</p>
+    <p class="explainer-note">The director is a small learner written for this game. During rehearsal it learns points for each word and linked pair it can read, one set per decision (who acts, what they do, or the mood), and stops when every line comes out right or after 400 passes. No language model runs. Lines are built from four characters, four actions and two moods. Par is the fewest links that make every scene right, found by checking every combination of pairs in the finished lines.</p>
+  </div></details>
+  
+</main>
+<div class="drag-ghost" id="drag-ghost" hidden aria-hidden="true"></div>
+<noscript><p>This interactive activity requires JavaScript.</p></noscript>
+<script>/* Robot Theatre model: scripts, what the director reads, rehearsal, and par.
+   The director reads a script as counts of its words (a bag of words), plus counts of any
+   neighbouring-word pairs the player has linked. In rehearsal it learns points for everything it
+   can read, one set of points per decision (who acts, what they do, the mood), with a multiclass
+   perceptron. It performs a script correctly only if those points fit every script in the show. */
+(function(root){
+  'use strict';
+  const CAST=['robot','dog','cat','ghost'];
+  const VERBS=['chases','hugs','pushes','lifts'];
+  const MOODS=['happy','sad'];
+  const MAX_EPOCHS=400;
+
+  // Mulberry32: neighbouring seeds give unrelated shows.
+  function rng(seed){let s=seed>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
+  const pick=(r,list)=>list[Math.floor(r()*list.length)];
+  function shuffle(r,list){const a=list.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+  // An action scene. happy names the happy character when the line has moods (the other one is sad).
+  const act=(a,v,b,happy=null)=>({kind:'act',actor:a,verb:v,target:b,happy});
+  const moodOf=(sc,who)=>sc.happy===who?'happy':'sad';
+  const mood=(who,m,not)=>({kind:'mood',who,mood:not?(m==='happy'?'sad':'happy'):m,words:m,not});
+  function words(sc){
+    if(sc.kind==='mood')return ['the',sc.who,'is',...(sc.not?['not']:[]),sc.words];
+    return sc.happy?['the',moodOf(sc,sc.actor),sc.actor,sc.verb,'the',moodOf(sc,sc.target),sc.target]:['the',sc.actor,sc.verb,'the',sc.target];
+  }
+  function sceneKey(s){return s.kind==='act'?`${s.actor} ${s.verb} ${s.target}`+(s.happy?`, ${s.happy} happy`:''):`${s.who} ${s.mood}`;}
+
+  // What a line of words says, if it is a well-formed line; otherwise null.
+  function parse(tokens){
+    const t=tokens;
+    if(t.length===5&&t[0]==='the'&&t[3]==='the'&&CAST.includes(t[1])&&VERBS.includes(t[2])&&CAST.includes(t[4])&&t[1]!==t[4])return act(t[1],t[2],t[4]);
+    if(t.length===7&&t[0]==='the'&&t[4]==='the'&&MOODS.includes(t[1])&&MOODS.includes(t[5])&&t[1]!==t[5]&&CAST.includes(t[2])&&VERBS.includes(t[3])&&CAST.includes(t[6])&&t[2]!==t[6])
+      return act(t[2],t[3],t[6],t[1]==='happy'?t[2]:t[6]);
+    if(t[0]==='the'&&CAST.includes(t[1])&&t[2]==='is'){
+      if(t.length===4&&MOODS.includes(t[3]))return mood(t[1],t[3],false);
+      if(t.length===5&&t[3]==='not'&&MOODS.includes(t[4]))return mood(t[1],t[4],true);
+    }
+    return null;
+  }
+
+  const pairKey=(a,b)=>`${a} ${b}`;
+  function pairs(tokens){const out=[];for(let i=0;i+1<tokens.length;i++)out.push(pairKey(tokens[i],tokens[i+1]));return out;}
+  // The director's reading: word counts, plus counts of linked pairs.
+  function reading(tokens,links){
+    const m=new Map();
+    for(const w of tokens)m.set(w,(m.get(w)||0)+1);
+    for(const p of pairs(tokens))if(links.has(p))m.set(p,(m.get(p)||0)+1);
+    return m;
+  }
+  const readingKey=r=>[...r.entries()].sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0).map(([k,v])=>`${k}:${v}`).join('|');
+
+  // Decisions the director makes for a show. With two actors, "who acts" also fixes the target.
+  function decisions(scenes){
+    if(scenes[0].kind==='mood')return [{name:'mood',label:s=>s.mood}];
+    const cast=new Set(scenes.flatMap(s=>[s.actor,s.target]));
+    const out=[{name:'actor',label:s=>s.actor},{name:'verb',label:s=>s.verb}];
+    if(cast.size>2)out.push({name:'target',label:s=>s.target});
+    if(scenes[0].happy)out.push({name:'happy',label:s=>s.happy});
+    return out;
+  }
+
+  // Multiclass perceptron over the readings (plus a bias). Returns the prediction for each script and
+  // whether rehearsal fitted every script. Deterministic: fixed order, fixed epoch cap.
+  function learn(rows,labels){
+    const classes=[...new Set(labels)],W=new Map(classes.map(c=>[c,new Map()]));
+    const score=(c,r)=>{const w=W.get(c);let s=w.get('#bias')||0;for(const [k,v] of r)s+=(w.get(k)||0)*v;return s;};
+    const predict=r=>{let best=classes[0],bs=-Infinity;for(const c of classes){const s=score(c,r);if(s>bs+1e-9){bs=s;best=c;}}return best;};
+    const bump=(c,r,d)=>{const w=W.get(c);w.set('#bias',(w.get('#bias')||0)+d);for(const [k,v] of r)w.set(k,(w.get(k)||0)+d*v);};
+    let fitted=classes.length<2;
+    for(let e=0;e<MAX_EPOCHS&&!fitted;e++){
+      let errors=0;
+      rows.forEach((r,i)=>{const p=predict(r);if(p!==labels[i]){errors++;bump(labels[i],r,1);bump(p,r,-1);}});
+      fitted=errors===0;
+    }
+    return {fitted,predict};
+  }
+
+  // Rehearse a show: scripts are {tokens, scene} where scene is what the line should show.
+  // Lines that read the same can only be staged the same way: the director learns the first of them
+  // and stages it for all of them.
+  function rehearse(scripts,links){
+    const rows=scripts.map(s=>reading(s.tokens,links)),scenes=scripts.map(s=>s.scene);
+    const keys=rows.map(readingKey),firstOf=new Map();
+    keys.forEach((k,i)=>{if(!firstOf.has(k))firstOf.set(k,i);});
+    const taught=[...firstOf.values()];
+    const performed=scenes.map(s=>({...s}));
+    let fitted=keys.every((k,i)=>sceneKey(scenes[firstOf.get(k)])===sceneKey(scenes[i]));
+    for(const d of decisions(scenes)){
+      const res=learn(taught.map(i=>rows[i]),taught.map(i=>d.label(scenes[i])));fitted=fitted&&res.fitted;
+      rows.forEach((r,i)=>{performed[i][d.name]=res.predict(r);});
+    }
+    // Two actors: whoever does not act is the target.
+    if(scenes[0].kind==='act'&&!decisions(scenes).some(d=>d.name==='target')){
+      const cast=[...new Set(scenes.flatMap(s=>[s.actor,s.target]))];
+      performed.forEach(p=>{p.target=cast.find(c=>c!==p.actor);});
+    }
+    return scripts.map((s,i)=>({reading:rows[i],readingKey:keys[i],performed:performed[i],correct:sceneKey(performed[i])===sceneKey(s.scene),
+      twins:keys.map((k,j)=>j!==i&&k===keys[i]?j:-1).filter(j=>j>=0)})).map(r=>Object.assign(r,{fitted}));
+  }
+
+  // Par: the fewest linked pairs (from pairs that occur in the finished scripts) that let every scene come out right.
+  function solve(scenes,maxLinks=3){
+    const scripts=scenes.map(s=>({tokens:words(s),scene:s}));
+    const cand=[...new Set(scripts.flatMap(s=>pairs(s.tokens)))].sort();
+    const ok=links=>rehearse(scripts,new Set(links)).every(r=>r.correct);
+    const solutions=[];let par=null;
+    for(let k=0;k<=maxLinks&&par===null;k++){
+      const walk=(start,chosen)=>{
+        if(chosen.length===k){if(ok(chosen))solutions.push(chosen.slice());return;}
+        for(let i=start;i<cand.length;i++){chosen.push(cand[i]);walk(i+1,chosen);chosen.pop();}
+      };
+      walk(0,[]);if(solutions.length)par=k;
+    }
+    const useful=new Set(solutions.flat());
+    return {par,solutions,candidates:cand,useless:cand.filter(c=>!useful.has(c))};
+  }
+
+  // A show is a short play. Every act uses the same words as Act 1, so every act is a look-alike of the others.
+  // The player writes each act after the first (it starts as a copy of Act 1) and the twist is in the word order.
+  //   turns       the tables turn: who acts swaps (fix: a subject-verb pair)
+  //   moods       the moods swap, the action stays (fix: an adjective-noun pair; subject-verb pairs are useless)
+  //   moods-turn  who acts swaps and the moods go with the characters (fix: subject-verb; adjective pairs are useless)
+  //   both        three acts, one of each twist (par 2, one pair of each kind)
+  //   negation    course level only: is happy / is not happy / is sad / is not sad (no writing)
+  const TITLES={chases:'The Chase',hugs:'The Big Hug',pushes:'The Shove',lifts:'The Lift'};
+  function scenario(seed,level){
+    seed=seed>>>0;
+    if(seed===1)return build(seed,'turns',[act('dog','chases','robot'),act('robot','chases','dog')]);
+    const r=rng(seed^0x9E3779B9);
+    const types=level==='course'?['turns','moods','moods-turn','both','negation']:['turns','moods','moods','moods-turn','both'];
+    for(let tries=0;tries<60;tries++){
+      const type=pick(r,types),[a,b]=shuffle(r,CAST),v=pick(r,VERBS);
+      let scenes;
+      if(type==='turns')scenes=[act(a,v,b),act(b,v,a)];
+      else if(type==='moods')scenes=[act(a,v,b,a),act(a,v,b,b)];
+      else if(type==='moods-turn')scenes=[act(a,v,b,a),act(b,v,a,a)];
+      else if(type==='both')scenes=[act(a,v,b,a),act(a,v,b,b),act(b,v,a,a)];
+      else scenes=shuffle(r,[mood(a,'happy',false),mood(a,'happy',true),mood(a,'sad',false),mood(a,'sad',true)]);
+      const s=build(seed,type,scenes);
+      if(s.par>=1&&s.par<=2)return s;
+    }
+    return build(seed,'turns',[act('dog','chases','robot'),act('robot','chases','dog')]);
+  }
+  function build(seed,type,scenes){
+    const sol=solve(scenes),write=type==='negation'?[]:scenes.map((_,i)=>i).slice(1);
+    const title=type==='negation'?'How Does It Feel?':TITLES[scenes[0].verb];
+    return {seed,type,title,scenes,write,start:words(scenes[0]),par:sol.par,solutions:sol.solutions,useless:sol.useless,candidates:sol.candidates};
+  }
+
+  root.RobotTheatre={CAST,VERBS,MOODS,parse,words,sceneKey,pairs,pairKey,reading,readingKey,rehearse,solve,scenario,rng};
+})(typeof window!=='undefined'?window:globalThis);
+</script><script>(function(){
+  'use strict';
+  const T=window.RobotTheatre,$=id=>document.getElementById(id);
+  // Course pages run the course version: wire_course.py sets data-mode="course" (?mode=course previews it). It plays the lecture's level (negation shows) with
+  // negation second, and uses the lecture's terms. The arcade never sees it.
+  const COURSE=document.documentElement.dataset.mode==='course'||new URLSearchParams(location.search).get('mode')==='course';
+  // Course: the explainer stays hidden until play and then opens, as before. Arcade: a closed drop-down under the game from the start.
+  if(COURSE){const ex=document.getElementById('explainer');ex.open=true;ex.hidden=true;}
+  const params=new URLSearchParams(location.search),embed=COURSE||params.get('embed')==='1',level=params.get('level')||(COURSE?'course':'');
+  if(embed)document.body.classList.add('embedded');
+  if(COURSE){
+    document.body.classList.add('course');
+    // Size the course page's frame to the game when the page allows it (same origin); otherwise its set height stands.
+    const fit=()=>{try{const f=window.frameElement,mn=document.querySelector('main');if(f&&mn){const h=Math.ceil(mn.getBoundingClientRect().bottom+window.scrollY+8);if(Math.abs(f.offsetHeight-h)>4)f.style.height=h+'px';}}catch(e){}};
+    if(typeof ResizeObserver!=='undefined')new ResizeObserver(fit).observe(document.body);
+    window.addEventListener('load',fit);
+  }
+  const reduced=()=>globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
+  const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const list=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+  const q=p=>`“${p}”`;
+  const ACT_MS=2300;
+  // revealed: the director's reading and the link gaps appear after the first rehearsal, and stay for the session.
+  let s,seed=1,lines=[],links=new Set(),selected=null,result=null,revealed=false,playing=null,shows=1,drag=null,suppressClick=false;
+
+  // ---- Art: characters face right with their feet at the origin. ----
+  const LEGS=xs=>xs.map(x=>`<line class="limb" x1="${x}" y1="-11" x2="${x}" y2="0"/>`).join('');
+  const ART={
+    robot:`<line class="limb" x1="-7" y1="-15" x2="-7" y2="0"/><line class="limb" x1="7" y1="-15" x2="7" y2="0"/><line class="limb" x1="-15" y1="-33" x2="-22" y2="-24"/><line class="limb" x1="15" y1="-33" x2="23" y2="-27"/><rect class="skin" x="-15" y="-41" width="30" height="27" rx="5"/><line class="limb" x1="0" y1="-60" x2="0" y2="-67"/><circle class="ink" cx="0" cy="-69" r="3"/><rect class="skin" x="-12" y="-60" width="24" height="19" rx="6"/><rect class="ink" x="-1" y="-55" width="11" height="5" rx="2.5"/>`,
+    dog:`<path class="tail" d="M-18 -20q-9 -4 -9 -14"/>${LEGS([-12,-4,8,14])}<ellipse class="skin" cx="0" cy="-19" rx="19" ry="10"/><circle class="skin" cx="20" cy="-31" r="10"/><ellipse class="ear" cx="14" cy="-31" rx="4" ry="8" transform="rotate(18 14 -31)"/><circle class="ink" cx="23" cy="-33" r="1.8"/><circle class="ink" cx="30" cy="-29" r="2.2"/>`,
+    cat:`<path class="tail" d="M-17 -17q-12 -2 -9 -24"/>${LEGS([-10,-3,7,13])}<ellipse class="skin" cx="0" cy="-17" rx="17" ry="9"/><path class="ear" d="M11 -34L12 -45L19 -37Z"/><path class="ear" d="M20 -37L26 -45L27 -33Z"/><circle class="skin" cx="19" cy="-29" r="9"/><circle class="ink" cx="22" cy="-31" r="1.8"/>`,
+    ghost:`<path class="skin" d="M-16 -6V-40a16 16 0 0 1 32 0V-6l-5.3 -6-5.3 6-5.4 -6-5.3 6-5.4 -6z"/><circle class="ink" cx="3" cy="-42" r="2.3"/><circle class="ink" cx="10" cy="-42" r="2.3"/>`
+  };
+  const FACE={robot:[4,-46],dog:[24,-25],cat:[22,-25],ghost:[6.5,-34]};
+  const HEAD={robot:[0,-74],dog:[20,-44],cat:[19,-48],ghost:[4,-60]};
+  const STAR='<path class="spark" d="M0 -7L2 -2L7 0L2 2L0 7L-2 2L-7 0L-2 -2Z"/>';
+  const RAIN='<path class="cloud" d="M-19 3a10 10 0 0 1 15 -9a12 12 0 0 1 22 3a9 9 0 0 1 1 17h-37a8 8 0 0 1 -1 -11z"/><line class="drop" x1="-10" y1="18" x2="-13" y2="26"/><line class="drop" x1="1" y1="18" x2="-2" y2="26"/><line class="drop" x1="12" y1="18" x2="9" y2="26"/>';
+  // A mood mark: sparkles for happy, a rain cloud for sad, in the mood's colour. It always sits at the same angle,
+  // about 24 degrees up from the top of the head and away from the other actor (side is +1 or -1 in the
+  // character's own coordinates), joined by a curved trail of dots. The icon springs in; the icon and each dot then bob on their own rhythm.
+  function moodMark(name,mood,side){
+    // The cloud sits a little farther out along the same angle: its raindrops hang toward the trail.
+    const [hx,hy]=HEAD[name],d=side,reach=mood==='sad'?44:34,ax=hx+6*d,ay=hy+2,ix=ax+reach*d,iy=ay-reach*15/34;
+    const cx=(ax+ix)/2-3*d,cy=(ay+iy)/2-9;
+    const pt=t=>[(1-t)*(1-t)*ax+2*(1-t)*t*cx+t*t*ix,(1-t)*(1-t)*ay+2*(1-t)*t*cy+t*t*iy];
+    const dots=[.22,.4,.58].map((t,k)=>{const [x,y]=pt(t);return `<circle class="trail bob b${k+1}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2"/>`;}).join('');
+    const icon=mood==='happy'?`<g transform="scale(1.2)">${STAR}</g><g transform="translate(${10*d} -10) scale(.85)">${STAR}</g>`:`<g transform="translate(0 -4) scale(.7)">${RAIN}</g>`;
+    return `<g class="mark-${mood}">${dots}<g transform="translate(${ix.toFixed(1)} ${iy.toFixed(1)})"><g class="bob b4"><g class="pop">${icon}</g></g></g></g>`;
+  }
+  function figure(name,mood,side){
+    let extra='';
+    if(mood){const [x,y]=FACE[name];extra=mood==='happy'?`<path class="mouth" d="M${x-5} ${y-1}q5 5 10 0"/>`:`<path class="mouth" d="M${x-5} ${y+2}q5 -5 10 0"/>`;}
+    if(mood&&side)extra+=moodMark(name,mood,side);
+    return `<g class="ch ${name}">${ART[name]}${extra}</g>`;
+  }
+  const flip=svg=>`<g transform="scale(-1 1)">${svg}</g>`;
+  const BACKDROP=`<rect class="wall" x="-40" y="-40" width="400" height="230"/><rect class="boards" x="-40" y="132" width="400" height="58"/><line class="board-line" x1="-40" y1="138" x2="360" y2="138"/><line class="board-line" x1="-40" y1="144" x2="360" y2="144"/><path class="drape" d="M-40 -40h64c-4 80 -2 130 6 230H-40z"/><path class="drape" d="M360 -40h-64c4 80 2 130 -6 230H360z"/><path class="valance" d="M-40 -40h400v52${' q-20 10 -40 0'.repeat(10)}z"/>`;
+  const SPARKS=[[122,64],[198,58],[190,88]].map(([x,y])=>`<g transform="translate(${x} ${y})">${STAR}</g>`).join('');
+  const CLOUD=`<g class="cloud-g"><g transform="translate(157 50)">${RAIN}</g></g>`;
+  // mode: 'play' animates the action, 'still' holds the opening positions, 'sketch' shows the final pose cropped.
+  function sceneSVG(scene,mode){
+    let art='';
+    if(scene&&scene.kind==='act'){
+      const v=scene.verb,faceLeft=v==='hugs'||v==='lifts',mood=w=>scene.happy?(scene.happy===w?'happy':'sad'):null;
+      // The actor's bubble goes behind it (left); the target's goes to the right, whichever way it faces.
+      const t=figure(scene.target,mood(scene.target),faceLeft?-1:1),a=figure(scene.actor,mood(scene.actor),-1);
+      const target=`<g class="target" transform="translate(205 132)"><g class="mv">${faceLeft?flip(t):t}</g></g>`;
+      const actor=`<g class="actor" transform="translate(70 132)"><g class="mv">${a}</g></g>`;
+      const heart=v==='hugs'?`<g class="heart-g" transform="translate(188 58)"><path class="heart" d="M0 8C-14 -4 -9 -16 0 -9C9 -16 14 -4 0 8Z"/></g>`:'';
+      art=`<g class="v-${v}">${v==='lifts'?actor+target:target+actor}${heart}</g>`;
+    }else if(scene){
+      art=`<g class="m-${scene.mood}"><g class="who" transform="translate(160 132)"><g class="mv">${figure(scene.who,scene.mood,0)}</g></g>${scene.mood==='happy'?SPARKS:CLOUD}</g>`;
+    }
+    const vb=mode==='sketch'?sketchBox(scene):'0 -10 320 160';
+    return `<svg class="stage ${mode}" viewBox="${vb}" aria-hidden="true" focusable="false">${BACKDROP}${art}</svg>`;
+  }
+  // The sketch is cropped to the actors' final poses (2:1), so it stays readable at thumbnail size.
+  function sketchBox(sc){
+    const b=sc.kind==='mood'?[118,34,202,140]:{chases:[136,52,296,140],hugs:[132,40,252,140],pushes:[128,52,286,140],lifts:[128,14,244,140]}[sc.verb].slice();
+    if(sc.happy){b[0]-=30;b[1]-=40;b[2]+=30;}
+    let [x0,y0,x1,y1]=b,w=x1-x0,h=y1-y0;
+    if(w<2*h){const cx=(x0+x1)/2;w=2*h;x0=cx-w/2;}else{const cy=(y0+y1)/2;h=w/2;y0=cy-h/2;}
+    return `${x0.toFixed(1)} ${y0.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`;
+  }
+  function describe(sc){
+    if(!sc)return 'nothing';
+    if(sc.kind==='mood')return `the ${sc.who} looking ${sc.mood}`;
+    const m=w=>sc.happy?(sc.happy===w?'happy ':'sad '):'';
+    return `the ${m(sc.actor)}${sc.actor} ${sc.verb} the ${m(sc.target)}${sc.target}`;
+  }
+  const actName=i=>`Act ${i+1}`;
+
+  // ---- Show ----
+  function start(n){
+    stopPlaying();
+    seed=n>>>0;s=T.scenario(seed,level);
+    lines=s.scenes.map((sc,i)=>s.write.includes(i)?s.start.slice():T.words(sc));
+    links=new Set();selected=null;result=null;
+    $('st-play').textContent=s.title;
+    $('howto-mine').hidden=!s.write.length;
+    $('explainer-negation').hidden=!COURSE&&s.type!=='negation';
+    $('prompt').textContent=!s.write.length?'Rehearse the play, then link words until every act comes out the way its sketch shows.'
+      :s.write.length===1?'Write the twist in Act 2 to match its sketch, then rehearse the play.'
+      :`Write ${list(s.write.map(actName))} to match their sketches, then rehearse the play.`;
+    $('acts').innerHTML=s.scenes.map((sc,i)=>`<li class="act${s.write.includes(i)?' mine':''}" id="act-${i}">
+      <div class="act-side"><b id="act-name-${i}">${actName(i)}</b><div class="sketch-box" role="img" aria-label="Sketch: ${esc(describe(sc))}">${sceneSVG(sc,'sketch')}</div></div>
+      <div class="act-main"><div class="act-top"><span class="act-state" id="state-${i}"></span><button type="button" class="mark" id="mark-${i}" data-watch="${i}" hidden></button></div>
+      <div class="line" id="line-${i}" role="group" aria-labelledby="act-name-${i}"></div><div class="reads" id="reads-${i}" hidden></div></div></li>`).join('');
+    $('stage').innerHTML=sceneSVG(s.scenes[0],'still');$('act-label').textContent=s.title;
+    setURL();update();
+  }
+  function setURL(){try{const u=new URL(location.href);u.searchParams.set('seed',seed);history.replaceState(null,'',u);}catch(e){}}
+
+  function evaluate(){
+    const kind=s.scenes[0].kind,out=lines.map((t,i)=>{const says=T.parse(t);return {i,says:says&&says.kind===kind&&!!says.happy===!!s.scenes[i].happy?says:null};});
+    const rows=out.filter(o=>o.says),res=rows.length?T.rehearse(rows.map(o=>({tokens:lines[o.i],scene:o.says})),links):[];
+    res.forEach((r,k)=>Object.assign(rows[k],{reading:r.reading,performed:r.performed,twins:r.twins.map(j=>rows[j].i),fitted:r.fitted}));
+    for(const o of out){
+      o.matches=!!o.says&&T.sceneKey(o.says)===T.sceneKey(s.scenes[o.i]);
+      o.right=!!o.performed&&T.sceneKey(o.performed)===T.sceneKey(s.scenes[o.i]);
+    }
+    return {out,allRight:out.every(o=>o.right),written:out.every(o=>o.matches)};
+  }
+  // Links the play would still get right without: the over-par explanation names these.
+  function spare(){
+    return [...links].filter(p=>{const all=links,keep=new Set(links);keep.delete(p);links=keep;const ok=evaluate().allRight;links=all;return ok;});
+  }
+
+  // Re-render the script rows and status. Any change after a rehearsal clears its result.
+  function update(){
+    const focusKey=document.activeElement?.dataset?.focus,e=evaluate();
+    e.out.forEach(o=>{
+      const i=o.i,mine=s.write.includes(i),st=$(`state-${i}`),r=result&&result.out[i];
+      st.className='act-state'+(mine&&!o.matches?' todo':'');
+      st.textContent=!o.says?'The director can’t stage this line':mine&&!o.matches?'Doesn’t match its sketch yet':mine?'Matches its sketch':'';
+      const m=$(`mark-${i}`);m.hidden=!r||(!!playing&&playing.step<=e.out.indexOf(o));
+      if(r){m.className='mark '+(r.right?'right':'wrong');m.innerHTML=`<span aria-hidden="true">${r.right?'✓':'✗'}</span> Watch`;m.setAttribute('aria-label',`${actName(i)} ${r.right?'came out right':`was staged as ${describe(r.performed)}`}. Watch it again`);}
+      $(`line-${i}`).innerHTML=lineHTML(i);
+      const rd=$(`reads-${i}`);rd.hidden=!revealed;rd.innerHTML=revealed?readsHTML(o):'';
+    });
+    $('st-links-wrap').hidden=!revealed;$('st-links').textContent=`${links.size} / par ${s.par}`;
+    const btn=$('rehearse');btn.disabled=!!playing||!e.written;
+    btn.textContent=playing?'Performing…':result?'Rehearse again':'Rehearse the play';
+    const todo=e.out.filter(o=>!o.matches).map(o=>actName(o.i));
+    $('rehearse-note').textContent=playing?'':!e.written?`Write ${list(todo)} to match ${todo.length===1?'its sketch':'their sketches'} first.`:'';
+    if(!playing)judge();
+    if(focusKey){const el=document.querySelector(`[data-focus="${focusKey}"]`);if(el)el.focus();}
+  }
+  function lineHTML(i){
+    const t=lines[i],mine=s.write.includes(i);let h='';
+    t.forEach((w,k)=>{
+      const lk=revealed&&((k>0&&links.has(T.pairKey(t[k-1],w)))||(k+1<t.length&&links.has(T.pairKey(w,t[k+1]))));
+      h+=mine?`<button type="button" class="word${lk?' linked':''}" data-i="${i}" data-k="${k}" data-focus="w${i}-${k}" aria-pressed="${!!selected&&selected.i===i&&selected.k===k}" aria-label="${esc(w)}, word ${k+1} of ${t.length}">${esc(w)}</button>`
+        :`<span class="word${lk?' linked':''}">${esc(w)}</span>`;
+      if(k+1<t.length){
+        if(!revealed){h+='<span class="space"></span>';return;}
+        const p=T.pairKey(w,t[k+1]),on=links.has(p);
+        h+=`<button type="button" class="gap" data-pair="${esc(p)}" data-focus="g${i}-${k}" aria-pressed="${on}" aria-label="${on?'Unlink':'Link'} ${esc(w)} and ${esc(t[k+1])}"></button>`;
+      }
+    });
+    return h;
+  }
+  function readsHTML(o){
+    if(!o.reading)return 'The director skips this line.';
+    const all=[...o.reading.entries()].sort((a,b)=>(a[0].includes(' ')-b[0].includes(' '))||(a[0]<b[0]?-1:1));
+    return `<span>Director reads:</span>`+all.map(([k,v])=>`<span class="chip${k.includes(' ')?' pair':''}">${esc(k)}${v>1?` ×${v}`:''}</span>`).join('');
+  }
+  const readsText=reading=>[...reading.entries()].sort((a,b)=>a[0]<b[0]?-1:1).map(([k,v])=>k+(v>1?` ×${v}`:'')).join(', ');
+
+  // Outcome of the last rehearsal: outline, corner label, status and the reason line.
+  function judge(){
+    const th=$('theatre'),lab=$('outcome-label'),st=$('st-status');
+    th.classList.remove('outcome-win','outcome-over','outcome-lose');
+    if(!result){
+      const e=evaluate();
+      lab.className='corner corner-right';lab.textContent='';st.className='';
+      st.textContent=!e.written?`Write ${list(e.out.filter(o=>!o.matches).map(o=>actName(o.i)))}`:'Ready to rehearse';
+      $('feedback-title').textContent='';$('feedback-text').textContent='';return;
+    }
+    const n=result.links,right=result.out.filter(o=>o.right).length;
+    const kind=result.allRight?(n<=s.par?'win':'over'):'lose';
+    th.classList.add('outcome-'+kind);st.className=kind;
+    st.textContent=kind==='win'?'Every act right':kind==='over'?'Right, over par':right===0?'Every act flopped':`${list(result.out.filter(o=>!o.right).map(o=>actName(o.i)))} flopped`;
+    lab.className='corner corner-right '+kind;
+    lab.textContent=kind==='win'?'BRAVO':kind==='over'?'OVER PAR':`${right} OF ${result.out.length} ACTS RIGHT`;
+    const [title,text]=reason(result,kind);
+    $('feedback-title').textContent=title;$('feedback-text').textContent=text;
+    if(kind!=='lose')$('explainer').hidden=false;
+  }
+  function reason(e,kind){
+    const n=e.links,held=[...e.linkSet].sort();
+    if(kind==='win'){
+      const where=p=>{const a=e.out.filter(o=>T.pairs(lines[o.i]).includes(p)).map(o=>o.i+1);return a.length===1?`Act ${a[0]}`:`Acts ${list(a.map(String))}`;};
+      return ['Every act came out right.',`${n} link${n===1?'':'s'}, par ${s.par}. `+held.map(p=>`${q(p)} is only in ${where(p)}`).join('. ')+'. '
+        +(s.type==='negation'?'That gives the director a feature of its own for a flipped line.':'The director can finally tell the acts apart.')];
+    }
+    if(kind==='over'){const extra=spare();return ['Every act came out right, over par.',`${n} links, par ${s.par}. The director doesn’t need ${list(extra.map(q))||'all of them'}.`];}
+    for(const o of e.out){
+      if(o.right)continue;
+      const j=o.twins.filter(j=>j<o.i).find(j=>T.sceneKey(s.scenes[j])!==T.sceneKey(s.scenes[o.i]));
+      if(j===undefined)continue;
+      const both=held.filter(p=>T.pairs(lines[o.i]).includes(p)&&T.pairs(lines[j]).includes(p));
+      const first=!e.wasRevealed?' It reads which words a line has, not their order. Press the gap between two words to teach it a word pair.':'';
+      return [`${actName(o.i)} read the same as ${actName(j)} to the director.`,
+        `Both read ${readsText(o.reading)}, so it staged ${actName(j)} again.`+(both.length?` Linking ${list(both.map(q))} doesn’t help: ${both.length===1?'it is':'they are'} in both acts.`:'')+first];
+    }
+    if(s.type==='negation')return ['Every line reads differently, but the word points don’t fit.','The word not has to push toward sad after happy and toward happy after sad. One point per word can’t do both.'];
+    return ['Every line reads differently, but the word points don’t fit.','No set of points for these words and pairs gets every act right at once.'];
+  }
+
+  // ---- Rehearsal: the acts play in order on the one stage. ----
+  function rehearse(){
+    const e=evaluate();if(!e.written||playing)return;
+    result=Object.assign(e,{links:links.size,linkSet:new Set(links),wasRevealed:revealed});
+    selected=null;
+    const order=e.out.map(o=>o.i),finish=()=>{playing=null;revealed=true;update();};
+    if(reduced()){show(order[order.length-1]);finish();return;}
+    playing={step:0,timer:null};update();
+    const next=()=>{
+      if(!playing)return;
+      show(order[playing.step]);
+      playing.timer=setTimeout(()=>{if(!playing)return;playing.step++;if(playing.step<order.length){update();next();}else finish();},ACT_MS);
+    };
+    next();
+  }
+  function show(i){
+    const r=result&&result.out[i];
+    $('stage').innerHTML=sceneSVG(r&&r.performed||null,'play');
+    $('act-label').textContent=actName(i);
+    document.querySelectorAll('.act').forEach(el=>el.classList.toggle('on-stage',el.id===`act-${i}`));
+  }
+  function stopPlaying(){if(playing){clearTimeout(playing.timer);playing=null;}}
+  function changed(){stopPlaying();result=null;document.querySelectorAll('.act').forEach(el=>el.classList.remove('on-stage'));update();}
+
+  // ---- Interaction ----
+  function swap(i,a,b){const t=lines[i];[t[a],t[b]]=[t[b],t[a]];}
+  $('rehearse').addEventListener('click',rehearse);
+  $('acts').addEventListener('click',ev=>{
+    const watch=ev.target.closest('[data-watch]');
+    if(watch){if(!playing&&result)show(Number(watch.dataset.watch));return;}
+    const gap=ev.target.closest('.gap');
+    if(gap){const p=gap.dataset.pair;if(links.has(p))links.delete(p);else links.add(p);changed();return;}
+    const w=ev.target.closest('button.word');if(!w)return;
+    if(suppressClick){suppressClick=false;return;}
+    const i=Number(w.dataset.i),k=Number(w.dataset.k);
+    if(!selected||selected.i!==i)selected={i,k};else if(selected.k===k)selected=null;else{swap(i,selected.k,k);selected=null;changed();return;}
+    update();
+  });
+  $('acts').addEventListener('keydown',ev=>{
+    const w=ev.target.closest('button.word');if(!w||!['ArrowLeft','ArrowRight'].includes(ev.key))return;
+    const i=Number(w.dataset.i),k=Number(w.dataset.k),to=k+(ev.key==='ArrowLeft'?-1:1);if(to<0||to>=lines[i].length)return;
+    ev.preventDefault();swap(i,k,to);selected=null;w.dataset.focus=`w${i}-${to}`;changed();
+  });
+  $('acts').addEventListener('pointerdown',ev=>{
+    const w=ev.target.closest('button.word');if(!w||ev.button>0)return;
+    drag={i:Number(w.dataset.i),k:Number(w.dataset.k),x:ev.clientX,y:ev.clientY,moved:false,el:w,over:null};
+    try{w.setPointerCapture(ev.pointerId);}catch(e){}
+  });
+  $('acts').addEventListener('pointermove',ev=>{
+    if(!drag)return;
+    if(!drag.moved&&Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)<6)return;
+    const g=$('drag-ghost');
+    if(!drag.moved){drag.moved=true;document.body.classList.add('dragging');g.textContent=drag.el.textContent;g.hidden=false;}
+    g.style.left=ev.clientX+'px';g.style.top=ev.clientY+'px';
+    const under=document.elementFromPoint(ev.clientX,ev.clientY)?.closest?.('button.word');
+    const ok=under&&under!==drag.el&&Number(under.dataset.i)===drag.i?under:null;
+    if(drag.over&&drag.over!==ok)drag.over.classList.remove('drop');
+    drag.over=ok;if(ok)ok.classList.add('drop');
+  });
+  function endDrag(commit){
+    if(!drag)return;const d=drag;drag=null;document.body.classList.remove('dragging');$('drag-ghost').hidden=true;
+    if(d.over)d.over.classList.remove('drop');
+    if(d.moved){suppressClick=true;setTimeout(()=>{suppressClick=false;},0);if(commit&&d.over){swap(d.i,d.k,Number(d.over.dataset.k));selected=null;changed();}}
+  }
+  $('acts').addEventListener('pointerup',()=>endDrag(true));
+  $('acts').addEventListener('pointercancel',()=>endDrag(false));
+  function randomSeed(){try{return crypto.getRandomValues(new Uint32Array(1))[0];}catch(e){return (Date.now()^Math.floor(Math.random()*4294967296))>>>0;}}
+  // The first shows run in a fixed order so each kind of twist turns up early: after The Chase (who acts),
+  // a mood swap (only an adjective pair works), a turn with moods (only a subject-verb pair works), then
+  // three acts that need one of each. Later shows are random. The seed still reproduces any show.
+  // Course pages put negation second, the lecture's own example, then a mood swap and three acts.
+  const PROGRESSION=COURSE?['negation','moods','both']:['moods','moods-turn','both'];
+  $('new-show').addEventListener('click',()=>{
+    const want=level==='course'&&!COURSE?null:PROGRESSION[shows-1];
+    let next=randomSeed();
+    for(let tries=0;tries<200;tries++){if(next!==seed&&next!==1&&(!want||T.scenario(next,level).type===want))break;next=randomSeed();}
+    shows++;start(next);
+  });
+  $('reset').addEventListener('click',()=>start(seed));
+
+  const raw=params.get('seed'),n=raw===null?1:Number(raw);
+  start(Number.isInteger(n)&&n>=0&&n<=4294967295?n:1);
+})();
+</script>
+</body></html>

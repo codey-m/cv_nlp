@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Where the probability goes</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Georgia,'Times New Roman',serif;background:#FAFAF8;color:#1A1A1A;padding:16px}
+  #app{max-width:640px;margin:0 auto}
+  h1{font-size:20px;font-weight:600;margin-bottom:4px}
+  .sub{font-size:13px;color:#595959;margin-bottom:14px}
+  .controls{display:flex;flex-wrap:wrap;gap:14px 18px;align-items:center;margin-bottom:10px}
+  .ctrl{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+  .ctrl label,.control-label{font-size:12px;font-family:'Courier New',monospace;color:#444;margin-right:6px}
+  .seg button{font-family:'Courier New',monospace;font-size:12px;padding:5px 10px;border:1px solid #767676;background:#fff;color:#1A1A1A;cursor:pointer;border-radius:4px;margin:0 4px 4px 0}
+  .seg button.on{background:#A31F34;color:#fff;border-color:#A31F34}
+  button.act{font-family:'Courier New',monospace;font-size:12px;padding:5px 12px;border:1px solid #A31F34;background:#fff;color:#A31F34;border-radius:4px;cursor:pointer}
+  input[type=range]{vertical-align:middle;width:150px}
+  .val{font-family:'Courier New',monospace;font-size:12px;color:#A31F34;font-weight:700;margin-left:6px;min-width:34px;display:inline-block}
+  button:focus-visible,input:focus-visible{outline:3px solid #1D4ED8;outline-offset:3px}
+  canvas{background:#fff;border:1px solid #767676;border-radius:6px;display:block;margin-bottom:8px;width:100%;max-width:608px;height:270px}
+  .legend{font-size:12px;color:#444;margin-bottom:8px;line-height:1.9}
+  .key{display:inline-block;width:12px;height:12px;vertical-align:-1px;margin:0 5px 0 12px;border:1px solid #1A1A1A}
+  .key:first-child{margin-left:0}
+  .key.seen{background:#A31F34;border-color:#A31F34}
+  .key.unseen{background:repeating-linear-gradient(45deg,#16456B 0 2px,#fff 2px 5px);border-color:#16456B}
+  .key.ghost{background:#fff;border:2px solid #1A1A1A}
+  .key.even{width:18px;height:0;border:0;border-top:2px dashed #16456B;vertical-align:3px}
+  .readout{font-size:13px;background:#fff;border:1px solid #767676;border-radius:6px;padding:10px 14px;margin-bottom:12px;line-height:1.5}
+  .v{font-weight:700;font-family:'Courier New',monospace;color:#A31F34}
+  h2{font-size:15px;font-weight:600;margin:4px 0 8px}
+  table{border-collapse:collapse;width:100%;font-size:12px;margin:8px 0 6px;background:#fff}
+  th,td{border:1px solid #B5B5B5;padding:4px 8px;text-align:right;font-family:'Courier New',monospace}
+  th{background:#F2F2EF;font-weight:600}
+  th:first-child,td:first-child{text-align:left}
+  td.zero{color:#A31F34;font-weight:700}
+  .product{font-size:13px;margin-bottom:12px;line-height:1.5}
+  .corpus{font-family:'Courier New',monospace;font-size:12px;background:#fff;border:1px solid #B5B5B5;border-radius:6px;padding:8px 12px;margin:6px 0 10px;line-height:1.6}
+  .note{font-size:12px;color:#444;line-height:1.6}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Where the probability goes</h1>
+  <p class="sub">Choose the word before, then raise λ and watch where the probability of the next word goes.</p>
+
+  <div class="controls">
+    <div class="ctrl"><span id="ctxLabel" class="control-label">word before</span><span class="seg" id="segCtx" role="group" aria-labelledby="ctxLabel"></span></div>
+    <div class="ctrl"><label for="lam">λ</label>
+      <input type="range" id="lam" min="0" max="3" step="0.05" value="0"><span class="val" id="lamV">0.00</span></div>
+    <div class="ctrl"><button class="act" type="button" id="reset">Reset</button></div>
+  </div>
+
+  <div class="legend">
+    <span class="key seen"></span>seen after this word
+    <span class="key unseen"></span>never seen after it
+    <span class="key ghost"></span>count and divide (λ = 0)
+    <span class="key even"></span>1/10, all equal
+  </div>
+  <canvas id="cv" width="608" height="270" role="img" aria-label="Bar chart of the probability of each of the ten words coming next" aria-describedby="summary"></canvas>
+  <div class="readout" id="summary"></div>
+
+  <h2>Score a sentence</h2>
+  <div class="ctrl"><span id="sentLabel" class="control-label">sentence</span><span class="seg" id="segSent" role="group" aria-labelledby="sentLabel"></span></div>
+  <table>
+    <caption class="sr-only">The probability of each next word in the chosen sentence, given the word before it</caption>
+    <thead><tr><th scope="col">factor</th><th scope="col">count and divide</th><th scope="col" id="lamHead">at λ = 0.00</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <p class="product" id="product"></p>
+
+  <div class="corpus" aria-label="The counts come from these six sentences, read as one sequence">
+    the cat sat on the mat . the dog sat on the log . the cat ran to the dog .<br>
+    the dog ran to the cat . the cat sat on the dog . the dog sat on the mat .
+  </div>
+  <p class="note">The counts come from these 42 words, read as one sequence. Smoothing adds λ to every
+    count, so each denominator grows by λ once for each of the 10 words.</p>
+  <div class="sr-only" id="announcement" role="status" aria-live="polite" aria-atomic="true"></div>
+</div>
+
+<script>
+(function(){
+  const SENTS=['the cat sat on the mat .','the dog sat on the log .','the cat ran to the dog .',
+               'the dog ran to the cat .','the cat sat on the dog .','the dog sat on the mat .'];
+  const VOCAB=['the','cat','dog','sat','ran','on','to','mat','log','.'];
+  const V=VOCAB.length;
+  const toks=SENTS.join(' ').split(' ');
+  const pairs={}, ctx={};
+  for(let i=0;i+1<toks.length;i++){
+    const k=toks[i]+' '+toks[i+1];
+    pairs[k]=(pairs[k]||0)+1; ctx[toks[i]]=(ctx[toks[i]]||0)+1;
+  }
+  const count=(prev,next)=>pairs[prev+' '+next]||0;
+  const prob=(next,prev,lam)=>(count(prev,next)+lam)/(ctx[prev]+lam*V);
+
+  const CONTEXTS=['the','cat','sat'];
+  const SENTENCES=['the cat sat on the log .','the log sat on the cat .'];
+  let cur='the', lam=0, sent=SENTENCES[0];
+
+  // The chart is redrawn at its displayed width, so its text stays legible on
+  // a phone instead of shrinking with a scaled-down bitmap.
+  const cv=document.getElementById('cv'), g=cv.getContext('2d');
+  const H=270,R=12,T=18,B=40;
+  let W=608,L=44;
+  const Y=p=>H-B-p*(H-B-T);
+  function fit(){
+    const dpr=window.devicePixelRatio||1;
+    W=Math.max(280,Math.round(cv.clientWidth||608)); L=W<420?36:44;
+    cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
+    g.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function label(text,x,y){
+    g.lineWidth=4; g.strokeStyle='#fff'; g.lineJoin='round';
+    g.strokeText(text,x,y); g.fillText(text,x,y);
+  }
+  const quote=w=>'“'+w+'”';
+
+  const SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴',
+             '5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+  function sci(x){
+    if(x===0) return '0';
+    if(x>=0.001) return x.toFixed(4).replace(/0+$/,'').replace(/\.$/,'');
+    const e=Math.floor(Math.log10(x)), m=x/Math.pow(10,e);
+    return m.toFixed(2)+' × 10'+String(e).split('').map(c=>SUP[c]).join('');
+  }
+
+  function drawChart(){
+    fit();
+    g.clearRect(0,0,W,H);
+    g.font='11px "Courier New", monospace'; g.textAlign='right'; g.textBaseline='middle';
+    [0,0.25,0.5,0.75,1].forEach(t=>{
+      g.strokeStyle= t===0 ? '#767676' : '#E3E3E0'; g.lineWidth=1;
+      g.beginPath(); g.moveTo(L,Y(t)); g.lineTo(W-R,Y(t)); g.stroke();
+      // Narrow charts label only the ticks that one decimal states exactly.
+      if(W>=420) { g.fillStyle='#444'; g.fillText(t.toFixed(2),L-6,Y(t)); }
+      else if(t===0||t===0.5||t===1) { g.fillStyle='#444'; g.fillText(t.toFixed(1),L-6,Y(t)); }
+    });
+    const slot=(W-L-R)/V, bw=slot*0.56;
+    const bars=VOCAB.map((w,i)=>({w, x0:L+slot*i+(slot-bw)/2, p0:prob(w,cur,0), p:prob(w,cur,lam), seen:count(cur,w)>0}));
+    bars.forEach(({x0,p0,p,seen})=>{
+      const top=Y(p), h=Y(0)-top;
+      if(seen){ g.fillStyle='#A31F34'; g.fillRect(x0,top,bw,h); }
+      else if(h>0){
+        g.fillStyle='#fff'; g.fillRect(x0,top,bw,h);
+        g.save(); g.beginPath(); g.rect(x0,top,bw,h); g.clip();
+        g.strokeStyle='#16456B'; g.lineWidth=1.6;
+        for(let d=-H;d<bw+H;d+=5){ g.beginPath(); g.moveTo(x0+d,Y(0)); g.lineTo(x0+d+H,Y(0)-H); g.stroke(); }
+        g.restore(); g.strokeStyle='#16456B'; g.lineWidth=1; g.strokeRect(x0,top,bw,h);
+      }
+      if(p0>0){ g.strokeStyle='#1A1A1A'; g.lineWidth=2; g.strokeRect(x0-2,Y(p0),bw+4,Y(0)-Y(p0)); }
+    });
+    // The even-split line goes under the labels, so every number stays readable.
+    g.strokeStyle='#16456B'; g.lineWidth=2; g.setLineDash([6,4]);
+    g.beginPath(); g.moveTo(L,Y(1/V)); g.lineTo(W-R,Y(1/V)); g.stroke(); g.setLineDash([]);
+    const small=W<420;
+    bars.forEach(({w,x0,p0,p})=>{
+      g.fillStyle='#1A1A1A'; g.textAlign='center'; g.textBaseline='bottom';
+      g.font=(small?'10px':'11px')+' "Courier New", monospace';
+      label(p===0?'0':(small?p.toFixed(2).replace(/^0/,''):p.toFixed(2)), x0+bw/2, Math.min(Y(p),Y(p0))-3);
+      g.textBaseline='top'; g.font='13px "Courier New", monospace';
+      g.fillText(w, x0+bw/2, Y(0)+8);
+    });
+    g.fillStyle='#16456B'; g.textAlign='right'; g.textBaseline='middle'; g.font='bold 11px "Courier New", monospace';
+    label('1/10', L-6, Y(1/V));
+  }
+  window.addEventListener('resize',()=>drawChart());
+
+  function summary(){
+    const seen=VOCAB.filter(w=>count(cur,w)>0), unseen=VOCAB.filter(w=>count(cur,w)===0);
+    const seenNow=seen.reduce((s,w)=>s+prob(w,cur,lam),0);
+    const one=seen.length===1;
+    let t=`After ${quote(cur)}, count and divide gives <span class="v">${unseen.length}</span> of the 10 words probability 0. `;
+    t+= lam===0
+      ? (one ? `The one word seen after ${quote(cur)} gets all of it.`
+             : `The ${seen.length} words seen after ${quote(cur)} share all of it.`)
+      : `At λ = ${lam.toFixed(2)}, ${one ? 'the one seen word gets' : `the ${seen.length} seen words share`} <span class="v">${seenNow.toFixed(2)}</span> and the ${unseen.length} unseen words share <span class="v">${(1-seenNow).toFixed(2)}</span>.`;
+    document.getElementById('summary').innerHTML=t;
+  }
+
+  function scoreSentence(){
+    const w=sent.split(' '), rows=document.getElementById('rows');
+    rows.innerHTML='';
+    let p0=1, p=1, missing=null;
+    for(let i=0;i+1<w.length;i++){
+      const a=w[i], b=w[i+1], q0=prob(b,a,0), q=prob(b,a,lam);
+      p0*=q0; p*=q; if(q0===0 && !missing) missing=[a,b];
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>P(${b} | ${a})</td><td class="${q0===0?'zero':''}">${count(a,b)}/${ctx[a]} = ${q0.toFixed(3)}</td><td>${q.toFixed(3)}</td>`;
+      rows.appendChild(tr);
+    }
+    document.getElementById('lamHead').textContent='at λ = '+lam.toFixed(2);
+    let t=`Given its first word, ${quote(sent)} gets probability <span class="v">${sci(p0)}</span> by count and divide`;
+    t+= missing ? `, because ${quote(missing[1])} never follows ${quote(missing[0])} in the corpus.` : '.';
+    if(lam>0) t+=` At λ = ${lam.toFixed(2)} it gets <span class="v">${sci(p)}</span>.`;
+    document.getElementById('product').innerHTML=t;
+  }
+
+  function draw(announce){
+    drawChart(); summary(); scoreSentence();
+    if(announce){
+      const seenNow=VOCAB.filter(w=>count(cur,w)>0).reduce((s,w)=>s+prob(w,cur,lam),0);
+      document.getElementById('announcement').textContent=
+        `After ${cur}, lambda ${lam.toFixed(2)}: seen words ${seenNow.toFixed(2)}, unseen words ${(1-seenNow).toFixed(2)}.`;
+    }
+  }
+
+  function seg(id, opts, get, set){
+    const host=document.getElementById(id);
+    opts.forEach(val=>{
+      const b=document.createElement('button'); b.type='button'; b.textContent=val;
+      b.onclick=()=>{ set(val); sync(host,get()); draw(true); };
+      host.appendChild(b);
+    });
+    sync(host,get());
+  }
+  function sync(host,val){
+    [...host.children].forEach(b=>{ const on=b.textContent===val; b.className=on?'on':''; b.setAttribute('aria-pressed',on?'true':'false'); });
+  }
+  seg('segCtx', CONTEXTS, ()=>cur, v=>{cur=v;});
+  seg('segSent', SENTENCES, ()=>sent, v=>{sent=v;});
+
+  const r=document.getElementById('lam');
+  r.oninput=()=>{ lam=+r.value; document.getElementById('lamV').textContent=lam.toFixed(2); draw(true); };
+  document.getElementById('reset').onclick=()=>{
+    cur='the'; lam=0; sent=SENTENCES[0]; r.value=0; document.getElementById('lamV').textContent='0.00';
+    sync(document.getElementById('segCtx'),cur); sync(document.getElementById('segSent'),sent); draw(true);
+  };
+  window.__widget={get:()=>({cur,lam,sent}), prob, V};
+  draw(false);
+})();
+</script>
+</body>
+</html>
