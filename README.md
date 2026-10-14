@@ -28,19 +28,6 @@ functions transfer beyond notebook examples; an experiment record checkpoint ask
 needs to check the run; and later checkpoints ask for a claim, its evidence and caveat, followed by the
 design of a next experiment. Accuracy itself is never a requirement.
 
-<!-- BEGIN GENERATED UNIT SUMMARIES -->
-
-## Current unit summaries
-
-Each title opens the exact page learners see in the lesson. The source link opens the
-self-contained HTML file in this repository.
-
-| Unit summary | What learners review | Course location |
-|---|---|---|
-| [Unit 1 · What text survives?](https://codey-m.github.io/cv_nlp/widgets/unit-summary-what-text-survives.html) ([source](widgets/unit-summary-what-text-survives.html)) | Trace one passage through five decisions that determine what a model can use. | 6.4600.1x · Unit 1, Lec. 2: Count based language models |
-
-<!-- END GENERATED UNIT SUMMARIES -->
-
 ## Lab runtime notes
 
 - **Lab 1** runs on a CPU. Learners implement four short functions, choose two tokenizers, and
@@ -57,15 +44,16 @@ self-contained HTML file in this repository.
 Lab 2 loads its checked support bundle from `labs/data/lab2/`. Keep that directory and the notebook at their current
 paths so the course links and notebook setup continue to work.
 
-## Other interactive course pages
+## Interactive course pages
 
-The current build also publishes three focused interactives for 6.4600.1x:
+The current build also publishes four focused interactives for 6.4600.1x:
 
 - **Robot Theatre** makes the limitation of a bag-of-words reader visible.
 - **Where the probability goes** traces probability mass in a count-based language model.
+- **What text survives?** guides learners through a compact Unit 1 synthesis.
 - **Order and visibility** builds geometric intuition for attention and token order.
 
-The course loads these interactives and the unit summaries in [`widgets/`](widgets/) through GitHub Pages. Open
+The course loads the self-contained pages in [`widgets/`](widgets/) through GitHub Pages. Open
 edX course assets no longer run their scripts, so moving or renaming this repository or that
 directory would break the embedded activities. The generated [widget index](widgets/README.md)
 links to the live pages and records their course locations.
@@ -78,6 +66,4 @@ reference copy, and the reference copies stay in the private course repository. 
 solution in it belongs here.
 
 Do not edit `widgets/` by hand either. `CV_NLP/docs/publish_widgets.py` copies the canonical
-course assets here, rewrites the course iframes, and regenerates the unit-summary catalog above
-and the widget index. New summaries use a `unit-summary-*` filename and an iframe title beginning
-`Unit N synthesis:`; the publisher checks both conventions before adding a row.
+course assets here, rewrites the course iframes, and regenerates the widget index.
