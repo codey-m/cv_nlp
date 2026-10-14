@@ -64,6 +64,11 @@ def cached_weight_bytes(group_size):
             "fp16": report["fp16"], "int4": report["int4"], "ratio": report["ratio"]}
 
 
+def _check_code(code):
+    if not isinstance(code, int) or not 2000 <= code < 2020:
+        raise ValueError("copy the four-digit PANEL_CODE from checkpoint 2")
+
+
 def personal_panel(data, code, count=200):
     """The fixed test panel issued to one learner.
 
@@ -71,8 +76,7 @@ def personal_panel(data, code, count=200):
     learner's live comparison must use the same ordered IDs so the comparison
     remains paired. The full 1,269-problem record stays separate.
     """
-    if not isinstance(code, int) or not 2000 <= code < 2020:
-        raise ValueError("copy the four-digit PANEL_CODE from checkpoint 1")
+    _check_code(code)
     if not 1 <= count <= len(data["full"]):
         raise ValueError("panel size must fit inside the fixed test set")
     return sorted(random.Random(460_000 + code).sample(list(data["full"]), count))
@@ -81,6 +85,57 @@ def personal_panel(data, code, count=200):
 def panel_fingerprint(ids):
     """A short order-sensitive check that the issued panel was copied correctly."""
     return sum((i + 1) * problem_id for i, problem_id in enumerate(ids)) % 1_000_000
+
+
+# The code also fixes two choices that no saved record contains, so what the live run measures on them is the
+# learner's own: the LoRA training seed, and the 128 calibration solutions behind task 5's Sigma. The saved records
+# use seeds 0 to 2 and the pool's first 128 solutions, and no code maps to either.
+
+def personal_seed(code):
+    """The LoRA training seed for an issued panel code."""
+    _check_code(code)
+    return 1000 + code
+
+
+def personal_calibration(data, code, count=128):
+    """The calibration solutions for an issued panel code, drawn from the lab's pool of training problems."""
+    _check_code(code)
+    pool = data["calibration_pool"]
+    picked = sorted(random.Random(470_000 + code).sample(range(len(pool)), count))
+    return [pool[k] for k in picked]
+
+
+def final_epoch_loss(losses, n_examples, cfg=LORA_CONFIG):
+    """The mean training loss over the last epoch's steps, as train_lora reports them."""
+    per_epoch = math.ceil(n_examples / cfg["batch"])
+    return statistics.fmean(losses[-per_epoch:])
+
+
+# The environment the checkpoint 2 keys were computed in, by the staff key run on the course runtime. None until
+# that run is recorded. The keyed values depend on the GPU and on these library versions.
+KEY_ENVIRONMENT = None
+
+
+def environment():
+    """The GPU and library versions this session computes with."""
+    import importlib.metadata as metadata
+
+    def version(name):
+        try:
+            return metadata.version(name)
+        except metadata.PackageNotFoundError:
+            return None
+    return {"gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+            "cuda": torch.version.cuda, "torch": torch.__version__.split("+")[0],
+            "transformers": version("transformers"), "peft": version("peft")}
+
+
+def environment_differences(env, keyed=None):
+    """Where this session differs from the environment the keys were computed in."""
+    keyed = KEY_ENVIRONMENT if keyed is None else keyed
+    if not keyed:
+        return []
+    return [f"{k}: {env.get(k)} here, {keyed[k]} for the keys" for k in keyed if env.get(k) != keyed[k]]
 
 
 def checklist(conditions):

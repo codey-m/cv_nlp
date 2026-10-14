@@ -24,23 +24,22 @@ links live in `CV_NLP/6.4600.*x/html/*_prac_text.html` and `*_lab_ov_text.html`.
 | [`labs/lab2_language_model_systems.ipynb`](labs/lab2_language_model_systems.ipynb) | Evaluate prompting, LoRA, and quantization on an issued problem panel while auditing extraction, uncertainty, cost, and provenance | Lab 2: Language Model Systems |
 
 The labs use a common assessment pattern: changed readiness cases test whether the learner's
-functions transfer beyond notebook examples; an Evidence Record preserves the run; and later
-checkpoints ask for a claim, its evidence and caveat, followed by the design of a next experiment.
-Accuracy itself is not an execution requirement.
+functions transfer beyond notebook examples; an experiment record checkpoint asks what another analyst
+needs to check the run; and later checkpoints ask for a claim, its evidence and caveat, followed by the
+design of a next experiment. Accuracy itself is never a requirement.
 
 ## Lab runtime notes
 
 - **Lab 1** runs on a CPU. Learners implement four short functions, choose two tokenizers, and
   produce a comparison record. Its slowest cell takes under a minute.
-- **Lab 2** requires a supported GPU session. Each learner receives one of twenty panel codes and
-  runs prompting, LoRA, plain-int4 and calibrated-int4 on the same 200 problems. The panel
-  fingerprint, function digest, stage provenance and four right-answer counts make that run
-  auditable without requiring a target accuracy.
+- **Lab 2** requires a run on the course's GPU runtime. Checkpoint 2 issues each learner one of
+  twenty codes, which fixes a 200-problem panel, a LoRA training seed and a calibration sample.
+  Prompting, LoRA, plain int4 and calibrated int4 all run on that panel, and checkpoint 2 checks
+  values that only that run produces. No target accuracy is required.
 - **Lab 2 recovery** uses saved outputs when a session is interrupted or no GPU is present. Those
-  records support inspection and interpretation, but are labeled as recovery evidence and do not
-  satisfy the personal-run execution contract.
-- **Lab 2 timing** is provisionally 12 to 15 T4 minutes for the required model stages. A fresh
-  learner run on the supported service is still required to confirm that estimate.
+  records support inspection and interpretation, are labeled as recovery evidence, and never
+  produce checkpoint 2's values.
+- **Lab 2 timing** is about 12 to 15 T4 minutes for the required model stages.
 
 Lab 2 loads its checked support bundle from `labs/data/lab2/`. Keep that directory and the notebook at their current
 paths so the course links and notebook setup continue to work.
