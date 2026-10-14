@@ -6,116 +6,90 @@
 <title>What text survives?</title>
 <style>
   *,*::before,*::after{box-sizing:border-box}
-  html{background:#FAFAF8}
-  body{margin:0;padding:16px 12px 24px;background:#FAFAF8;color:#1A1A1A;font-family:Arial,Helvetica,sans-serif;line-height:1.45}
+  :root{--red:#A31F34;--blue:#245A7A;--ink:#1A1A1A;--muted:#5D625F;--line:#CDCEC8;--paper:#FAFAF8;--panel:#F6F6F2;--gold:#C17A00}
+  html{background:var(--paper)}
+  body{margin:0;padding:16px 12px 24px;background:var(--paper);color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.42}
   button,summary{font:inherit}
   button:focus-visible,summary:focus-visible,h2:focus-visible{outline:3px solid #1472AE;outline-offset:3px}
-  #essay{max-width:760px;margin:0 auto}
-  .eyebrow{margin:0 0 2px;color:#A31F34;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  #essay{max-width:780px;margin:0 auto}
+  .eyebrow{margin:0 0 2px;color:var(--red);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
   h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(28px,5vw,39px);font-weight:500;line-height:1.08}
-  .guiding{margin:7px 0 14px;color:#444;font-family:Georgia,'Times New Roman',serif;font-size:17px}
-  .guiding code{padding:1px 4px;background:#F3D8A6;color:#1A1A1A;font-size:.9em}
-  .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:0 0 12px}
-  .step{display:flex;align-items:center;justify-content:center;gap:6px;min-height:43px;padding:6px;border:0;border-top:3px solid #C7C7C2;background:transparent;color:#555;cursor:pointer}
-  .step[aria-selected="true"]{border-color:#A31F34;background:#F6F2EF;color:#1A1A1A;font-weight:700}
-  .step-no{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#E7E7E2;font-family:'Courier New',monospace;font-size:11px;font-weight:700}
-  .step[aria-selected="true"] .step-no{background:#A31F34;color:#FFF}
-  .step-label{font-size:11px;line-height:1.1}
-  .stage{padding:20px;border:1px solid #C8C8C2;border-radius:7px;background:#FFF}
+  .guiding{margin:7px 0 13px;color:#444;font-family:Georgia,'Times New Roman',serif;font-size:17px}
+  .guiding code{padding:1px 4px;background:#F3D8A6;color:var(--ink);font-size:.9em}
+
+  .steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;min-width:0;margin:0 0 10px}
+  .step{--step:#777;--step-bg:#F0F0EC;display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:47px;padding:5px;border:1px solid transparent;border-top:3px solid #C7C7C2;border-radius:0 0 5px 5px;background:transparent;color:#555;cursor:pointer}
+  .step[data-tone="units"]{--step:#267153;--step-bg:#E8F3EC}.step[data-tone="evidence"]{--step:#245A7A;--step-bg:#E8F1F6}.step[data-tone="task"]{--step:#684A8F;--step-bg:#F0EBF7}.step[data-tone="estimate"]{--step:#9A5B00;--step-bg:#FFF2D9}.step[data-tone="context"]{--step:#006B68;--step-bg:#E4F3F1}
+  .step[aria-selected="true"]{border-color:var(--step);background:var(--step-bg);color:var(--ink);font-weight:700}
+  .step-icon{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:23px;padding:0 4px;border-radius:5px;background:#E7E7E2;color:#555;font-family:'Courier New',monospace;font-size:10px;font-weight:700}
+  .step[aria-selected="true"] .step-icon{background:var(--step);color:#FFF}
+  .step-label{font-size:11px;line-height:1.05}
+
+  .running{margin:0 0 10px;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:#FFF}
+  .running-head{display:flex;align-items:center;gap:8px;margin-bottom:7px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+  .running-head::after{content:"";height:1px;flex:1;background:#E1E1DC}
+  .running-rows{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .running-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;min-width:0;padding:6px 7px;border-radius:5px;background:#F6F6F2;font-family:'Courier New',monospace;font-size:11px}
+  .case{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;color:#FFF;font:700 10px/1 Arial,Helvetica,sans-serif;flex:none}
+  .case.a{background:var(--red)}.case.b{background:var(--blue)}
+  .running-token{padding:3px 4px;border-radius:3px;background:#FFF;white-space:nowrap}.running-token.focus{background:#F3D8A6;font-weight:700}
+
+  .stage{--tone:#777;--tone-bg:#F2F2EE;padding:18px 19px;border:1px solid var(--line);border-top:4px solid var(--tone);border-radius:7px;background:#FFF}
+  .stage[data-tone="units"]{--tone:#267153;--tone-bg:#E8F3EC}.stage[data-tone="evidence"]{--tone:#245A7A;--tone-bg:#E8F1F6}.stage[data-tone="task"]{--tone:#684A8F;--tone-bg:#F0EBF7}.stage[data-tone="estimate"]{--tone:#9A5B00;--tone-bg:#FFF2D9}.stage[data-tone="context"]{--tone:#006B68;--tone-bg:#E4F3F1}
   .stage[hidden]{display:none}
-  .kicker{margin:0 0 3px;color:#A31F34;font-family:'Courier New',monospace;font-size:11px;font-weight:700;text-transform:uppercase}
-  h2{margin:0 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:clamp(23px,4vw,27px);font-weight:500;line-height:1.18}
-  .task{margin:0 0 12px;color:#444;font-size:14px}
-  .task strong{color:#A31F34}
-  .visual{padding:14px;background:#F7F7F4}
+  .kicker{margin:0 0 2px;color:var(--tone);font-family:'Courier New',monospace;font-size:11px;font-weight:700;text-transform:uppercase}
+  h2{margin:0 0 9px;font-family:Georgia,'Times New Roman',serif;font-size:clamp(22px,4vw,27px);font-weight:500;line-height:1.18}
+  .gap{display:grid;grid-template-columns:auto 1fr;align-items:start;gap:8px;margin:0 0 11px;padding:8px 10px;border-radius:6px;background:var(--tone-bg);color:#343735;font-size:13px}
+  .gap-label{padding:2px 6px;border-radius:999px;background:var(--tone);color:#FFF;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+  .task{margin:0 0 9px;color:#444;font-size:13px}.task strong{color:var(--tone)}
+  .visual{padding:12px;border-radius:6px;background:var(--panel)}
   .visual-label{margin:0 0 7px;color:#666;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
-  .phrase-focus{margin:0 0 11px;text-align:center;font-family:Georgia,'Times New Roman',serif;font-size:17px}
-  mark{padding:2px 4px;border-radius:3px;background:#F3D8A6;color:#1A1A1A}
-  .token-row,.pieces,.boundary-demo{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px}
-  .token,.piece,.prefix-token,.window-token{padding:5px 7px;border-radius:3px;background:#E9EFF3;font-family:'Courier New',monospace;font-size:12px}
-  .token.focus,.prefix-token.focus,.window-token.focus{background:#F3D8A6}
-  .measure{display:flex;justify-content:center;gap:10px;margin:10px 0}
-  .measure span{padding:4px 8px;border-radius:999px;background:#FFF;color:#555;font-size:11px}
-  .measure strong{color:#A31F34;font-family:'Courier New',monospace;font-size:13px}
-  .bpe-panel{margin-top:11px;padding-top:11px;border-top:1px solid #D2D2CC}
-  .mini-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}
-  .mini-head strong{font-family:Georgia,'Times New Roman',serif;font-size:16px;font-weight:500}
-  .mini-head span{color:#555;font-family:'Courier New',monospace;font-size:11px}
-  .pieces{justify-content:flex-start;min-height:38px;margin:6px 0}
-  .piece{background:#FFF;border:1px solid #C8C8C2;font-size:13px}
-  #bpe-status{display:inline;margin:0;color:#555;font-size:12px}
-  .merge-actions{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:8px}
-  .merge-actions button,.switches button{min-height:37px;padding:6px 10px;border:1px solid #777;border-radius:4px;background:#FFF;color:#222;cursor:pointer}
+  .switches{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 9px}
+  .switches button,.merge-actions button{min-height:44px;padding:7px 11px;border:1px solid #777;border-radius:5px;background:#FFF;color:#222;cursor:pointer}
+  .switches button[aria-pressed="true"]{border-color:var(--tone);background:var(--tone);color:#FFF}
   .merge-actions button:disabled{cursor:default;opacity:.45}
-  .boundary-demo{justify-content:flex-start;margin-top:10px;color:#555;font-family:'Courier New',monospace;font-size:11px}
-  .boundary{height:24px;border-left:3px solid #A31F34}
-  .takeaway{margin:12px 0 0;padding:10px 12px;border-left:4px solid #A31F34;background:#FFF8F5;font-family:Georgia,'Times New Roman',serif;font-size:15px}
-  .takeaway span{display:block;margin-bottom:2px;color:#A31F34;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-  details.detail{margin:10px 0 0;color:#4A4A4A;font-size:12px}
-  details.detail summary{min-height:32px;padding:6px 2px;color:#245A7A;cursor:pointer;font-weight:700}
-  details.detail blockquote{margin:7px 0;padding:9px 11px;border-left:3px solid #A31F34;background:#F6F2EF;font-family:Georgia,'Times New Roman',serif;font-size:14px}
+  .gain{display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:start;margin:10px 0 0;padding:9px 10px;border-left:4px solid var(--tone);background:var(--tone-bg);font-family:Georgia,'Times New Roman',serif;font-size:14px}
+  .gain-mark{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:50%;background:var(--tone);color:#FFF;font:700 12px/1 Arial,Helvetica,sans-serif}
+  .gain b{color:var(--tone);font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+  .handoff{margin:9px 0 0;padding:8px 2px 0;border-top:1px dashed #C5C6C0;color:#4D514E;font-size:12px}.handoff b{color:var(--tone)}
+  details.detail{margin:8px 0 0;color:#4A4A4A;font-size:12px}
+  details.detail summary{min-height:44px;padding:11px 2px;color:#245A7A;cursor:pointer;font-weight:700}
+  details.detail blockquote{margin:7px 0;padding:9px 11px;border-left:3px solid var(--red);background:#F6F2EF;font-family:Georgia,'Times New Roman',serif;font-size:14px}
   .source{margin:6px 0 0;color:#666;font-size:11px}
-  .switches{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 11px}
-  .switches button[aria-pressed="true"]{border-color:#A31F34;background:#A31F34;color:#FFF}
-  .representation-visual{min-height:185px}
-  .phrase-sources{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .phrase-box{padding:10px;border-top:3px solid #A31F34;background:#FFF;font-family:'Courier New',monospace;font-size:12px;text-align:center}
-  .phrase-box.b{border-color:#245A7A}
-  .phrase-box b{display:block;margin-bottom:3px;font-family:Arial,Helvetica,sans-serif;font-size:10px}
-  .mapping{margin:8px 0;text-align:center;color:#666;font-size:11px}
-  .shared-vector{display:flex;justify-content:center;flex-wrap:wrap;gap:6px}
-  .shared-vector span{padding:6px 8px;background:#FFF;font-family:'Courier New',monospace;font-size:12px}
-  .pair-rows{display:grid;gap:9px}
-  .pair-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;padding:9px;background:#FFF;font-family:'Courier New',monospace;font-size:12px}
-  .pair-row b{font-family:Arial,Helvetica,sans-serif;font-size:10px}
-  .link-word{padding:5px 6px;background:#F1F1ED}.arrow{color:#777}.changed{color:#A31F34;font-weight:700}
-  .readout{margin:10px 0 0;color:#222;font-size:13px;text-align:center}
-  .readout strong{color:#A31F34}
-  .lm-visual{display:grid;gap:10px}
-  .formula{padding:8px;background:#FFF;text-align:center;font-family:'Courier New',monospace;font-size:13px}
-  .prediction-row{display:grid;grid-template-columns:28px 1fr 22px minmax(70px,auto);align-items:center;gap:7px}
-  .row-key{font-size:11px;font-weight:700;text-align:center}
-  .prediction-row.a .row-key,.prediction-row.a .target{color:#A31F34}
-  .prediction-row.b .row-key,.prediction-row.b .target{color:#245A7A}
-  .context-line{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:5px;padding:9px;background:#FFF}
-  .prefix-token.earlier{background:#EEE;color:#555;font-family:Arial,Helvetica,sans-serif;font-size:10px}
-  .target{font-family:'Courier New',monospace;font-size:13px;font-weight:700}
-  .assumption{margin:0;padding:8px 10px;border-left:3px solid #245A7A;background:#FFF;color:#444;font-size:11px}
-  .assumption b{margin-right:6px;color:#245A7A;text-transform:uppercase}
-  .probability-visual{display:grid;gap:11px}
-  .prob-row{display:grid;grid-template-columns:90px 1fr;align-items:center;gap:10px}
-  .prob-name{font-size:11px;font-weight:700}
-  .prob-track{display:flex;height:38px;background:#E5E5E0;overflow:hidden}
-  .prob-seg{display:flex;align-items:center;justify-content:center;min-width:0;color:#FFF;font-family:'Courier New',monospace;font-size:11px;font-weight:700}
-  .prob-seg.facts{background:#A31F34}.prob-seg.theories{background:#245A7A}.prob-seg.data{background:#C17A00;box-shadow:inset 0 0 0 2px #FFF}
-  .prob-seg.other{background:repeating-linear-gradient(135deg,#777 0 4px,#8A8A86 4px 8px)}
-  .prob-callouts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
-  .prob-callouts div{padding:7px;background:#FFF;text-align:center;font-size:11px}
-  .prob-callouts .key-change{border:2px solid #C17A00;background:#FFF9EF}
-  .prob-callouts strong{display:block;font-family:'Courier New',monospace;font-size:13px}
-  .math-line{margin:0;text-align:center;color:#555;font-size:11px}
-  .window-board{display:grid;gap:9px}
-  .window-row{display:grid;grid-template-columns:24px minmax(160px,1fr) 20px 74px 20px minmax(62px,auto);align-items:center;gap:5px}
-  .window-row.a .row-key,.window-row.a .observed{color:#A31F34}
-  .window-row.b .row-key,.window-row.b .observed{color:#245A7A}
-  .window-input{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:5px;min-height:47px;padding:7px;background:#FFF}
-  .window-token.distinguishing{border:2px solid currentColor;padding:3px 5px}
-  .model-pill{padding:7px 5px;border-radius:4px;background:#272727;color:#FFF;font-size:9px;text-align:center}
-  .observed{font-family:'Courier New',monospace;font-size:12px;font-weight:700}
-  .model-note{margin:8px 0 0;color:#666;font-size:10px;text-align:center}
-  .synthesis-strip{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;margin:11px 0 0;color:#666;font-size:10px}
-  .synthesis-strip b{color:#A31F34}.synthesis-strip i{font-style:normal;color:#AAA}
-  .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 0}
-  .pager button{min-height:38px;padding:6px 10px;border:1px solid #777;border-radius:4px;background:#FFF;color:#222;cursor:pointer;font-size:12px}
-  .pager button:disabled{cursor:default;opacity:.45}.page-status{color:#666;font-family:'Courier New',monospace;font-size:11px;text-align:center}
+
+  .measure{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:0 0 9px}
+  .measure span{padding:4px 8px;border-radius:999px;background:#FFF;color:#555;font-size:11px}.measure strong{color:var(--tone);font-family:'Courier New',monospace;font-size:13px}
+  .oov-row{display:grid;grid-template-columns:minmax(110px,1fr) auto minmax(145px,1.2fr);align-items:center;gap:8px;margin-bottom:9px;padding:8px;background:#FFF}
+  .oov-word{padding:6px 8px;border:1px dashed #999;border-radius:4px;font-family:'Courier New',monospace;text-align:center}.oov-arrow{color:var(--tone);font-weight:700}.oov-result{color:#6B3434;font-size:11px;font-weight:700;text-align:center}
+  .bpe-panel{padding-top:9px;border-top:1px solid #D2D2CC}
+  .mini-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}.mini-head strong{font-family:Georgia,'Times New Roman',serif;font-size:15px;font-weight:500}.mini-head span{color:#555;font-family:'Courier New',monospace;font-size:10px}
+  .bpe-word{display:grid;grid-template-columns:80px 1fr;align-items:center;gap:8px;margin:6px 0}.bpe-word-label{color:#555;font-size:10px;font-weight:700;text-transform:uppercase}.pieces{display:flex;align-items:center;flex-wrap:wrap;gap:4px;min-height:31px}.piece{padding:4px 6px;border:1px solid color-mix(in srgb,var(--tone) 38%,#BBB);border-radius:4px;background:#FFF;color:#24302A;font-family:'Courier New',monospace;font-size:12px;animation:reveal .2s ease both}
+  .merge-actions{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:7px}#bpe-status{display:inline;margin:0;color:#555;font-size:11px}
+
+  .representation-visual{min-height:166px}
+  .repr-rows{display:grid;gap:8px}.repr-row{display:grid;grid-template-columns:23px repeat(7,auto);align-items:center;justify-content:center;gap:4px;min-width:0;padding:8px;background:#FFF;font-family:'Courier New',monospace;font-size:11px}.repr-row>*{min-width:0}.repr-token{position:relative;padding:5px 6px;border-radius:3px;background:#F0F0EC}.token-count{position:absolute;top:-6px;right:-5px;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--tone);color:#FFF;font:700 9px/1 Arial,Helvetica,sans-serif;transition:opacity .18s}.pair-link{min-width:19px;padding:1px 3px;border-radius:999px;color:#888;font-weight:700;text-align:center;transition:opacity .18s,color .18s,background .18s}.pair-link.diff{background:var(--tone-bg);color:var(--tone)}
+  .representation-visual[data-view="counts"] .pair-link{opacity:0}.representation-visual[data-view="pairs"] .token-count{opacity:0}
+  .repr-result{margin-top:9px;text-align:center}.shared-vector,.pair-key{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;color:#555;font-size:10px}.shared-vector span{padding:4px 6px;background:#FFF;font-family:'Courier New',monospace}.pair-key i{display:inline-block;width:17px;border-top:3px solid var(--tone)}.pair-key i.shared{border-color:#888}.pair-key[hidden],.shared-vector[hidden]{display:none}
+  .readout{margin:9px 0 0;color:#222;font-size:12px;text-align:center}.readout strong{color:var(--tone)}
+
+  .lm-visual{display:grid;gap:8px}.formula{padding:8px;background:#FFF;text-align:center;font-family:'Courier New',monospace;font-size:12px}.formula sub,.formula sup{font-size:.75em}.prediction-row{display:grid;grid-template-columns:25px 1fr 18px minmax(64px,auto);align-items:center;gap:6px}.context-line{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:4px;min-height:39px;padding:7px;background:#FFF}.prefix-token,.window-token{padding:4px 6px;border-radius:3px;background:#E7ECED;font-family:'Courier New',monospace;font-size:11px;transition:opacity .2s,filter .2s}.prefix-token.focus,.window-token.focus{background:#F3D8A6;font-weight:700}.prefix-token.discarded{opacity:.22;filter:grayscale(1);text-decoration:line-through}.target{font-family:'Courier New',monospace;font-size:12px;font-weight:700}.prediction-row.a .target{color:var(--red)}.prediction-row.b .target{color:var(--blue)}.target small{display:block;color:#777;font:700 8px/1.2 Arial,Helvetica,sans-serif;text-transform:uppercase}
+
+  .probability-visual{display:grid;gap:9px}.prob-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.prob-head strong{color:var(--tone);font-family:'Courier New',monospace;font-size:12px}.prob-track{display:flex;height:45px;border:1px solid #BBB;background:#E5E5E0;overflow:hidden}.prob-seg{display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden;color:#FFF;font-family:'Courier New',monospace;font-size:10px;font-weight:700;white-space:nowrap;transition:width .38s cubic-bezier(.4,0,.2,1)}.prob-seg.facts{background:var(--red)}.prob-seg.theories{background:var(--blue)}.prob-seg.data{background:#C17A00;box-shadow:inset 0 0 0 2px #FFF}.prob-seg.other{background:repeating-linear-gradient(135deg,#666 0 4px,#7B7B77 4px 8px)}
+  .prob-callouts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.prob-callouts div{padding:6px;border:1px solid transparent;background:#FFF;text-align:center;font-size:10px;transition:border-color .2s,background .2s}.prob-callouts .key-change{border-color:var(--tone);background:var(--tone-bg)}.prob-callouts strong{display:block;margin-top:2px;font-family:'Courier New',monospace;font-size:12px}.math-line{margin:0;text-align:center;color:#555;font-size:10px}
+
+  .window-board{display:grid;gap:8px}.window-row{display:grid;grid-template-columns:23px minmax(145px,1fr) 16px 68px 16px minmax(118px,1fr);align-items:center;gap:5px;min-width:0;padding:7px;background:#FFF}.window-row>*{min-width:0}.window-input{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:4px;min-height:38px}.window-token.distinguishing{border:2px solid var(--tone);padding:2px 4px}.model-pill{padding:7px 4px;border-radius:4px;background:#272727;color:#FFF;font-size:9px;text-align:center}.distribution-stack{min-width:0;text-align:center}.distribution-pill{padding:6px 5px;border:1px solid #888;border-radius:4px;background:#F2F2EE;font-family:'Courier New',monospace;font-size:9px;font-weight:700;overflow-wrap:anywhere;transition:border-color .2s,background .2s}.distribution-pill.can-differ{border-color:var(--tone);background:var(--tone-bg)}.observed-note{display:block;margin-top:3px;color:#666;font-size:9px}.observed-note b{font-family:'Courier New',monospace}.window-row.a .observed-note b{color:var(--red)}.window-row.b .observed-note b{color:var(--blue)}
+  .synthesis-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:9px 0 0}.synthesis-item{padding:6px 4px;border-top:3px solid var(--c);background:var(--bg);font-size:9px;text-align:center}.synthesis-item b{display:block;margin-bottom:1px;color:var(--c);font-size:10px}
+
+  .pager{display:flex;align-items:center;justify-content:space-between;gap:9px;margin:9px 0 0}.pager button{min-height:44px;padding:7px 11px;border:1px solid #777;border-radius:5px;background:#FFF;color:#222;cursor:pointer;font-size:12px}.pager button:disabled{cursor:default;opacity:.45}.page-status{color:#666;font-family:'Courier New',monospace;font-size:10px;text-align:center}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @keyframes reveal{from{opacity:.2;transform:translateY(2px)}to{opacity:1;transform:none}}
   @media(max-width:620px){
-    body{padding:12px 8px 20px}.stage{padding:16px 12px}.step{gap:0}.step-label{display:none}
-    .phrase-sources,.prob-callouts{grid-template-columns:1fr}.prediction-row{grid-template-columns:22px 1fr 18px minmax(58px,auto)}
-    .window-row{grid-template-columns:18px minmax(80px,1fr) 12px 54px 12px minmax(48px,auto);gap:3px}.model-pill{font-size:8px}.observed{font-size:10px}
-    .prob-row{grid-template-columns:72px 1fr}.visual{padding:11px}.pager button{max-width:40%}
+    body{padding:12px 8px 20px}.stage{padding:15px 11px}.running-rows{grid-template-columns:1fr}.gap{grid-template-columns:1fr}.gap-label{justify-self:start}
+    .repr-row{grid-template-columns:21px repeat(7,auto);gap:2px;padding:7px 3px}.repr-token{padding:4px 3px;font-size:10px}.pair-link{min-width:9px;font-size:10px}.prediction-row{grid-template-columns:22px 1fr 14px minmax(55px,auto)}
+    .prob-callouts{grid-template-columns:1fr 1fr}.prob-callouts div:last-child{grid-column:1/-1}.window-row{grid-template-columns:21px minmax(110px,1fr) 12px 55px 12px minmax(90px,1fr);gap:3px;padding:6px 3px}.model-pill,.distribution-pill{font-size:8px}.visual{padding:10px}.pager button{max-width:39%}.synthesis-item{font-size:8px}.synthesis-item b{font-size:9px}
   }
-  @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+  @media(max-width:430px){.step{gap:0}.step-label{display:none}.oov-row{grid-template-columns:1fr}.oov-arrow{transform:rotate(90deg);text-align:center}.bpe-word{grid-template-columns:1fr}.bpe-word-label{margin-top:3px}.window-row{grid-template-columns:21px 1fr 12px 52px}.window-row .flow:last-of-type{display:none}.distribution-stack{grid-column:2/5}.synthesis-strip{grid-template-columns:1fr}.synthesis-item{display:flex;justify-content:center;gap:5px}.running-row{font-size:10px}}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
@@ -124,113 +98,145 @@
   <h1>What text survives?</h1>
   <p class="guiding">What does a model know when it predicts after <code>suit</code>?</p>
 
-  <div class="steps" role="tablist" aria-label="Five pages in the synthesis">
-    <button class="step" id="tab-1" type="button" role="tab" aria-controls="stage-1" aria-selected="true" aria-label="Step 1 of 5: units"><span class="step-no">1</span><span class="step-label">Units</span></button>
-    <button class="step" id="tab-2" type="button" role="tab" aria-controls="stage-2" aria-selected="false" aria-label="Step 2 of 5: evidence"><span class="step-no">2</span><span class="step-label">Evidence</span></button>
-    <button class="step" id="tab-3" type="button" role="tab" aria-controls="stage-3" aria-selected="false" aria-label="Step 3 of 5: task"><span class="step-no">3</span><span class="step-label">Task</span></button>
-    <button class="step" id="tab-4" type="button" role="tab" aria-controls="stage-4" aria-selected="false" aria-label="Step 4 of 5: estimate"><span class="step-no">4</span><span class="step-label">Estimate</span></button>
-    <button class="step" id="tab-5" type="button" role="tab" aria-controls="stage-5" aria-selected="false" aria-label="Step 5 of 5: context"><span class="step-no">5</span><span class="step-label">Context</span></button>
+  <div class="steps" role="tablist" aria-label="Five steps in the synthesis">
+    <button class="step" data-tone="units" id="tab-1" type="button" role="tab" aria-controls="stage-1" aria-selected="true" aria-label="Step 1 of 5: pieces"><span class="step-icon">th·e</span><span class="step-label">Pieces</span></button>
+    <button class="step" data-tone="evidence" id="tab-2" type="button" role="tab" aria-controls="stage-2" aria-selected="false" aria-label="Step 2 of 5: order"><span class="step-icon">a→b</span><span class="step-label">Order</span></button>
+    <button class="step" data-tone="task" id="tab-3" type="button" role="tab" aria-controls="stage-3" aria-selected="false" aria-label="Step 3 of 5: predict"><span class="step-icon">P(·)</span><span class="step-label">Predict</span></button>
+    <button class="step" data-tone="estimate" id="tab-4" type="button" role="tab" aria-controls="stage-4" aria-selected="false" aria-label="Step 4 of 5: unseen"><span class="step-icon">0→+</span><span class="step-label">Unseen</span></button>
+    <button class="step" data-tone="context" id="tab-5" type="button" role="tab" aria-controls="stage-5" aria-selected="false" aria-label="Step 5 of 5: context"><span class="step-icon">[···]</span><span class="step-label">Context</span></button>
   </div>
 
-  <section class="stage" id="stage-1" role="tabpanel" aria-labelledby="tab-1">
-    <p class="kicker">1 · Units</p>
-    <h2 tabindex="-1">What counts as one token?</h2>
-    <p class="task"><strong>Try:</strong> Apply the illustrative BPE merges to <code>theories</code>.</p>
-    <div class="visual">
-      <p class="phrase-focus">… twist <mark>facts to suit theories</mark> … <mark>theories to suit facts</mark> …</p>
-      <p class="visual-label">Frozen word-token view</p>
-      <div class="token-row" aria-label="facts, to, suit, theories as four word tokens">
-        <span class="token">facts</span><span class="token">to</span><span class="token focus">suit</span><span class="token">theories</span>
-      </div>
-      <div class="measure"><span><strong id="token-count">29</strong> tokens</span><span><strong id="vocab-count">21</strong> distinct</span></div>
-      <div class="bpe-panel">
-        <div class="mini-head"><strong>BPE close-up: theories</strong><span id="bpe-progress">Step 0 of 4</span></div>
-      <div class="pieces" id="bpe-pieces" aria-label="Current BPE pieces for theories"></div>
-        <div class="merge-actions"><button type="button" id="bpe-reset" disabled>Reset</button><button type="button" id="bpe-next">Next merge</button><p id="bpe-status" aria-live="polite"></p></div>
-        <div class="boundary-demo" aria-label="This pre-tokenization pipeline places boundaries between theories, comma, and instead"><span>theories</span><span class="boundary" aria-hidden="true"></span><span>,</span><span class="boundary" aria-hidden="true"></span><span>instead</span></div>
-      </div>
+  <section class="running" aria-label="Running comparison used throughout the synthesis">
+    <div class="running-head">Same two fragments throughout</div>
+    <div class="running-rows">
+      <div class="running-row"><span class="case a">A</span><span class="running-token">facts</span><span class="running-token">to</span><span class="running-token focus">suit</span><span class="running-token">theories</span></div>
+      <div class="running-row"><span class="case b">B</span><span class="running-token">theories</span><span class="running-token">to</span><span class="running-token focus">suit</span><span class="running-token">facts</span></div>
     </div>
-    <div class="takeaway"><span>Keep</span>Tokenization chooses the pieces. The next four pages hold this word-token rule fixed.</div>
-    <details class="detail"><summary>Source passage</summary><blockquote>“It is a capital mistake to theorise before one has data. Insensibly one begins to twist facts to suit theories, instead of theories to suit facts.”</blockquote><p class="source">Arthur Conan Doyle, “A Scandal in Bohemia,” in <i>The Adventures of Sherlock Holmes</i> (1892). Public-domain text from Project Gutenberg, normalized as in Lab 1.</p></details>
   </section>
 
-  <section class="stage" id="stage-2" role="tabpanel" aria-labelledby="tab-2" hidden>
-    <p class="kicker">2 · Evidence</p>
-    <h2 tabindex="-1">Which representation keeps the difference?</h2>
-    <p class="task"><strong>Try:</strong> Switch from word counts to adjacent pairs.</p>
+  <section class="stage" data-tone="units" id="stage-1" role="tabpanel" aria-labelledby="tab-1">
+    <p class="kicker">1 · Choose the pieces</p>
+    <h2 tabindex="-1">Build words from reusable units</h2>
+    <div class="gap"><span class="gap-label">What is missing?</span><span>The passage’s whole-word vocabulary has no entry for a new spelling such as <code>theorises</code>.</span></div>
+    <p class="task"><strong>Try:</strong> Apply the same illustrative BPE merges to a word from the passage and a new word.</p>
+    <div class="visual">
+      <div class="measure"><span><strong id="token-count">29</strong> word tokens</span><span><strong id="vocab-count">21</strong> word types</span></div>
+      <p class="visual-label">Whole-word vocabulary from this passage</p>
+      <div class="oov-row"><span class="oov-word">theorises</span><span class="oov-arrow" aria-hidden="true">→</span><span class="oov-result">no whole-word entry</span></div>
+      <div class="bpe-panel">
+        <div class="mini-head"><strong>Reuse smaller pieces</strong><span id="bpe-progress">Merge 0 of 4</span></div>
+        <div class="bpe-word"><span class="bpe-word-label">In passage<br><b>theories</b></span><div class="pieces" id="bpe-pieces" aria-label="Current BPE pieces for theories"></div></div>
+        <div class="bpe-word"><span class="bpe-word-label">New word<br><b>theorises</b></span><div class="pieces" id="bpe-probe-pieces" aria-label="Current BPE pieces for theorises"></div></div>
+        <div class="merge-actions"><button type="button" id="bpe-reset" disabled>Reset</button><button type="button" id="bpe-next">Apply next merge</button><p id="bpe-status" aria-live="polite" aria-atomic="true"></p></div>
+      </div>
+    </div>
+    <div class="gain"><span class="gain-mark" aria-hidden="true">✓</span><div><b>Now possible</b><br>When the base symbols are available, <code>theorises</code> remains spellable; the displayed merges also compress <code>theories</code> from eight characters to four pieces.</div></div>
+    <p class="handoff"><b>Still missing →</b> Pieces alone do not say which relationships between words survive. The next four steps hold word tokenization fixed.</p>
+    <details class="detail"><summary>Source passage and BPE scope</summary><blockquote>“It is a capital mistake to theorise before one has data. Insensibly one begins to twist facts to suit theories, instead of theories to suit facts.”</blockquote><p class="source">Arthur Conan Doyle, “A Scandal in Bohemia,” in <i>The Adventures of Sherlock Holmes</i> (1892). Public-domain text from Project Gutenberg, normalized as in Lab 1. The four merges shown here are an illustrative ordered list, not a tokenizer trained on this one sentence.</p></details>
+  </section>
+
+  <section class="stage" data-tone="evidence" id="stage-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+    <p class="kicker">2 · Preserve the evidence</p>
+    <h2 tabindex="-1">Make the endpoint swap visible</h2>
+    <div class="gap"><span class="gap-label">What is missing?</span><span>Word counts give A and B the same evidence: each of the four words appears once.</span></div>
+    <p class="task"><strong>Try:</strong> Add adjacent-pair links without moving the words.</p>
     <div class="switches" role="group" aria-label="Representation view">
       <button type="button" data-view="counts" aria-pressed="true">Word counts</button>
-      <button type="button" data-view="pairs" aria-pressed="false">Adjacent pairs</button>
+      <button type="button" data-view="pairs" aria-pressed="false">Add adjacent pairs</button>
     </div>
-    <div class="visual representation-visual" id="representation-visual"></div>
-    <div class="readout" id="representation-readout" aria-live="polite"></div>
-    <div class="takeaway"><span>Keep</span>Weights cannot recover a relationship that the representation discarded.</div>
+    <div class="visual representation-visual" id="representation-visual" data-view="counts" aria-label="Both phrases have the same unigram count vector.">
+      <div class="repr-rows">
+        <div class="repr-row"><span class="case a">A</span><span class="repr-token">facts<span class="token-count">1</span></span><span class="pair-link diff" aria-label="followed by">→</span><span class="repr-token">to<span class="token-count">1</span></span><span class="pair-link" aria-label="followed by">→</span><span class="repr-token">suit<span class="token-count">1</span></span><span class="pair-link diff" aria-label="followed by">→</span><span class="repr-token">theories<span class="token-count">1</span></span></div>
+        <div class="repr-row"><span class="case b">B</span><span class="repr-token">theories<span class="token-count">1</span></span><span class="pair-link diff" aria-label="followed by">→</span><span class="repr-token">to<span class="token-count">1</span></span><span class="pair-link" aria-label="followed by">→</span><span class="repr-token">suit<span class="token-count">1</span></span><span class="pair-link diff" aria-label="followed by">→</span><span class="repr-token">facts<span class="token-count">1</span></span></div>
+      </div>
+      <div class="repr-result">
+        <div class="shared-vector" id="count-vector"><span>facts:1</span><span>suit:1</span><span>theories:1</span><span>to:1</span></div>
+        <div class="pair-key" id="pair-key" hidden><i></i> links that differ <i class="shared"></i> shared link</div>
+      </div>
+      <div class="readout" id="representation-readout" aria-live="polite" aria-atomic="true"><strong>Same evidence:</strong> unigram counts erase the endpoint swap.</div>
+    </div>
+    <div class="gain"><span class="gain-mark" aria-hidden="true">✓</span><div><b>Now possible</b><br>Adjacent pairs preserve enough local order here: the first and last links distinguish A from B.</div></div>
+    <p class="handoff"><b>Still missing →</b> The representation exposes a difference, but it has not defined a sequence-prediction task.</p>
     <details class="detail"><summary>Why TF-IDF does not help here</summary>With fixed unigram IDF weights, identical unigram count vectors remain identical after coordinate-by-coordinate weighting.</details>
   </section>
 
-  <section class="stage" id="stage-3" role="tabpanel" aria-labelledby="tab-3" hidden>
-    <p class="kicker">3 · Task</p>
-    <h2 tabindex="-1">What is the model asked to predict?</h2>
-    <p class="task"><strong>Look:</strong> Read each exact factor, then note the bigram assumption used next.</p>
-    <div class="visual lm-visual">
-      <div class="formula">P(sequence) = ∏ P(next token | all earlier tokens)</div>
-      <div class="prediction-row a">
-        <span class="row-key">A</span>
-        <div class="context-line"><span class="prefix-token earlier">earlier …</span><span class="prefix-token">facts</span><span class="prefix-token">to</span><span class="prefix-token focus">suit</span></div>
-        <span aria-hidden="true">→</span><span class="target">theories</span>
-      </div>
-      <div class="prediction-row b">
-        <span class="row-key">B</span>
-        <div class="context-line"><span class="prefix-token earlier">earlier …</span><span class="prefix-token">theories</span><span class="prefix-token">to</span><span class="prefix-token focus">suit</span></div>
-        <span aria-hidden="true">→</span><span class="target">facts</span>
-      </div>
-      <p class="assumption"><b>Bigram assumption</b>P(next | all earlier tokens) ≈ P(next | previous token)</p>
+  <section class="stage" data-tone="task" id="stage-3" role="tabpanel" aria-labelledby="tab-3" hidden>
+    <p class="kicker">3 · Change the question</p>
+    <h2 tabindex="-1">Factor sequence probability into next-token questions</h2>
+    <div class="gap"><span class="gap-label">Change the question</span><span>Move from representing a whole phrase to assigning probability to a token sequence.</span></div>
+    <p class="task"><strong>Try:</strong> Use the exact chain-rule factorization, then approximate each conditional with one previous token.</p>
+    <div class="switches" role="group" aria-label="Conditioning history">
+      <button type="button" data-history="exact" aria-pressed="true">Exact factors</button>
+      <button type="button" data-history="bigram" aria-pressed="false">Keep 1 previous token</button>
     </div>
-    <div class="takeaway"><span>Keep</span>The chain rule defines the next-token task. Limiting its history is a later model choice.</div>
+    <div class="visual lm-visual" id="lm-visual" aria-label="Exact next-token factors use all earlier tokens.">
+      <div class="formula" id="lm-formula">P(x<sub>1</sub>, …, x<sub>T</sub>) = ∏<sub>t=1</sub><sup>T</sup> P(x<sub>t</sub> | x<sub>&lt;t</sub>)</div>
+      <div class="prediction-row a"><span class="case a">A</span><div class="context-line"><span class="prefix-token history">earlier …</span><span class="prefix-token history">facts</span><span class="prefix-token history">to</span><span class="prefix-token focus">suit</span></div><span aria-hidden="true">→</span><span class="target"><small>next token</small>theories</span></div>
+      <div class="prediction-row b"><span class="case b">B</span><div class="context-line"><span class="prefix-token history">earlier …</span><span class="prefix-token history">theories</span><span class="prefix-token history">to</span><span class="prefix-token focus">suit</span></div><span aria-hidden="true">→</span><span class="target"><small>next token</small>facts</span></div>
+      <div class="readout" id="lm-readout" aria-live="polite" aria-atomic="true"><strong>Exact factorization:</strong> each arrow is one conditional next-token probability.</div>
+    </div>
+    <div class="gain"><span class="gain-mark" aria-hidden="true">✓</span><div><b>Now expressed</b><br>The chain rule exactly factorizes sequence probability. The bigram assumption then approximates each conditional using only the previous token.</div></div>
+    <p class="handoff"><b>Still missing →</b> With only <code>suit</code> as context, a count estimate assigns unseen continuations probability zero.</p>
   </section>
 
-  <section class="stage" id="stage-4" role="tabpanel" aria-labelledby="tab-4" hidden>
-    <p class="kicker">4 · Estimate</p>
-    <h2 tabindex="-1">Where does smoothing move the probability?</h2>
-    <p class="task"><strong>Compare:</strong> <code>data</code> is in the 21-token vocabulary, but it never follows <code>suit</code> here.</p>
-    <div class="visual probability-visual" role="img" aria-describedby="prob-description">
-      <div class="prob-row"><div class="prob-name">Count only</div><div class="prob-track" id="prob-raw-track"></div></div>
-      <div class="prob-row"><div class="prob-name">Add one</div><div class="prob-track" id="prob-smooth-track"></div></div>
+  <section class="stage" data-tone="estimate" id="stage-4" role="tabpanel" aria-labelledby="tab-4" hidden>
+    <p class="kicker">4 · Estimate the probabilities</p>
+    <h2 tabindex="-1">Reserve probability for unseen continuations</h2>
+    <div class="gap"><span class="gap-label">What is missing?</span><span><code>data</code> is one of the 21 known token types, but it never follows <code>suit</code> here, so the count-only estimate gives it zero.</span></div>
+    <p class="task"><strong>Try:</strong> Apply add-one smoothing and watch the same probability budget move.</p>
+    <div class="switches" role="group" aria-label="Probability estimate">
+      <button type="button" data-estimate="raw" aria-pressed="true">Count only</button>
+      <button type="button" data-estimate="smooth" aria-pressed="false">Apply add one</button>
+    </div>
+    <div class="visual probability-visual">
+      <div class="prob-head"><span class="visual-label" id="prob-title">Probability after <code>suit</code></span><strong id="prob-mode">count only</strong></div>
+      <div class="prob-track" id="prob-track" role="img" aria-labelledby="prob-title" aria-describedby="prob-description">
+        <div class="prob-seg facts" data-prob="facts"></div><div class="prob-seg theories" data-prob="theories"></div><div class="prob-seg data" data-prob="data"></div><div class="prob-seg other" data-prob="other"></div>
+      </div>
       <div class="prob-callouts">
-        <div>facts / theories<strong>1/2 → 2/23</strong></div>
-        <div class="key-change">data<strong>0 → 1/23</strong></div>
-        <div>18 other unseen<strong>0 → 18/23</strong></div>
+        <div>facts / theories<strong id="prob-seen">1/2 each</strong></div>
+        <div id="prob-data-card">data<strong id="prob-data">0</strong></div>
+        <div>18 other unseen<strong id="prob-other">0</strong></div>
       </div>
-      <p class="math-line">Add one: (count + 1) / (2 observed + 21 vocabulary)</p>
+      <p class="math-line" id="prob-math">Count only: count(suit, next) / count(suit)</p>
+      <div class="readout" id="prob-readout" aria-live="polite" aria-atomic="true"><strong>Zero support:</strong> all 19 unseen successors—data and 18 others—are impossible under this estimate.</div>
     </div>
-    <p class="sr-only" id="prob-description"></p>
-    <div class="takeaway"><span>Keep</span>Smoothing reserves probability for unseen continuations. It does not widen the context.</div>
+    <p class="sr-only" id="prob-description">Without smoothing, facts and theories each receive probability one half; data and the other eighteen unseen successors receive zero.</p>
+    <div class="gain"><span class="gain-mark" aria-hidden="true">✓</span><div><b>Now possible</b><br>Add-one smoothing gives unseen continuations nonzero probability. The probability comes from outcomes that were already observed.</div></div>
+    <p class="handoff"><b>A separate limitation →</b> Smoothing fixes zeros within a fixed context. A one-slot feedforward model still receives only <code>suit</code>; compare a three-slot version.</p>
   </section>
 
-  <section class="stage" id="stage-5" role="tabpanel" aria-labelledby="tab-5" hidden>
-    <p class="kicker">5 · Context</p>
-    <h2 tabindex="-1">What changes when the input window widens?</h2>
-    <p class="task"><strong>Try:</strong> Give the same feedforward model one input slot, then three.</p>
+  <section class="stage" data-tone="context" id="stage-5" role="tabpanel" aria-labelledby="tab-5" hidden>
+    <p class="kicker">5 · Widen the context</p>
+    <h2 tabindex="-1">Let the model see the distinguishing words</h2>
+    <div class="gap"><span class="gap-label">What is missing?</span><span>With one input slot, both examples send only <code>suit</code> into the one-slot feedforward model.</span></div>
+    <p class="task"><strong>Try:</strong> Expand the input from one fixed slot to three.</p>
     <div class="switches" role="group" aria-label="Context window size">
       <button type="button" data-window="1" aria-pressed="true">1 input slot</button>
       <button type="button" data-window="3" aria-pressed="false">3 input slots</button>
     </div>
     <div class="visual">
       <div class="window-board">
-        <div class="window-row a"><span class="row-key">A</span><div class="window-input" data-window-input="a"></div><span class="flow" aria-hidden="true">→</span><span class="model-pill">shared model</span><span class="flow" aria-hidden="true">→</span><span class="observed">theories</span></div>
-        <div class="window-row b"><span class="row-key">B</span><div class="window-input" data-window-input="b"></div><span class="flow" aria-hidden="true">→</span><span class="model-pill">shared model</span><span class="flow" aria-hidden="true">→</span><span class="observed">facts</span></div>
+        <div class="window-row a"><span class="case a">A</span><div class="window-input" data-window-input="a"></div><span class="flow" aria-hidden="true">→</span><span class="model-pill" data-model-pill>1-slot model</span><span class="flow" aria-hidden="true">→</span><div class="distribution-stack"><div class="distribution-pill" data-distribution="a">P(· | suit)</div><span class="observed-note">observed next: <b>theories</b></span></div></div>
+        <div class="window-row b"><span class="case b">B</span><div class="window-input" data-window-input="b"></div><span class="flow" aria-hidden="true">→</span><span class="model-pill" data-model-pill>1-slot model</span><span class="flow" aria-hidden="true">→</span><div class="distribution-stack"><div class="distribution-pill" data-distribution="b">P(· | suit)</div><span class="observed-note">observed next: <b>facts</b></span></div></div>
       </div>
-      <div class="readout" id="window-readout" aria-live="polite"></div>
-      <p class="model-note">fixed token slots → shared embeddings and feedforward network → next-token distribution</p>
+      <div class="readout" id="window-readout" aria-live="polite" aria-atomic="true"><strong>Same visible input:</strong> the one-slot model must return the same distribution for A and B.</div>
     </div>
-    <div class="synthesis-strip" aria-label="Unit 1 decisions: units, evidence, task, estimate, context"><b>units</b><i>→</i><b>evidence</b><i>→</i><b>task</b><i>→</i><b>estimate</b><i>→</i><b>context</b></div>
-    <div class="takeaway"><span>Unit 1 in one line</span>A model can use only the distinctions preserved in its input and visible context.</div>
+    <div class="gain"><span class="gain-mark" aria-hidden="true">✓</span><div><b>Now possible</b><br>A three-slot version receives different inputs for A and B and can return different distributions. The wider window makes that distinction available; it does not guarantee an accurate prediction.</div></div>
+    <div class="synthesis-strip" aria-label="Five gains from Unit 1">
+      <div class="synthesis-item" style="--c:#267153;--bg:#E8F3EC"><b>Pieces</b>new spellings covered</div>
+      <div class="synthesis-item" style="--c:#245A7A;--bg:#E8F1F6"><b>Order</b>endpoint swap visible</div>
+      <div class="synthesis-item" style="--c:#684A8F;--bg:#F0EBF7"><b>Predict</b>sequence factored</div>
+      <div class="synthesis-item" style="--c:#9A5B00;--bg:#FFF2D9"><b>Unseen</b>nonzero support</div>
+      <div class="synthesis-item" style="--c:#006B68;--bg:#E4F3F1"><b>Context</b>inputs can differ</div>
+    </div>
+    <p class="handoff"><b>Unit 1 in one line →</b> A model can use only distinctions preserved in its units and representation, supported by its estimate, and present in its visible context.</p>
   </section>
 
   <div class="pager">
     <button type="button" id="previous" disabled>Previous</button>
-    <span class="page-status" id="page-status" aria-live="polite">Page 1 of 5</span>
-    <button type="button" id="next">Next: keep evidence</button>
+    <span class="page-status" id="page-status">Step 1 of 5 · Pieces</span>
+    <button type="button" id="next">Next: preserve order</button>
   </div>
 </main>
 
@@ -240,13 +246,24 @@
   const TOKENS=QUOTE.toLowerCase().match(/[a-z0-9]+|[^\sa-z0-9]/g);
   const VOCAB=[...new Set(TOKENS)];
   const PHRASES={a:['facts','to','suit','theories'],b:['theories','to','suit','facts']};
-  const BPE_STEPS=[
-    {label:'Start with characters.',pieces:['t','h','e','o','r','i','e','s']},
-    {label:'Applied t + h → th.',pieces:['th','e','o','r','i','e','s']},
-    {label:'Applied th + e → the.',pieces:['the','o','r','i','e','s']},
-    {label:'Applied i + e → ie.',pieces:['the','o','r','ie','s']},
-    {label:'Applied ie + s → ies.',pieces:['the','o','r','ies']}
-  ];
+  const MERGES=[['t','h'],['th','e'],['i','e'],['ie','s']];
+  const MERGE_LABELS=['Start with characters.','Merge t + h → th.','Merge th + e → the.','Merge i + e → ie.','Merge ie + s → ies.'];
+
+  function applyMerge(pieces,left,right){
+    const next=[];
+    for(let i=0;i<pieces.length;i++){
+      if(i<pieces.length-1&&pieces[i]===left&&pieces[i+1]===right){next.push(left+right);i++}
+      else next.push(pieces[i]);
+    }
+    return next;
+  }
+  function bpeSteps(word){
+    const steps=[[...word]];
+    MERGES.forEach(([left,right])=>steps.push(applyMerge(steps[steps.length-1],left,right)));
+    return steps;
+  }
+  const BPE_TRAIN=bpeSteps('theories');
+  const BPE_PROBE=bpeSteps('theorises');
   const PAIRS={};
   const CONTEXT={};
   for(let i=0;i<TOKENS.length-1;i++){
@@ -255,50 +272,46 @@
     CONTEXT[TOKENS[i]]=(CONTEXT[TOKENS[i]]||0)+1;
   }
   const pair=(a,b)=>PAIRS[a+'\u0000'+b]||0;
-  if(TOKENS.length!==29||VOCAB.length!==21||CONTEXT.suit!==2||pair('suit','facts')!==1||pair('suit','theories')!==1||BPE_STEPS.some(s=>s.pieces.join('')!=='theories')){
+  if(TOKENS.length!==29||VOCAB.length!==21||CONTEXT.suit!==2||pair('suit','facts')!==1||pair('suit','theories')!==1||BPE_TRAIN[BPE_TRAIN.length-1].join('|')!=='the|o|r|ies'||BPE_PROBE[BPE_PROBE.length-1].join('|')!=='the|o|r|i|s|e|s'){
     throw new Error('The frozen excerpt no longer agrees with its displayed evidence.');
   }
 
   document.getElementById('token-count').textContent=TOKENS.length;
   document.getElementById('vocab-count').textContent=VOCAB.length;
 
+  function renderPieces(host,pieces){
+    host.innerHTML='';
+    pieces.forEach(piece=>{const span=document.createElement('span');span.className='piece';span.textContent=piece;host.appendChild(span)});
+  }
   let bpeStep=0;
   function drawBPE(){
-    const current=BPE_STEPS[bpeStep];
-    const host=document.getElementById('bpe-pieces'); host.innerHTML='';
-    current.pieces.forEach(piece=>{
-      const span=document.createElement('span'); span.className='piece'; span.textContent=piece; host.appendChild(span);
-    });
-    document.getElementById('bpe-status').textContent=current.label;
-    document.getElementById('bpe-progress').textContent='Step '+bpeStep+' of '+(BPE_STEPS.length-1);
+    renderPieces(document.getElementById('bpe-pieces'),BPE_TRAIN[bpeStep]);
+    renderPieces(document.getElementById('bpe-probe-pieces'),BPE_PROBE[bpeStep]);
+    document.getElementById('bpe-status').textContent=MERGE_LABELS[bpeStep]+' theories: '+BPE_TRAIN[0].length+' → '+BPE_TRAIN[bpeStep].length+' pieces; theorises: '+BPE_PROBE[0].length+' → '+BPE_PROBE[bpeStep].length+'.';
+    document.getElementById('bpe-progress').textContent='Merge '+bpeStep+' of '+MERGES.length;
     document.getElementById('bpe-reset').disabled=bpeStep===0;
-    document.getElementById('bpe-next').disabled=bpeStep===BPE_STEPS.length-1;
-    document.getElementById('bpe-next').textContent=bpeStep===BPE_STEPS.length-1?'Complete':'Next merge';
+    document.getElementById('bpe-next').textContent=bpeStep===MERGES.length?'Start over':'Apply next merge';
   }
   document.getElementById('bpe-reset').addEventListener('click',()=>{bpeStep=0;drawBPE()});
-  document.getElementById('bpe-next').addEventListener('click',()=>{bpeStep=Math.min(BPE_STEPS.length-1,bpeStep+1);drawBPE()});
+  document.getElementById('bpe-next').addEventListener('click',()=>{bpeStep=bpeStep===MERGES.length?0:bpeStep+1;drawBPE()});
   drawBPE();
 
   let stage=0;
   const tabs=[...document.querySelectorAll('.step')];
   const stages=[...document.querySelectorAll('.stage')];
-  const nextLabels=['Next: keep evidence','Next: define prediction','Next: estimate probability','Next: widen context','Summary complete'];
+  const stageNames=['Pieces','Order','Predict','Unseen','Context'];
+  const nextLabels=['Next: preserve order','Next: define prediction','Next: repair zeros','Next: widen context','Summary complete'];
   function setStage(index,focusTarget){
     const changed=index!==stage;
     stage=Math.max(0,Math.min(stages.length-1,index));
-    tabs.forEach((tab,i)=>{
-      const active=i===stage;
-      tab.setAttribute('aria-selected',active?'true':'false');
-      tab.tabIndex=active?0:-1;
-      stages[i].hidden=!active;
-    });
+    tabs.forEach((tab,i)=>{const active=i===stage;tab.setAttribute('aria-selected',active?'true':'false');tab.tabIndex=active?0:-1;stages[i].hidden=!active});
     document.getElementById('previous').disabled=stage===0;
     document.getElementById('next').disabled=stage===stages.length-1;
     document.getElementById('next').textContent=nextLabels[stage];
-    document.getElementById('page-status').textContent='Page '+(stage+1)+' of '+stages.length;
-    if(focusTarget==='tab') tabs[stage].focus();
-    if(focusTarget==='heading') stages[stage].querySelector('h2').focus({preventScroll:true});
-    if(changed&&focusTarget) window.scrollTo(0,0);
+    document.getElementById('page-status').textContent='Step '+(stage+1)+' of '+stages.length+' · '+stageNames[stage];
+    if(focusTarget==='tab')tabs[stage].focus();
+    if(focusTarget==='heading')stages[stage].querySelector('h2').focus({preventScroll:true});
+    if(changed&&focusTarget)window.scrollTo(0,0);
   }
   tabs.forEach((tab,i)=>{
     tab.addEventListener('click',()=>setStage(i,'tab'));
@@ -312,83 +325,68 @@
   document.getElementById('previous').addEventListener('click',()=>setStage(stage-1,'heading'));
   document.getElementById('next').addEventListener('click',()=>setStage(stage+1,'heading'));
 
-  function counts(words){
-    const c={};
-    words.forEach(w=>c[w]=(c[w]||0)+1);
-    return c;
-  }
   function drawRepresentation(view){
-    document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===view?'true':'false'));
-    const host=document.getElementById('representation-visual'); host.innerHTML='';
-    if(view==='counts'){
-      const sources=document.createElement('div'); sources.className='phrase-sources';
-      sources.innerHTML='<div class="phrase-box"><b>A</b>facts to suit theories</div><div class="phrase-box b"><b>B</b>theories to suit facts</div>';
-      const mapping=document.createElement('div'); mapping.className='mapping'; mapping.textContent='both map to the same count vector ↓';
-      const vector=document.createElement('div'); vector.className='shared-vector';
-      Object.keys(counts(PHRASES.a)).sort().forEach(word=>{
-        const item=document.createElement('span'); item.textContent=word+' : 1'; vector.appendChild(item);
-      });
-      host.append(sources,mapping,vector);
-      host.setAttribute('aria-label','Both phrases map to the same unigram count vector.');
-    }else{
-      const rows=document.createElement('div'); rows.className='pair-rows';
-      Object.entries(PHRASES).forEach(([key,words])=>{
-        const row=document.createElement('div'); row.className='pair-row';
-        const label=document.createElement('b'); label.textContent=key.toUpperCase(); row.appendChild(label);
-        words.forEach((word,i)=>{
-          const w=document.createElement('span'); w.className='link-word'; w.textContent=word; row.appendChild(w);
-          if(i<words.length-1){
-            const arrow=document.createElement('span');
-            arrow.className='arrow'+(i===1?'':' changed');
-            arrow.setAttribute('aria-label','followed by'); arrow.textContent='→'; row.appendChild(arrow);
-          }
-        });
-        rows.appendChild(row);
-      });
-      host.appendChild(rows);
-      host.setAttribute('aria-label','The phrases share to followed by suit, but their first and last adjacent pairs differ.');
-    }
-    document.getElementById('representation-readout').innerHTML=view==='counts'
-      ? '<strong>Same evidence:</strong> unigram counts erase the reversal.'
-      : '<strong>Different evidence:</strong> the first and last links expose the reversal.';
+    document.querySelectorAll('[data-view]').forEach(button=>button.setAttribute('aria-pressed',button.dataset.view===view?'true':'false'));
+    const visual=document.getElementById('representation-visual');
+    visual.dataset.view=view;
+    document.getElementById('count-vector').hidden=view!=='counts';
+    document.getElementById('pair-key').hidden=view!=='pairs';
+    visual.setAttribute('aria-label',view==='counts'?'Both phrases have the same unigram count vector.':'The phrases share to followed by suit, while their first and last adjacent pairs differ.');
+    document.getElementById('representation-readout').innerHTML=view==='counts'?'<strong>Same evidence:</strong> unigram counts erase the endpoint swap.':'<strong>Different evidence:</strong> the first and last links expose the endpoint swap.';
   }
-  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>drawRepresentation(b.dataset.view)));
-  drawRepresentation('counts');
+  document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>drawRepresentation(button.dataset.view)));
+
+  function drawHistory(mode){
+    document.querySelectorAll('[data-history]').forEach(button=>button.setAttribute('aria-pressed',button.dataset.history===mode?'true':'false'));
+    const bigram=mode==='bigram';
+    document.querySelectorAll('.prefix-token.history').forEach(token=>token.classList.toggle('discarded',bigram));
+    document.getElementById('lm-formula').innerHTML=bigram?'Bigram approximation: P(x<sub>t</sub> | x<sub>&lt;t</sub>) ≈ P(x<sub>t</sub> | x<sub>t−1</sub>)':'P(x<sub>1</sub>, …, x<sub>T</sub>) = ∏<sub>t=1</sub><sup>T</sup> P(x<sub>t</sub> | x<sub>&lt;t</sub>)';
+    document.getElementById('lm-visual').setAttribute('aria-label',bigram?'The bigram approximation discards earlier tokens, leaving suit as the same context in both rows.':'Exact next-token factors use all earlier tokens.');
+    document.getElementById('lm-readout').innerHTML=bigram?'<strong>Same retained context:</strong> both approximated factors condition only on suit.':'<strong>Exact factorization:</strong> each arrow is one conditional next-token probability.';
+  }
+  document.querySelectorAll('[data-history]').forEach(button=>button.addEventListener('click',()=>drawHistory(button.dataset.history)));
 
   const successors={facts:pair('suit','facts'),theories:pair('suit','theories'),data:pair('suit','data')};
-  function drawProbability(trackId,values,labels){
-    const track=document.getElementById(trackId); track.innerHTML='';
-    ['facts','theories','data','other'].forEach(key=>{
-      const seg=document.createElement('div');
-      seg.className='prob-seg '+key;
-      seg.style.width=(values[key]*100)+'%';
-      if(values[key]>.12) seg.textContent=labels[key];
-      track.appendChild(seg);
-    });
-  }
   const denominator=CONTEXT.suit+VOCAB.length;
-  drawProbability('prob-raw-track',{facts:successors.facts/CONTEXT.suit,theories:successors.theories/CONTEXT.suit,data:0,other:0},{facts:'facts 1/2',theories:'theories 1/2',data:'',other:''});
-  drawProbability('prob-smooth-track',{facts:(successors.facts+1)/denominator,theories:(successors.theories+1)/denominator,data:(successors.data+1)/denominator,other:(VOCAB.length-3)/denominator},{facts:'facts',theories:'theories',data:'',other:'other unseen'});
-  document.getElementById('prob-description').textContent='Without smoothing: facts one half, theories one half, data zero. With add-one smoothing: facts two twenty-thirds, theories two twenty-thirds, data one twenty-third, and the other eighteen unseen successors eighteen twenty-thirds.';
+  const PROBS={
+    raw:{facts:successors.facts/CONTEXT.suit,theories:successors.theories/CONTEXT.suit,data:0,other:0},
+    smooth:{facts:(successors.facts+1)/denominator,theories:(successors.theories+1)/denominator,data:(successors.data+1)/denominator,other:(VOCAB.length-3)/denominator}
+  };
+  function drawEstimate(mode){
+    document.querySelectorAll('[data-estimate]').forEach(button=>button.setAttribute('aria-pressed',button.dataset.estimate===mode?'true':'false'));
+    const smooth=mode==='smooth';
+    const labels=smooth?{facts:'',theories:'',data:'',other:'18 unseen'}:{facts:'facts 1/2',theories:'theories 1/2',data:'',other:''};
+    Object.entries(PROBS[mode]).forEach(([key,value])=>{const seg=document.querySelector('[data-prob="'+key+'"]');seg.style.width=(value*100)+'%';seg.textContent=labels[key]});
+    document.getElementById('prob-mode').textContent=smooth?'add one':'count only';
+    document.getElementById('prob-seen').textContent=smooth?'1/2 → 2/23 each':'1/2 each';
+    document.getElementById('prob-data').textContent=smooth?'0 → 1/23':'0';
+    document.getElementById('prob-other').textContent=smooth?'0 → 18/23':'0';
+    document.getElementById('prob-data-card').classList.toggle('key-change',smooth);
+    document.getElementById('prob-math').textContent=smooth?'Add one: (count + 1) / (2 observed + 21 token types)':'Count only: count(suit, next) / count(suit)';
+    document.getElementById('prob-readout').innerHTML=smooth?'<strong>Nonzero support:</strong> all 19 unseen successors receive mass; data gets 1/23, while each observed successor falls from 1/2 to 2/23.':'<strong>Zero support:</strong> all 19 unseen successors—data and 18 others—are impossible under this estimate.';
+    document.getElementById('prob-description').textContent=smooth?'With add-one smoothing, facts and theories each receive two twenty-thirds, data receives one twenty-third, and the other eighteen unseen successors receive eighteen twenty-thirds.':'Without smoothing, facts and theories each receive probability one half; data and the other eighteen unseen successors receive zero.';
+  }
+  document.querySelectorAll('[data-estimate]').forEach(button=>button.addEventListener('click',()=>drawEstimate(button.dataset.estimate)));
 
   const WINDOWS={a:['facts','to','suit'],b:['theories','to','suit']};
   function drawWindow(size){
-    document.querySelectorAll('[data-window]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.window===size?'true':'false'));
-    Object.entries(WINDOWS).forEach(([key,words])=>{
-      const host=document.querySelector('[data-window-input="'+key+'"]'); host.innerHTML='';
-      words.slice(size==='1'?-1:-3).forEach((word,i)=>{
-        const span=document.createElement('span'); span.className='window-token';
-        if(word==='suit') span.classList.add('focus');
-        if(size==='3'&&i===0) span.classList.add('distinguishing');
-        span.textContent=word; host.appendChild(span);
-      });
-    });
+    document.querySelectorAll('[data-window]').forEach(button=>button.setAttribute('aria-pressed',button.dataset.window===size?'true':'false'));
     const wider=size==='3';
-    document.getElementById('window-readout').innerHTML=wider
-      ? '<strong>Different inputs:</strong> this feedforward model can produce different distributions.'
-      : '<strong>Same input:</strong> with only this slot, this feedforward model must produce the same distribution.';
+    document.querySelectorAll('[data-model-pill]').forEach(pill=>pill.textContent=wider?'3-slot model':'1-slot model');
+    Object.entries(WINDOWS).forEach(([key,words])=>{
+      const host=document.querySelector('[data-window-input="'+key+'"]');host.innerHTML='';
+      words.slice(wider?-3:-1).forEach((word,i)=>{const span=document.createElement('span');span.className='window-token';if(word==='suit')span.classList.add('focus');if(wider&&i===0)span.classList.add('distinguishing');span.textContent=word;host.appendChild(span)});
+      const distribution=document.querySelector('[data-distribution="'+key+'"]');
+      distribution.textContent=wider?'P(· | '+words.join(' · ')+')':'P(· | suit)';
+      distribution.classList.toggle('can-differ',wider);
+    });
+    document.getElementById('window-readout').innerHTML=wider?'<strong>Different visible inputs:</strong> the three-slot model can return different distributions for A and B.':'<strong>Same visible input:</strong> the one-slot model must return the same distribution for A and B.';
   }
-  document.querySelectorAll('[data-window]').forEach(b=>b.addEventListener('click',()=>drawWindow(b.dataset.window)));
+  document.querySelectorAll('[data-window]').forEach(button=>button.addEventListener('click',()=>drawWindow(button.dataset.window)));
+
+  drawRepresentation('counts');
+  drawHistory('exact');
+  drawEstimate('raw');
   drawWindow('1');
   setStage(0,false);
 })();
