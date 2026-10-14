@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How context reaches a prediction</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{--ink:#1d292b;--muted:#5a676a;--line:#cfd7d5;--paper:#f7f8f5;--a:#a31f34;--b:#245a7a;--grey:#7b8785;--bad:#7d2a33;
+        --reach:#3b7a3a;--reach-w:#ebf4e8;--keep:#654c91;--keep-w:#f1ecf8;--order:#9a5b00;--order-w:#fff2dc;--hide:#1b6d74;--hide-w:#e3f2f3}
+  body{margin:0;padding:18px 16px 26px;background:var(--paper);color:var(--ink);font:16px/1.45 Arial,Helvetica,sans-serif}
+  main{max-width:840px;margin:auto}
+  button{font:inherit;cursor:pointer}button:disabled{cursor:default;opacity:.45}
+  button:focus-visible,h2:focus-visible{outline:3px solid #176ca5;outline-offset:3px}
+  [hidden]{display:none!important}
+  [data-tone="reach"]{--tone:var(--reach);--wash:var(--reach-w)}[data-tone="keep"]{--tone:var(--keep);--wash:var(--keep-w)}
+  [data-tone="order"]{--tone:var(--order);--wash:var(--order-w)}[data-tone="hide"]{--tone:var(--hide);--wash:var(--hide-w)}
+  .eyebrow{margin:0 0 3px;color:var(--a);font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase}
+  h1{margin:0 0 14px;font:500 clamp(28px,5vw,38px)/1.1 Georgia,"Times New Roman",serif}
+
+  .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:12px}
+  .step{display:grid;justify-items:center;gap:1px;padding:7px 4px;border:1px solid var(--line);border-top:4px solid var(--tone);border-radius:4px;background:#fff;color:#4a5659;font-size:14px}
+  .step b{font:700 12px "Courier New",monospace;color:var(--tone)}
+  .step[aria-selected="true"]{background:var(--wash);border-color:var(--tone);color:var(--ink);font-weight:700}
+
+  .stage{padding:20px 20px 18px;border:1px solid var(--line);border-top:5px solid var(--tone);border-radius:8px;background:#fff}
+  .kicker{margin:0 0 2px;color:var(--tone);font:700 13px "Courier New",monospace;text-transform:uppercase}
+  h2{margin:0 0 16px;font:500 clamp(24px,4.4vw,31px)/1.2 Georgia,"Times New Roman",serif}
+  .need-a{color:var(--a)}.need-b{color:var(--b)}
+
+  .head{color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+  .head.c{text-align:center}
+  .case{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;color:#fff;font-weight:700;font-size:13px}
+  .case.a{background:var(--a)}.case.b{background:var(--b)}
+  .sentence{display:flex;flex-wrap:wrap;gap:4px;padding:9px 0}
+  .tok{position:relative;padding:4px 5px;border-radius:4px;background:#e9edeb;font:15px "Courier New",monospace;white-space:nowrap;transition:opacity .25s,background .25s,box-shadow .2s,color .25s}
+  .tok.out{opacity:.28}.tok.win{background:#dfe4e2;box-shadow:inset 0 0 0 2px var(--grey)}
+  .tok.unread{opacity:.35}.tok.now{background:var(--reach-w);box-shadow:inset 0 0 0 2px var(--reach);opacity:1}
+  .tok.subject{font-weight:700}
+  .tok.hop{background:var(--reach-w);box-shadow:inset 0 0 0 1px var(--reach)}
+  .tok.kept{background:var(--keep-w);box-shadow:inset 0 0 0 1px var(--keep)}
+  .tok.flash{animation:flash .5s ease}
+  @keyframes flash{0%{background:var(--keep);color:#fff}100%{}}
+  .tok .pos{position:absolute;top:-9px;right:-3px;min-width:15px;padding:0 3px;border-radius:3px;background:var(--order);color:#fff;font:700 10px/14px Arial,sans-serif;text-align:center;animation:pop .25s ease both}
+  @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+  .tok.calc{background:var(--hide);color:#fff}
+  .tok.reused{background:#eef1f0;color:#8a9694}
+  .tok.newest{box-shadow:inset 0 0 0 2px var(--hide)}
+
+  .reach{display:flex;justify-content:center;align-items:center;min-height:44px;padding:6px;border-radius:6px;background:#f1f3f2}
+  .reach.same .chips{display:flex;gap:3px}
+  .reach .chip{padding:2px 4px;border-radius:3px;background:#dfe4e2;font:12px "Courier New",monospace}
+  .vecwrap{display:grid;justify-items:center;gap:2px}.vecwrap small{color:var(--muted);font-size:10px;letter-spacing:.05em;text-transform:uppercase;text-align:center;line-height:1.2}
+  .vec{display:grid;grid-template-columns:repeat(8,11px);gap:2px}
+  .vec i{display:block;height:24px;border-radius:2px;background:var(--c,var(--reach))}
+  .vec.strip{grid-template-columns:repeat(10,8px)}
+  .rel{justify-self:center;margin:-6px 0;padding:0 9px;border-radius:99px;font:700 18px/1.3 Georgia,serif;color:var(--grey);background:#f1f3f2}
+  .rel.diff{color:#fff;background:var(--tone)}
+
+  .ans{display:grid;place-items:center;align-content:center;min-height:52px;padding:6px;border:2px solid var(--grey);border-radius:7px;background:#fff;text-align:center}
+  .ans.merged{align-self:stretch;background:#f4f5f4}
+  .ans .big{font:700 24px Georgia,serif;line-height:1.1}
+  .ans small{display:block;color:var(--muted);font-size:11px;line-height:1.2}
+  .ans.own{border-style:dashed;border-color:var(--tone);background:var(--wash)}
+  .ans.own.a .big{color:var(--a)}.ans.own.b .big{color:var(--b)}
+
+  /* two-row A/B board (slides 1 and 3) */
+  .board{display:grid;grid-template-columns:28px minmax(0,1fr) 120px 92px;column-gap:10px;row-gap:10px;align-items:center}
+  .board .ra{grid-row:2}.board .rel{grid-row:3;grid-column:3}.board .rb{grid-row:4}
+  .board .c1{grid-column:1}.board .c2{grid-column:2}.board .c3{grid-column:3}.board .c4{grid-column:4}
+  .board .ans.merged{grid-row:2/5}
+
+  /* slide 2 */
+  .board2{display:grid;grid-template-columns:28px minmax(0,1fr) 120px;column-gap:10px;align-items:end}
+  .arcwrap{position:relative;padding-top:46px}
+  .arcwrap svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+  .arcwrap path{fill:none;stroke-linecap:round}
+  .arcwrap path.hop{stroke:var(--reach);stroke-width:2}
+  .arcwrap path.look{stroke:var(--keep);stroke-width:1.5;opacity:.5}
+  .arcwrap path.look.main{stroke-width:4;opacity:1}
+  .arcwrap path.draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw .7s ease forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .route{grid-column:2;margin:4px 0 0;font:20px/1.3 Georgia,serif;color:var(--reach)}
+  .route.keep{color:var(--keep)}
+  .board2 .reach{align-self:end;margin-bottom:6px}
+
+  /* slide 4 */
+  .board4{display:grid;grid-template-columns:92px minmax(0,1fr) 84px;column-gap:10px;row-gap:12px;align-items:center}
+  .board4 .tok{font-size:13px;padding:3px 4px}
+  .board4 .sentence{padding:4px 0;min-height:36px}
+  .lane{font-size:14px;font-weight:700;line-height:1.2}.lane.m{color:var(--hide)}
+  .board4 .tok{transition:background .15s linear}
+  .board4 .tok .bar{position:absolute;left:0;right:-4px;bottom:-5px;height:3px;border-radius:2px;background:var(--hide);transform:scaleX(0);transform-origin:left;transition:transform .2s ease}
+  .board4 .tok.scanned{background:var(--hide-w)}
+  .board4 .tok.scanned .bar{transform:scaleX(1)}
+  .board4 .tok.first.scanned{background:var(--keep-w)}.board4 .tok.first .bar{background:var(--keep)}
+  .board4 .tok.reused{background:var(--hide-w);box-shadow:inset 0 0 0 1px var(--hide);color:var(--ink)}
+  .board4 .tok.newword{animation:fadein .35s ease both}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+  .count{text-align:center;font:700 28px/1 Georgia,serif;color:var(--bad)}.count.m{color:var(--hide)}
+  .count small{display:block;margin-top:3px;font:11px Arial,sans-serif;color:var(--muted)}
+
+  .verdict{margin:18px 0 6px;font:22px/1.32 Georgia,"Times New Roman",serif}
+  .verdict.problem{color:var(--bad)}.verdict.fixed{color:var(--tone)}
+  .aside{margin:0 0 14px;color:var(--muted);font-size:14px}
+  .changed{margin:4px 0 14px;padding:12px 14px;border-left:5px solid var(--tone);background:var(--wash);font:18px/1.42 Georgia,"Times New Roman",serif}
+  .changed b{display:block;margin-bottom:2px;color:var(--tone);font:700 11px Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase}
+  .act{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+  .go{display:inline-grid;justify-items:start;gap:1px;min-height:52px;padding:8px 18px;border:2px solid var(--tone);border-radius:7px;background:var(--tone);color:#fff;font-size:17px;font-weight:700}
+  .go small{font-size:12px;font-weight:400;opacity:.85}
+  .again{min-height:44px;padding:8px 12px;border:1px solid #8a9694;border-radius:6px;background:#fff;color:var(--ink);font-size:14px}
+
+  .recap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:4px 0 14px}
+  .recap div{padding:8px 6px;border-top:4px solid var(--tone);background:var(--wash);font-size:13px;text-align:center}
+  .recap b{display:block;color:var(--tone);font-size:13px}
+
+  .pager{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+  .pager button{min-height:46px;padding:8px 14px;border:1px solid #8a9694;border-radius:6px;background:#fff;color:var(--ink);font-size:15px}
+  .pcount{color:#5b686b;font:13px "Courier New",monospace}
+
+  @media(max-width:640px){
+    body{padding:12px 8px 22px}.stage{padding:15px 11px}
+    .board{grid-template-columns:24px minmax(0,1fr) 104px 74px;column-gap:7px}
+    .board2{grid-template-columns:24px minmax(0,1fr) 104px;column-gap:7px}
+    .board4{grid-template-columns:58px minmax(0,1fr) 56px;column-gap:6px}.lane{font-size:12px}.count{font-size:22px}
+    .tok{font-size:13px;padding:3px 4px}.board4 .tok{font-size:12px;padding:2px 3px}
+    .reach.same .chips{flex-direction:column;align-items:center;gap:2px}
+    .vec{grid-template-columns:repeat(4,12px)}.vec i{height:15px}.vec.strip{grid-template-columns:repeat(5,9px)}
+    .ans .big{font-size:20px}.verdict{font-size:19px}.changed{font-size:16px}.route{font-size:17px}
+    .step{font-size:12px}.wide{display:none}.recap{grid-template-columns:1fr 1fr}
+  }
+  @media(max-width:430px){
+    .board{grid-template-columns:22px minmax(0,1fr) 72px 60px;column-gap:5px}
+    .board2{grid-template-columns:22px minmax(0,1fr) 76px}
+    .head{font-size:9px}.reach .chip{font-size:10px}.tok{font-size:12px}
+    .vec{grid-template-columns:repeat(4,10px)}.vec i{height:12px}
+  }
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}.arcwrap path.draw{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Unit 2 synthesis</p>
+  <h1>How context reaches a prediction</h1>
+  <nav class="steps" role="tablist" aria-label="Four steps">
+    <button class="step" role="tab" id="tab-1" aria-controls="stage-1" data-tone="reach"><b>1</b>Reach</button>
+    <button class="step" role="tab" id="tab-2" aria-controls="stage-2" data-tone="keep"><b>2</b>Keep</button>
+    <button class="step" role="tab" id="tab-3" aria-controls="stage-3" data-tone="order"><b>3</b>Order</button>
+    <button class="step" role="tab" id="tab-4" aria-controls="stage-4" data-tone="hide"><b>4</b>Hide</button>
+  </nav>
+
+  <!-- 1 · Reach -->
+  <section class="stage" id="stage-1" role="tabpanel" aria-labelledby="tab-1" data-tone="reach">
+    <p class="kicker">1 · Reach</p>
+    <h2 tabindex="-1">Sentence A needs <em class="need-a">are</em>. Sentence B needs <em class="need-b">is</em>.</h2>
+    <div class="board">
+      <span></span><span class="head">Sentence</span><span class="head c">Reaches the prediction</span><span class="head c">Next word</span>
+      <span class="case a ra c1">A</span><div class="sentence ra c2" id="r-row-a"></div><div class="reach ra c3" id="r-reach-a"></div><div class="ans ra c4" id="r-ans-a"></div>
+      <span class="rel" id="r-rel" aria-hidden="true">=</span>
+      <span class="case b rb c1">B</span><div class="sentence rb c2" id="r-row-b"></div><div class="reach rb c3" id="r-reach-b"></div><div class="ans rb c4" id="r-ans-b"></div>
+    </div>
+    <p class="verdict" id="r-verdict" aria-live="polite"></p>
+    <p class="aside" id="r-aside">A wider window moves the edge back, and a longer sentence can still put the subject past it.</p>
+    <p class="changed" id="r-changed" hidden><b>What changed</b>The state is updated at every word, so the subject can reach the prediction from anywhere earlier in the sentence.</p>
+    <div class="act"><button type="button" class="go" id="r-go">Read the whole sentence<small>recurrent state</small></button><button type="button" class="again" id="r-again" hidden>Show the window again</button></div>
+  </section>
+
+  <!-- 2 · Keep -->
+  <section class="stage" id="stage-2" role="tabpanel" aria-labelledby="tab-2" data-tone="keep" hidden>
+    <p class="kicker">2 · Keep</p>
+    <h2 tabindex="-1">In sentence A, <em>keys</em> sits eight words before the prediction.</h2>
+    <div class="board2">
+      <span></span><span class="head">Sentence A</span><span class="head c">Reaches the prediction</span>
+      <span class="case a">A</span>
+      <div class="arcwrap" id="k-wrap"><svg id="k-svg" aria-hidden="true"></svg><div class="sentence" id="k-row"></div></div>
+      <div class="reach" id="k-reach"></div>
+      <p class="route" id="k-route"></p>
+    </div>
+    <p class="verdict" id="k-verdict" aria-live="polite"></p>
+    <p class="aside" id="k-aside">A 100,000-word novel would still get a state of this same size.</p>
+    <p class="changed" id="k-changed" hidden><b>What changed</b>Attention keeps every word and looks back at any of them directly, computing all positions at once. The price is a score for every pair of words.</p>
+    <div class="act"><button type="button" class="go" id="k-go">Look back directly<small>attention</small></button><button type="button" class="again" id="k-again" hidden>Show the recurrent state again</button></div>
+  </section>
+
+  <!-- 3 · Order -->
+  <section class="stage" id="stage-3" role="tabpanel" aria-labelledby="tab-3" data-tone="order" hidden>
+    <p class="kicker">3 · Order</p>
+    <h2 tabindex="-1">A and B use the same words in a different order.</h2>
+    <div class="board">
+      <span></span><span class="head">Sentence</span><span class="head c">Reaches the prediction</span><span class="head c">Next word</span>
+      <span class="case a ra c1">A</span><div class="sentence ra c2" id="o-row-a"></div><div class="reach ra c3" id="o-reach-a"></div><div class="ans ra c4" id="o-ans-a"></div>
+      <span class="rel" id="o-rel" aria-hidden="true">=</span>
+      <span class="case b rb c1">B</span><div class="sentence rb c2" id="o-row-b"></div><div class="reach rb c3" id="o-reach-b"></div><div class="ans rb c4" id="o-ans-b"></div>
+    </div>
+    <p class="verdict" id="o-verdict" aria-live="polite"></p>
+    <p class="aside" id="o-aside">The recurrent state picked up order by reading one word after another. Attention reads every word at once, so it has no order to use.</p>
+    <p class="changed" id="o-changed" hidden><b>What changed</b>Each word’s embedding now includes its position, so the same word in a different place looks different to attention.</p>
+    <div class="act"><button type="button" class="go" id="o-go">Add positions<small>position embeddings</small></button><button type="button" class="again" id="o-again" hidden>Remove positions</button></div>
+  </section>
+
+  <!-- 4 · Hide -->
+  <section class="stage" id="stage-4" role="tabpanel" aria-labelledby="tab-4" data-tone="hide" hidden>
+    <p class="kicker">4 · Hide</p>
+    <h2 tabindex="-1">Generation adds one word at a time.</h2>
+    <div class="board4">
+      <span></span><span class="head">Sequence</span><span class="head c">Computed</span>
+      <span class="lane">No mask</span><div class="sentence" id="h-row-n"></div><span class="count" id="h-count-n"></span>
+      <span class="lane m">Causal mask</span><div class="sentence" id="h-row-m"></div><span class="count m" id="h-count-m"></span>
+    </div>
+    <p class="verdict" id="h-verdict" aria-live="polite"></p>
+    <p class="changed" id="h-changed" hidden><b>What changed</b>Each word attends only to itself and earlier words. Their representations stay fixed, so generation reuses them.</p>
+    <div class="recap" id="h-recap" hidden aria-label="Unit 2 in four steps">
+      <div data-tone="reach"><b>Reach</b>a state carries the subject</div>
+      <div data-tone="keep"><b>Keep</b>look back at any word</div>
+      <div data-tone="order"><b>Order</b>positions tell A from B</div>
+      <div data-tone="hide"><b>Hide</b>reuse earlier words</div>
+    </div>
+    <div class="act"><button type="button" class="go" id="h-go">Generate the rest of the sentence<small>with and without the causal mask</small></button><button type="button" class="again" id="h-again" hidden>Generate again</button></div>
+  </section>
+
+  <div class="pager"><button type="button" id="prev">←<span class="wide"> Previous</span></button><span class="pcount" id="pcount">1 of 4</span><button type="button" id="next"><span class="wide" id="next-label">Next: Keep </span>→</button></div>
+</main>
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id)};
+  var A=["the","keys","beside","the","cabinet","in","the","very","old","office"];
+  var B=["the","cabinet","beside","the","keys","in","the","very","old","office"];
+    var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function shade(str,i){var h=2166136261^(i*7919);for(var k=0;k<str.length;k++){h^=str.charCodeAt(k);h=Math.imul(h,16777619)}return((h>>>0)%1000)/1000}
+  function vec(key,color,caption,n,extra){
+    var wrap=document.createElement("span");wrap.className="vecwrap";
+    var v=document.createElement("span");v.className="vec"+(extra?" "+extra:"");v.setAttribute("role","img");v.setAttribute("aria-label",caption);
+    for(var i=0;i<(n||8);i++){var c=document.createElement("i");c.style.setProperty("--c",color);c.style.opacity=(0.14+0.84*shade(key,i)).toFixed(2);v.appendChild(c)}
+    var cap=document.createElement("small");cap.textContent=caption;wrap.appendChild(v);wrap.appendChild(cap);return wrap}
+  function tokens(host,words,cls,badges){host=typeof host==="string"?$(host):host;host.replaceChildren();words.forEach(function(w,i){var t=document.createElement("span");t.className="tok "+(cls?cls(i,w):"");t.textContent=w;if(badges){var b=document.createElement("span");b.className="pos";b.textContent=i+1;b.style.animationDelay=(reduce?0:i*45)+"ms";t.appendChild(b)}host.appendChild(t)});return host}
+  function subj(i){return i===1?" subject":""}
+  function verdict(id,kind,html){var v=$(id);v.className="verdict "+kind;v.innerHTML=html}
+  function answers(prefix,mode){var a=$(prefix+"-ans-a"),b=$(prefix+"-ans-b");
+    if(mode==="merged"){a.className="ans ra c4 merged";a.innerHTML='<span class="big">?</span><small>one answer for both</small>';b.hidden=true}
+    else{b.hidden=false;a.className="ans ra c4 own a";b.className="ans rb c4 own b";a.innerHTML='<span class="big">are</span><small>can differ</small>';b.innerHTML='<span class="big">is</span><small>can differ</small>'}}
+  function rel(id,same){var r=$(id);r.textContent=same?"=":"≠";r.classList.toggle("diff",!same)}
+  function done(prefix){$(prefix+"-go").hidden=true;$(prefix+"-again").hidden=false;$(prefix+"-changed").hidden=false;var a=$(prefix+"-aside");if(a)a.hidden=true}
+  function undone(prefix){$(prefix+"-go").hidden=false;$(prefix+"-go").disabled=false;$(prefix+"-again").hidden=true;$(prefix+"-changed").hidden=true;var a=$(prefix+"-aside");if(a)a.hidden=false}
+
+  /* 1 · Reach */
+  var WINDOW=3,timer=null;
+  function reachWindow(){
+    clearInterval(timer);timer=null;var start=A.length-WINDOW;
+    tokens("r-row-a",A,function(i){return(i<start?"out":"win")+subj(i)});tokens("r-row-b",B,function(i){return(i<start?"out":"win")+subj(i)});
+    [["r-reach-a",A],["r-reach-b",B]].forEach(function(p){var r=$(p[0]);r.className="reach same "+(p[0].slice(-1)==="a"?"ra":"rb")+" c3";var box=document.createElement("span");box.className="chips";p[1].slice(-WINDOW).forEach(function(w){var c=document.createElement("span");c.className="chip";c.textContent=w;box.appendChild(c)});r.replaceChildren(box)});
+    rel("r-rel",true);answers("r","merged");
+    verdict("r-verdict","problem","Same input, so one answer for both. Whichever word it picks, one sentence gets it wrong.");undone("r");
+  }
+  function reachRead(n){
+    tokens("r-row-a",A,function(i){return(i<n?"":i===n?"now":"unread")+subj(i)});tokens("r-row-b",B,function(i){return(i<n?"":i===n?"now":"unread")+subj(i)});
+    $("r-reach-a").className="reach ra c3";$("r-reach-a").replaceChildren(vec(A.slice(0,n+1).join(" "),"var(--reach)","state"));
+    $("r-reach-b").className="reach rb c3";$("r-reach-b").replaceChildren(vec(B.slice(0,n+1).join(" "),"var(--reach)","state"));
+    rel("r-rel",A.slice(0,n+1).join(" ")===B.slice(0,n+1).join(" "));
+  }
+  function reachDone(){clearInterval(timer);timer=null;reachRead(A.length-1);tokens("r-row-a",A,subj);tokens("r-row-b",B,subj);answers("r","own");verdict("r-verdict","fixed","Different states, so A and B can get different answers.");done("r")}
+  function reachRun(){$("r-aside").hidden=true;$("r-go").hidden=true;verdict("r-verdict","","Reading word by word…");if(reduce){reachDone();return}var n=0;reachRead(n);timer=setInterval(function(){n++;reachRead(n);if(n>=A.length-1){clearInterval(timer);timer=setTimeout(reachDone,380)}},380)}
+  $("r-go").addEventListener("click",reachRun);$("r-again").addEventListener("click",function(){reachWindow();$("r-go").focus()});
+
+  /* 2 · Keep */
+  var keepMode="state";
+  function arcPath(wrap,from,to,lift){
+    var w=wrap.getBoundingClientRect(),toks=wrap.querySelectorAll(".tok"),a=toks[from].getBoundingClientRect(),b=toks[to].getBoundingClientRect();
+    var x1=a.left+a.width/2-w.left,y1=a.top-w.top,x2=b.left+b.width/2-w.left,y2=b.top-w.top,top=Math.min(y1,y2)-lift;
+    return"M"+x1.toFixed(1)+" "+y1.toFixed(1)+" C"+x1.toFixed(1)+" "+top.toFixed(1)+" "+x2.toFixed(1)+" "+top.toFixed(1)+" "+x2.toFixed(1)+" "+y2.toFixed(1)}
+  function keepArcs(animate){
+    var svg=$("k-svg"),wrap=$("k-wrap");svg.replaceChildren();if($("stage-2").hidden)return;
+    var specs=keepMode==="state"?[1,2,3,4,5,6,7,8].map(function(i){return{f:i,t:i+1,lift:13,cls:"hop"}})
+      :[0,2,3,4,5,6,7,8,1].map(function(j){return{f:9,t:j,lift:14+3.4*(9-j),cls:"look"+(j===1?" main":"")}});
+    // On a narrow screen the sentence wraps; drop the thin arcs that would cross between lines and keep the one to keys.
+    var toks=wrap.querySelectorAll(".tok"),line=function(i){return Math.round(toks[i].getBoundingClientRect().top)};
+    specs=specs.filter(function(s){return/main/.test(s.cls)||Math.abs(line(s.f)-line(s.t))<4});
+    specs.forEach(function(s){var p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",arcPath(wrap,s.f,s.t,s.lift));p.setAttribute("class",s.cls);svg.appendChild(p);
+      if(animate&&!reduce){var len=p.getTotalLength();p.style.setProperty("--len",len);p.classList.add("draw")}});
+  }
+  function keepDraw(animate){
+    var st=keepMode==="state";
+    tokens("k-row",A,function(i){return(st?(i>=1?"hop":""):"kept"+(animate?" flash":""))+subj(i)});
+    $("k-reach").replaceChildren(st?vec(A.join(" "),"var(--reach)","1 state, any length"):vec("kept",  "var(--keep)","10 kept, grows with length",10,"strip"));
+    var r=$("k-route");r.className="route"+(st?"":" keep");r.textContent=st?"keys → 8 rewrites → prediction":"keys → 1 step → prediction";
+    if(st){verdict("k-verdict","problem","<em>Keys</em> reaches the prediction only through eight rewrites of one fixed-size state, one word at a time.");undone("k")}
+    else{verdict("k-verdict","fixed","One step from <em>keys</em> to the prediction, and every word keeps its own representation.");done("k")}
+    requestAnimationFrame(function(){keepArcs(animate)});
+  }
+  $("k-go").addEventListener("click",function(){keepMode="attn";keepDraw(true)});$("k-again").addEventListener("click",function(){keepMode="state";keepDraw(false);$("k-go").focus()});
+  window.addEventListener("resize",function(){keepArcs(false)});
+
+  /* 3 · Order */
+  function orderDraw(on){
+    tokens("o-row-a",A,subj,on);tokens("o-row-b",B,subj,on);
+    var key=function(w){return on?w.map(function(x,i){return x+"@"+i}).join(" "):w.slice().sort().join(" ")};
+    $("o-reach-a").replaceChildren(vec(key(A),"var(--keep)","attention mix"));$("o-reach-b").replaceChildren(vec(key(B),"var(--keep)","attention mix"));
+    rel("o-rel",!on);answers("o",on?"own":"merged");
+    if(on){verdict("o-verdict","fixed","Same words in different places, so A and B can get different answers again.");done("o")}
+    else{verdict("o-verdict","problem","Attention mixes the same ten words the same way for A and B. One answer for both, again.");undone("o")}
+  }
+  $("o-go").addEventListener("click",function(){orderDraw(true)});$("o-again").addEventListener("click",function(){orderDraw(false);$("o-go").focus()});
+
+  /* 4 · Hide */
+  var PROMPT=A.slice(0,5),MORE=A.slice(5).concat(["are","on","the","desk"]);
+  var PER=70,BEAT=200,HOLD=550,GAP=250,runId=0;
+  function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+  function countHtml(n,fin){return n+"<small>"+(fin?"done":"computed")+"</small>"}
+  function scanTok(w,cls){var t=document.createElement("span");t.className="tok"+(cls?" "+cls:"");t.textContent=w;var b=document.createElement("i");b.className="bar";t.appendChild(b);return t}
+  function fillRow(id,words,cls){var r=$(id);r.replaceChildren();words.forEach(function(w,i){r.appendChild(scanTok(w,cls?cls(i):""))})}
+  function hideReset(){
+    runId++;fillRow("h-row-n",PROMPT);fillRow("h-row-m",PROMPT);
+    $("h-count-n").innerHTML=countHtml(0);$("h-count-m").innerHTML=countHtml(0);
+    verdict("h-verdict","","");undone("h");$("h-recap").hidden=true;
+  }
+  function sweep(toks,cnt,from,id,first){
+    toks.forEach(function(t,i){var d=i*PER;if(first)t.classList.add("first");t.style.transition="background .15s linear "+d+"ms";t.querySelector(".bar").style.transition="transform "+PER+"ms linear "+d+"ms";t.classList.add("scanned")});
+    toks.forEach(function(t,i){setTimeout(function(){if(id===runId)cnt.innerHTML=countHtml(from+i+1)},(i+1)*PER)});
+    return from+toks.length;
+  }
+  function unsweep(toks){toks.forEach(function(t){t.style.transition="";t.querySelector(".bar").style.transition="";t.classList.remove("scanned","first")})}
+  async function hideRun(){
+    hideReset();var id=runId,rn=$("h-row-n"),rm=$("h-row-m"),cn=$("h-count-n"),cm=$("h-count-m"),nn=0,nm=0;
+    $("h-go").hidden=true;verdict("h-verdict","","Generating…");
+    if(reduce){hideEnd();return}
+    await sleep(300);if(id!==runId)return;
+    for(let k=0;k<MORE.length;k++){
+      // the first pass reads the prompt in both rows; after that the masked row reads only its newest word
+      let nScan=Array.from(rn.querySelectorAll(".tok")),mAll=Array.from(rm.querySelectorAll(".tok")),mScan=k===0?mAll:[mAll[mAll.length-1]];
+      nn=sweep(nScan,cn,nn,id,k===0);nm=sweep(mScan,cm,nm,id,k===0);
+      // each row's next word appears a short beat after its own line reaches the end
+      await Promise.all([
+        sleep(nScan.length*PER+BEAT).then(function(){if(id===runId)rn.appendChild(scanTok(MORE[k],"newword"))}),
+        sleep(mScan.length*PER+BEAT).then(function(){if(id===runId)rm.appendChild(scanTok(MORE[k],"newword"))})
+      ]);
+      if(id!==runId)return;
+      await sleep(HOLD);if(id!==runId)return;
+      unsweep(nScan);unsweep(mScan);mScan.forEach(function(t){t.classList.add("reused")});
+      await sleep(GAP);if(id!==runId)return;
+    }
+    cn.innerHTML=countHtml(nn,true);cm.innerHTML=countHtml(nm,true);hideFinish();
+  }
+  function hideFinish(){
+    verdict("h-verdict","fixed","Without the mask, every new word forces the earlier ones to be recomputed. With it, earlier words stay fixed.");
+    done("h");$("h-recap").hidden=false;
+  }
+  function hideEnd(){
+    runId++;var seq=PROMPT.concat(MORE),n=0;for(var L=PROMPT.length;L<seq.length;L++)n+=L;
+    fillRow("h-row-n",seq);fillRow("h-row-m",seq,function(i){return i<seq.length-1?"reused":""});
+    $("h-count-n").innerHTML=countHtml(n,true);$("h-count-m").innerHTML=countHtml(PROMPT.length+MORE.length-1,true);hideFinish();
+  }
+  $("h-go").addEventListener("click",hideRun);$("h-again").addEventListener("click",function(){hideRun()});
+
+  /* navigation */
+  var tabs=Array.from(document.querySelectorAll(".step")),panels=Array.from(document.querySelectorAll(".stage")),cur=0;
+  var nextNames=["Keep","Order","Hide",""];
+  function show(i,focus){cur=i;tabs.forEach(function(t,n){t.setAttribute("aria-selected",String(n===i));t.tabIndex=n===i?0:-1});panels.forEach(function(p,n){p.hidden=n!==i});
+    $("prev").disabled=i===0;$("next").disabled=i===panels.length-1;$("next-label").textContent=nextNames[i]?"Next: "+nextNames[i]+" ":"";$("pcount").textContent=(i+1)+" of "+panels.length;
+    if(i===1)requestAnimationFrame(function(){keepArcs(false)});if(focus)panels[i].querySelector("h2").focus()}
+  tabs.forEach(function(t,i){t.addEventListener("click",function(){show(i,false)});t.addEventListener("keydown",function(e){var j=null;if(e.key==="ArrowRight")j=(i+1)%tabs.length;if(e.key==="ArrowLeft")j=(i+tabs.length-1)%tabs.length;if(e.key==="Home")j=0;if(e.key==="End")j=tabs.length-1;if(j!==null){e.preventDefault();show(j,false);tabs[j].focus()}})});
+  $("prev").addEventListener("click",function(){show(cur-1,true)});$("next").addEventListener("click",function(){show(cur+1,true)});
+
+  reachWindow();keepDraw(false);orderDraw(false);hideReset();show(0,false);
+  window.__u2={show:show,reachDone:reachDone,reachRead:reachRead,keep:function(){keepMode="attn";keepDraw(false)},order:orderDraw,hideEnd:hideEnd,hideRun:hideRun};
+})();
+</script>
+</body>
+</html>

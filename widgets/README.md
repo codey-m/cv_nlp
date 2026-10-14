@@ -1,10 +1,10 @@
-# Natural Language Processing widgets
+# Multimodal AI widgets
 
-The interactive widgets in the Natural Language Processing courses on MIT Learn. The courses load each widget from
+The interactive widgets in the Multimodal AI courses on MIT Learn. The courses load each widget from
 this folder through GitHub Pages, so every link below opens the exact page learners see inside
 the lesson.
 
-## 6.4600.1x Natural Language Processing: Foundations
+## 6.4600.1x Multimodal AI: Language Model Foundations
 
 | Widget | Where | What it shows |
 | --- | --- | --- |
@@ -12,6 +12,7 @@ the lesson.
 | [Where the probability goes](https://codey-m.github.io/cv_nlp/widgets/widget-where-the-probability-goes.html) | Unit 1, Lec. 2: Count based language models |  |
 | [What text survives?](https://codey-m.github.io/cv_nlp/widgets/unit-summary-what-text-survives.html) | Unit 1, Lec. 2: Count based language models | Unit 1 synthesis: what text survives? |
 | [Order and visibility](https://codey-m.github.io/cv_nlp/widgets/widget-order-and-visibility.html) | Unit 2, Lec. 4: Attention and transformers |  |
+| [How context reaches a prediction](https://codey-m.github.io/cv_nlp/widgets/unit-summary-how-context-reaches-prediction.html) | Unit 2, Lec. 4: Attention and transformers | Unit 2 synthesis: how context reaches a prediction |
 
 ## Review tips
 
