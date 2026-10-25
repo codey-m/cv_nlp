@@ -2,7 +2,7 @@
 
 Public learner notebooks and browser-based interactives for the Computer Vision and Natural
 Language Processing course sequence, 6.4600.1x to 6.4600.5x. The current build includes the
-Natural Language Processing foundations materials described below.
+Module 1, 2 and 5 materials described below.
 
 ## Start here
 
@@ -22,6 +22,8 @@ links live in `CV_NLP/6.4600.*x/html/*_prac_text.html` and `*_lab_ov_text.html`.
 | [`labs/lab1_text_representation.ipynb`](labs/lab1_text_representation.ipynb) | Compare word and BPE tokenization with the same bigram model; test whether perplexities across tokenizations are comparable | Lab 1: Text Representation and Language Models |
 | [`practice/m2_beam_search.ipynb`](practice/m2_beam_search.ipynb) | Extend and prune a beam, trace two examples, and distinguish model likelihood from answer correctness | Module 2 beam-search coding practice; course placement follows lecture 2.1 segmentation |
 | [`labs/lab2_language_model_systems.ipynb`](labs/lab2_language_model_systems.ipynb) | Evaluate prompting, LoRA, and quantization on an issued problem panel while auditing extraction, uncertainty, cost, and provenance | Lab 2: Language Model Systems |
+| [`practice/m5_zero_shot_clip.ipynb`](practice/m5_zero_shot_clip.ipynb) | Label CIFAR-10 photos with CLIP by their nearest class description, then run the same code on two models trained apart | Module 5 coding practice for lecture 5.2; placement follows the final 5.2 cut |
+| [`labs/lab5_unpaired_alignment.ipynb`](labs/lab5_unpaired_alignment.ipynb) | Build a bridge between an image model and a text model without a single captioned photo, follow photos you choose as it improves, and find out what kinds of meaning it carries across | Lab 5: Aligning Two Models That Never Met |
 
 The labs use a common assessment pattern: changed readiness cases test whether the learner's
 functions transfer beyond notebook examples; an experiment record checkpoint asks what another analyst
@@ -40,9 +42,15 @@ design of a next experiment. Accuracy itself is never a requirement.
   records support inspection and interpretation, are labeled as recovery evidence, and never
   produce checkpoint 2's values.
 - **Lab 2 timing** is about 12 to 15 T4 minutes for the required model stages.
+- **Lab 5** runs on a T4 in about 20 minutes of fitting, or on a CPU in about 40. Each fit is saved
+  to Google Drive as it finishes, so an interrupted session picks up where it stopped. No checkpoint
+  keys a learner's run values; checkpoint 3 asks about statements that hold for any correct run of
+  the learner's own bridge.
 
-Lab 2 loads its checked support bundle from `labs/data/lab2/`. Keep that directory and the notebook at their current
-paths so the course links and notebook setup continue to work.
+Lab 2 loads its checked support bundle from `labs/data/lab2/`. Lab 5 loads its provided code from
+`labs/data/lab5/` and its data from the course's Hugging Face dataset, `MIT-OL-AI-D/cv-nlp-lab5`. Keep
+those directories and the notebooks at their current paths so the course links and notebook setup
+continue to work.
 
 ## Interactive course pages
 
@@ -60,10 +68,11 @@ links to the live pages and records their course locations.
 
 ## For maintainers
 
-Do not edit these notebooks or Lab 2's support bundle by hand.
+Do not edit these notebooks, Lab 2's support bundle or Lab 5's helpers by hand.
 `CV_NLP/_workfiles/practice/build_practice.py` writes each notebook together with its solved
-reference copy, and the reference copies stay in the private course repository. Nothing with a
-solution in it belongs here.
+reference copy, and the reference copies stay in the private course repository. Lab 5's
+`labs/data/lab5/lab5_helpers.py` is copied here by `CV_NLP/_workfiles/practice/make_lab5_data.py`.
+Nothing with a solution in it belongs here.
 
 Do not edit `widgets/` by hand either. `CV_NLP/docs/publish_widgets.py` copies the canonical
 course assets here, rewrites the course iframes, and regenerates the widget index.
