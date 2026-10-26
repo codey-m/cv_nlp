@@ -339,21 +339,44 @@ def matching_score(Xs, Ys, W, batch=4000):
 
 # ---------------------------------------------------------------- saving fits
 
+def stamp(*functions, **settings):
+    """A short fingerprint of the code and settings a fit depends on. A saved fit is reused only while it matches, so
+    changing a function or a setting changes the experiment you see."""
+    import inspect
+    parts = []
+    for f in functions:
+        try:
+            parts.append(inspect.getsource(f))
+        except (OSError, TypeError):                       # no source to read: the compiled code, stable across reruns
+            parts.append(f.__code__.co_code.hex() + repr([c for c in f.__code__.co_consts if not hasattr(c, "co_code")]))
+    parts.append(json.dumps(settings, sort_keys=True, default=str))
+    return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
+def device_name():
+    return torch.cuda.get_device_name(0) if DEVICE.type == "cuda" else "a CPU"
+
+
 class Saved:
-    """Fits saved as they finish, in Google Drive if it is mounted, so Run all skips what is already done."""
+    """Fits saved as they finish, in Google Drive if it is mounted. Run all reuses a saved fit only while the code,
+    data and settings it was fitted with are unchanged."""
 
     def __init__(self, folder):
         self.folder = pathlib.Path(folder)
         self.folder.mkdir(parents=True, exist_ok=True)
 
-    def get(self, name):
+    def get(self, name, stamp):
         path = self.folder / f"{name}.pt"
         if not path.exists():
             return None
         out = torch.load(path, weights_only=True, map_location=DEVICE)
-        print(f"{name}: loaded from {path} (delete that file to fit it again)")
+        if out.get("stamp") != stamp:
+            print(f"{name}: your code or settings changed since this fit was saved, so it runs again")
+            return None
+        print(f"{name}: loaded the fit saved in {path}, made on {out.get('device', 'an unrecorded device')}")
         return out
 
-    def put(self, name, value):
+    def put(self, name, value, stamp):
+        value = {**value, "stamp": stamp, "device": device_name()}
         torch.save({k: (v.cpu() if torch.is_tensor(v) else v) for k, v in value.items()}, self.folder / f"{name}.pt")
         return value
