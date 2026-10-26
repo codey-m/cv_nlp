@@ -1,6 +1,6 @@
 """Provided machinery for Lab 5, Aligning Two Models That Never Met.
 
-The notebook downloads this file from the public notebooks repo (labs/data/lab5/, copied there by
+The notebook downloads this file from the public notebooks repo (labs/helpers/, copied there by
 make_lab5_data.py) and checks its digest. The clustering code is the pilot's (_workfiles/pilot/lab5/pilotlib5.py):
 scikit-learn's k-means with k-means++ seeding, run to convergence, as in the authors' code, and the TA's best-swap
 search over cluster matchings.
