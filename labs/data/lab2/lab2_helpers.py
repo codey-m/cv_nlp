@@ -11,9 +11,7 @@ import gzip
 import hashlib
 import json
 import math
-import os
 import random
-import shutil
 import statistics
 import time
 import urllib.request
@@ -21,7 +19,6 @@ from pathlib import Path
 
 import torch
 
-BASE = "https://raw.githubusercontent.com/codey-m/cv_nlp/main/labs/data/lab2/"
 MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
 REVISION = "7ae557604adf67be50417f59c2c2f167def9a775"
 
@@ -148,18 +145,17 @@ def checklist(conditions):
 
 # ------------------------------------------------------------------------------------------------ files
 
-def fetch(name, sha256, base=None):
-    """A shipped file, downloaded once and checked by digest. LAB2_BASE may name a local folder instead."""
-    base = base or os.environ.get("LAB2_BASE", BASE)
-    path = Path(name)
-    if not path.exists() or hashlib.sha256(path.read_bytes()).hexdigest() != sha256:
+def fetch(name, digest, base, folder):
+    """Download one file into folder unless an intact copy is there; stop if its digest differs."""
+    path = Path(folder) / name
+    if not (path.exists() and hashlib.sha256(path.read_bytes()).hexdigest() == digest):
         path.parent.mkdir(parents=True, exist_ok=True)
         if base.startswith("http"):
             urllib.request.urlretrieve(base + name, path)
         else:
-            shutil.copyfile(Path(base) / name, path)
-    if hashlib.sha256(path.read_bytes()).hexdigest() != sha256:
-        raise RuntimeError(f"{name} did not download intact. Delete it and run the cell again.")
+            path.write_bytes((Path(base) / name).read_bytes())
+    if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+        raise RuntimeError(f"{name} did not download intact. Delete {path} and run this cell again.")
     return path
 
 

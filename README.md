@@ -47,9 +47,10 @@ design of a next experiment. Accuracy itself is never a requirement.
   keys a learner's run values; checkpoint 3 asks about statements that hold for any correct run of
   the learner's own bridge.
 
-Lab 2 loads its checked support bundle from `labs/data/lab2/`. Lab 5 loads its provided code from
-`labs/data/lab5/` and its data from the course's Hugging Face dataset, `MIT-OL-AI-D/cv-nlp-lab5`. Keep
-those directories and the notebooks at their current paths so the course links and notebook setup
+Each lab that downloads files takes its provided code from `labs/data/labN/` in this repository and
+its data from the course's Hugging Face dataset `MIT-OL-AI-D/cv-nlp-labN`, at a fixed tag, so a
+learner's saved copy keeps working after later uploads. Lab 2 and Lab 5 work this way. Keep those
+directories and the notebooks at their current paths so the course links and notebook setup
 continue to work.
 
 ## Interactive course pages
@@ -68,11 +69,11 @@ links to the live pages and records their course locations.
 
 ## For maintainers
 
-Do not edit these notebooks, Lab 2's support bundle or Lab 5's helpers by hand.
+Do not edit these notebooks or the labs' helpers by hand.
 `CV_NLP/_workfiles/practice/build_practice.py` writes each notebook together with its solved
-reference copy, and the reference copies stay in the private course repository. Lab 5's
-`labs/data/lab5/lab5_helpers.py` is copied here by `CV_NLP/_workfiles/practice/make_lab5_data.py`.
-Nothing with a solution in it belongs here.
+reference copy, and the reference copies stay in the private course repository. Each
+`labs/data/labN/labN_helpers.py` is copied here by `CV_NLP/_workfiles/practice/make_labN_data.py`,
+which also writes that lab's Hugging Face upload. Nothing with a solution in it belongs here.
 
 Do not edit `widgets/` by hand either. `CV_NLP/docs/publish_widgets.py` copies the canonical
 course assets here, rewrites the course iframes, and regenerates the widget index.
