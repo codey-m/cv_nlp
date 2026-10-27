@@ -21,6 +21,12 @@ the lesson.
 | [Crossfade](https://codey-m.github.io/cv_nlp/widgets/widget-crossfade.html) | Unit 1 overview | Crossfade: combining picture and sound |
 | [Stunt School](https://codey-m.github.io/cv_nlp/widgets/widget-stunt-school.html) | Unit 2 overview | Stunt School: learning a trick from rewards |
 
+## For course developers
+
+[Visual methods catalog](https://codey-m.github.io/cv_nlp/widgets/visual-methods.html): fourteen methods with sample visuals,
+reader actions, evidence requirements and source examples. Use it to design explainers,
+unit summaries and views of lab evidence.
+
 ## Review tips
 
 - Each widget is one self-contained HTML file. It makes no network requests, so a downloaded copy works too.
@@ -32,3 +38,6 @@ Nothing here is edited by hand. Each widget is developed in the course repositor
 repository's `docs/publish_widgets.py` copies it here and rewrites this README. A push to `main`
 updates the live widget a minute or two later, with no course import. The repository name is part
 of every widget address, so it must never change.
+
+The developer catalog has its own source at `CV_NLP/docs/visual-methods.html`; the same
+publisher copies it here. It is a standalone adaptation of the Visual Stories methods catalog.
