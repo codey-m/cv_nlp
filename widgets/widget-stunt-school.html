@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="en" data-mode="course">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Stunt School</title>
+  <style>:root{--ground:#F3F4F8;--ink:#212326;--muted:#626A73;--line:#DDE1E6;--purple:#750014;--purple-light:#F9E9ED;--orange:#ba4d2d;--green:#2f6855;--panel:#FFFFFF;font-family:"neue-haas-grotesk-text","Helvetica Neue",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--ground)}
+*{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.5}button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #915f18;outline-offset:4px}button,input,summary{-webkit-tap-highlight-color:transparent}main{max-width:1260px;margin:auto;padding:0 40px}p{margin:0}button{border:0}a{color:inherit}h1,h2{margin:0;letter-spacing:-.055em}button[hidden]{display:none}.masthead{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:24px 0;border-bottom:1px solid var(--line)}.wordmark{font-size:15px;letter-spacing:.13em;font-weight:850;text-decoration:none;display:flex;align-items:center;gap:14px}.badge{font-size:9px;letter-spacing:.12em;font-weight:750;border:1px solid #B8C2CC;color:var(--purple);padding:5px 7px;border-radius:4px}.edition{font-family:ui-serif,Georgia,serif;font-style:italic;color:var(--muted);font-size:15px}.intro{display:flex;align-items:flex-end;justify-content:space-between;gap:30px;padding:35px 0 30px}.eyebrow{font-size:10px;font-weight:800;letter-spacing:.18em;color:var(--purple);margin-bottom:12px}h1{font-family:ui-serif,Georgia,serif;font-size:49px;font-weight:500;line-height:1.02}h1 span{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:18px;font-weight:550;letter-spacing:-.02em;margin-top:13px}.brief{max-width:388px;font-size:15px;line-height:1.65;color:#40464C}.brief strong{font-weight:650;color:var(--ink)}.school{border:1px solid var(--line);border-radius:16px;display:grid;grid-template-columns:minmax(0,1fr) 300px;background:var(--panel);overflow:hidden;box-shadow:0 8px 25px #21232605}.stage-column{min-width:0}.stage-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:17px 22px;font-size:12px;font-weight:650;border-bottom:1px solid var(--line)}.status-dot{font-size:11px;font-weight:500;color:var(--muted)}.status-dot:before{content:"";display:inline-block;width:6px;height:6px;margin:0 6px 1px 0;background:#8a9679;border-radius:50%}.arena{position:relative;overflow:hidden}.arena svg{display:block;width:100%;height:auto}.arena-caption{position:absolute;top:16px;left:22px;right:20px;font-size:12px;font-weight:500;color:#40464C;pointer-events:none}.result{display:flex;align-items:center;gap:12px;min-height:85px;padding:17px 22px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.result-icon{width:31px;height:31px;flex:0 0 31px;display:grid;place-items:center;font-size:22px;color:var(--purple);background:var(--purple-light);border-radius:50%}.result[data-hit="yes"] .result-icon{background:#e4f0e5;color:var(--green)}.result[data-hit="no"] .result-icon{background:#f6ecde;color:#895627}#result-title{font-size:15px;font-weight:700;line-height:1.3}#result-detail{font-size:12px;line-height:1.55;margin-top:4px;color:var(--muted)}#replay{margin-left:auto;white-space:nowrap;font-size:12px;flex-shrink:0}.scoreboard{display:grid;grid-template-columns:repeat(3,1fr);padding:20px 22px 16px;gap:12px}.scoreboard>div+div{border-left:1px solid var(--line);padding-left:19px}.score-label{font-size:9px;letter-spacing:.11em;display:block;color:var(--muted);font-weight:750}.scoreboard strong{font-size:27px;font-weight:600;letter-spacing:-.04em;display:block;margin-top:4px}.scoreboard small{font-size:16px;font-weight:400;color:var(--muted)}.recent{padding:0 22px 18px}.recent-heading{font-size:10px;display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}.recent-heading span+span{color:var(--muted)}.shot-strip{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;min-height:40px}.shot{border:1px solid var(--line);min-height:40px;background:#F3F4F8;border-radius:6px;font-size:14px;color:#6a675c;position:relative}.shot small{position:absolute;top:3px;left:5px;font-size:8px;color:#40464C}.shot.hit{color:var(--green);background:#edf3e8;border-color:#b6c8b3}.shot.active{outline:2px solid var(--purple);outline-offset:1px}.shot.empty{opacity:.4;cursor:default}.actions{display:flex;gap:10px;flex-wrap:wrap;padding:0 22px}.primary,.secondary{padding:13px 17px;border-radius:8px;font-size:13px;font-weight:650;min-height:46px}.primary{background:var(--purple);color:white;flex:1;display:flex;justify-content:space-between;gap:15px;align-items:center}.secondary{background:#F3F4F8;border:1px solid #B8C2CC;color:var(--ink);flex:1}.quiet{background:transparent;color:var(--purple);padding:7px 0;line-height:1.4;font-size:12px}.small-print{font-size:10px;line-height:1.5;color:var(--muted);padding:11px 22px 18px}.training{background:#F3F4F8;border-left:1px solid var(--line);padding:25px 20px;display:flex;flex-direction:column}.training h2{font-family:ui-serif,Georgia,serif;font-size:31px;line-height:1.1;font-weight:500;margin-bottom:20px}.reward-options{margin:0;padding:0;border:0;display:grid;gap:9px}.reward-card{position:relative;display:flex;align-items:flex-start;gap:9px;border:1px solid #CBD2DB;border-radius:9px;padding:13px 11px;background:#FFFFFF;cursor:pointer}.reward-card:has(input:checked){background:var(--purple-light);border-color:#750014;box-shadow:inset 0 0 0 1px #750014}.reward-card input{position:absolute;right:10px;top:12px;accent-color:var(--purple);margin:0}.card-icon{font-size:22px;line-height:1.1;color:var(--purple);width:22px;flex:0 0 22px}.reward-card strong{display:block;font-size:12px;line-height:1.3;padding-right:14px}.reward-card small{display:block;color:#40464C;font-size:11px;line-height:1.5;margin-top:5px}.exploration{margin-top:24px}.exploration>div:first-child{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:650}.exploration output{font-size:11px;font-variant-numeric:tabular-nums;color:var(--purple);background:#F9E9ED;border-radius:4px;padding:4px 6px}.exploration input{width:100%;margin:16px 0 6px;accent-color:var(--purple)}.range-ends{display:flex;justify-content:space-between;font-size:9px;color:var(--muted)}.exploration p{font-size:10px;color:var(--muted);line-height:1.6;margin-top:10px}.desk-note{display:flex;gap:8px;align-items:flex-start;margin-top:25px;padding-top:20px;border-top:1px solid #DDE1E6}.desk-note>span{color:#9c5e36;font-size:20px}.desk-note p{font-size:11px;line-height:1.65;color:#40464C}.stage-tools{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:auto;padding-top:23px}.stage-tools button{font-size:10px}.records,.explainer{border-bottom:1px solid var(--line);padding:18px 0;font-size:13px;line-height:1.7}.records{margin-top:14px}summary{cursor:pointer;font-weight:600;width:fit-content}.explainer p{max-width:850px;margin-top:12px;color:var(--muted)}.table-scroll{overflow:auto;margin-top:15px}table{width:100%;border-collapse:collapse;font-size:11px;min-width:590px}caption{text-align:left;font-size:11px;color:var(--muted);margin-bottom:10px}th,td{text-align:left;padding:8px 12px;border-bottom:1px solid #E6E9EE}th{font-weight:700}footer{font-size:10px;letter-spacing:.04em;padding:20px 0 30px;color:var(--muted)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.success .arena{box-shadow:inset 0 0 0 4px #6c9472}.success #phase{color:var(--green)}#confetti{pointer-events:none}
+@media(min-width:1100px){.arena svg{max-height:390px}}
+@media(max-width:900px){main{padding:0 22px}.edition{display:none}.school{grid-template-columns:minmax(0,1fr) 255px}.training{padding:22px 15px}.intro{padding-top:28px}.brief{max-width:310px;font-size:13px}h1{font-size:43px}.stage-top,.result{padding-left:16px;padding-right:16px}.scoreboard{padding-left:16px;padding-right:16px}.recent,.actions{padding-left:16px;padding-right:16px}.small-print{padding-left:16px;padding-right:16px}.primary,.secondary{padding:12px;font-size:11px}}
+@media(max-width:680px){main{padding:0 15px}.masthead{padding:18px 0}.wordmark{font-size:12px;gap:10px}.intro{display:block;padding:26px 0 22px}h1{font-size:43px}h1 br{display:none}h1 span{font-size:17px}.brief{margin-top:17px;max-width:none;font-size:12px}.brief br{display:none}.school{grid-template-columns:1fr;overflow:visible}.stage-column{overflow:hidden;border-radius:15px 15px 0 0}.training{border-left:0;border-top:1px solid var(--line);border-radius:0 0 15px 15px;display:block;padding:19px 16px}.training .eyebrow{margin-bottom:7px}.training h2{font-size:24px;margin-bottom:15px}.training h2 br{display:none}.reward-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.reward-card{display:block;padding:12px 8px}.reward-card input{right:7px;top:9px}.card-icon{display:block;font-size:20px;margin-bottom:6px}.reward-card strong{font-size:10px;padding-right:0;min-height:27px}.reward-card small{font-size:9px;margin-top:4px}.exploration{margin-top:18px}.desk-note{margin-top:17px;padding-top:15px}.desk-note br{display:none}.stage-tools{padding-top:12px}.stage-tools button{font-size:11px}.result{min-height:87px;gap:9px;padding:13px 14px}#result-title{font-size:13px}#result-detail{font-size:11px}#replay{font-size:11px}.arena-caption{font-size:10px;left:16px;top:12px}.scoreboard{padding:15px 14px 12px;gap:5px}.scoreboard>div+div{padding-left:12px}.score-label{font-size:8px}.scoreboard strong{font-size:24px}.scoreboard small{font-size:13px}.recent{padding:0 14px 14px}.recent-heading{font-size:9px}.shot-strip{gap:5px}.shot{min-height:36px}.actions{padding:0 14px;gap:7px}.primary,.secondary{font-size:11px;min-height:44px;padding:11px}.small-print{font-size:9px;padding:10px 14px 15px}.stage-top{font-size:11px;padding:13px 14px}.status-dot{font-size:10px}.badge{font-size:8px}.records,.explainer{font-size:12px}.school.success .arena{box-shadow:inset 0 0 0 3px #6c9472}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* MIT Learn arcade chrome: cool gray page, white panels, MIT red actions.
+   Scene palettes and Pip's lilac costume are independent of the interface. */
+.gamebar{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:16px;background:#FFFFFF;border-bottom:1px solid #E6E9EE;padding:12px 16px}
+.back{display:flex;align-items:center;justify-content:center;width:44px;height:44px;color:#0C0C0D;border-radius:4px}.back svg{width:26px;height:26px}.game-name{text-align:center;font-size:30px;line-height:1.2;font-weight:700;color:#0C0C0D;letter-spacing:-.02em}
+h1,h2,.edition{font-family:inherit}h1{font-size:38px;font-weight:700;letter-spacing:-.03em}.booth h2,.training h2{font-family:inherit;font-size:26px;font-weight:600;letter-spacing:-.03em}
+.primary:hover:enabled{background:#5A0010}button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{outline-color:#1472AE}.quiet{min-height:44px}.game,.school{border-radius:6px}.review-about{font-size:12px;line-height:1.6;margin-top:18px}.review-about a{color:#750014}
+body.embedded .gamebar,body.embedded footer,body.embedded .review-about,html[data-mode="course"] .gamebar,html[data-mode="course"] footer,html[data-mode="course"] .review-about{display:none}
+body.embedded main{padding:12px}html[data-mode="course"] .explainer>summary{display:none}
+#source-feedback{font-size:11px;line-height:1.6;margin-top:8px;color:#40464C}
+@media(max-width:720px){.game-name{font-size:26px}h1{font-size:32px}.intro{padding-top:20px}body.embedded main{padding:10px}#source-feedback{font-size:10px}}
+
+.table-scroll{max-height:360px;overflow:auto}
+.control-note{font-size:10px;line-height:1.6;color:var(--muted);margin-top:10px}
+[hidden]{display:none!important}
+.tour-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.tour-header p{font-weight:700;font-size:14px}.tour-header button{font-size:15px;min-height:48px;padding:12px 20px}
+.stage-tools{gap:10px}.stage-tools button{min-height:48px;font-size:14px;font-weight:650;padding:12px 16px;flex:1 1 140px}
+.tour-board,.tour-end{background:#FFFFFF;border:1px solid var(--line);border-radius:6px;padding:20px;margin-bottom:20px}.tour-board>p:first-child{font-weight:700;font-size:14px}.tour-steps{list-style:none;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:0;margin:16px 0}.tour-steps li{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}.tour-steps span{display:grid;place-items:center;width:30px;height:30px;border:1px solid #B8C2CC;border-radius:50%;font-weight:700;flex-shrink:0}.tour-steps [aria-current]{color:var(--purple);font-weight:700}.tour-steps [aria-current] span{border:2px solid var(--purple)}.tour-steps .finished span{background:#E4F0E5;border-color:#2F6855;color:#235F45}.tour-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:12px;color:var(--muted)}.tour-totals strong{display:block;color:var(--ink);font-size:23px;margin-top:4px}.tour-rule{font-size:11px;line-height:1.6;color:var(--muted);margin-top:12px}.tour-end{margin:20px 0}.tour-end h2{font-size:25px}.tour-end p{margin-top:12px;line-height:1.6}.tour-end-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}.tour-end-actions button{flex:1;justify-content:center;min-height:48px}.tour-shot{min-width:44px;min-height:44px;border:1px solid #B8C2CC;background:#F3F4F8;border-radius:4px;font-weight:700;color:#353246;margin:2px}
+@media(max-width:680px){.tour-board,.tour-end{padding:14px}.tour-steps{gap:4px}.tour-steps li{flex-direction:column;font-size:10px}.tour-totals{font-size:10px}.tour-totals strong{font-size:20px}.stage-tools button{font-size:14px}}
+</style>
+</head>
+<body>
+<main>
+  <header class="gamebar"><a href="index.html" class="back" aria-label="Back to AI Arcade"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7M7 12h14" fill="none" stroke="currentColor" stroke-width="2"/></svg></a><p class="game-name">Stunt School</p><span></span></header>
+  <section class="intro" aria-labelledby="title">
+    <div><p class="eyebrow">YOU'RE THE TRAINER</p><h1 id="title">Help Pip learn<br> the trick.</h1></div>
+    <p class="brief" id="brief">Choose what earns encouragement while Pip learns to bounce a ball off the floor and through the hoop. Each stage gives her up to <strong>64 practice tries</strong> before a show, where she needs to land <strong>4 of 5 throws</strong>.</p>
+  </section>
+  <section id="tour-board" class="tour-board" aria-label="Tour progress and score" hidden>
+    <div class="tour-header"><p id="tour-label"></p><div id="tour-controls"></div></div><ol id="tour-steps" class="tour-steps" aria-label="Five stages"></ol>
+    <div class="tour-totals"><p>Show tricks <strong><span id="tour-hits">0</span> / 25</strong></p><p>Practice used <strong id="tour-practice">0</strong></p><p>Stages cleared <strong><span id="tour-cleared">0</span> / 5</strong></p></div>
+    <p class="tour-rule">Each stage clears with 4 of 5 bounce tricks. Tour rankings put show successes first, then fewer practice throws.</p>
+  </section>
+  <section id="school" class="school" aria-label="Stunt School game">
+    <div class="stage-column">
+      <div class="stage-top"><span id="stage-name">The first bounce</span><span class="status-dot" id="phase">Ready to practise</span></div>
+      <div class="arena">
+        <svg id="stage" viewBox="0 0 750 415" role="img" aria-labelledby="stage-title" aria-describedby="stage-description">
+          <title id="stage-title">Pip's practice stage</title>
+          <desc id="stage-description">Pip stands to the left of a hoop. A dotted line records the ball's actual flight.</desc>
+          <defs>
+            <pattern id="floor-grid" width="40" height="25" patternUnits="userSpaceOnUse"><path d="M0 0h40M0 0v25" fill="none" stroke="#CBD2DB" stroke-width="1"/></pattern>
+            <radialGradient id="halo"><stop stop-color="#fff7bd"/><stop offset="1" stop-color="#F9FAFB" stop-opacity="0"/></radialGradient>
+          </defs>
+          <rect width="750" height="415" fill="#F9FAFB"/>
+          <circle cx="530" cy="180" r="180" fill="url(#halo)"/>
+          <path d="M0 348H750V415H0Z" fill="#E6E9EE"/>
+          <path d="M0 350H750" stroke="#383c38" stroke-width="3"/>
+          <path d="M0 352H750V415H0Z" fill="url(#floor-grid)"/>
+          <g fill="#DDE1E6"><circle cx="198" cy="90" r="4"/><circle cx="645" cy="75" r="6"/><path d="m305 135 5-8 5 8-5 8Z"/><path d="m678 256 5-8 5 8-5 8Z"/></g>
+          <g id="hoop-back"><path id="hoop-stand" d="M525 205V350" fill="none" stroke="#555a50" stroke-width="7"/><ellipse id="hoop-shadow" cx="525" cy="350" rx="42" ry="7" fill="#CBD2DB"/><ellipse id="hoop-rear" cx="525" cy="205" rx="16" ry="31" fill="#FFFFFF" stroke="#e46d3d" stroke-width="7"/></g>
+          <path id="habit-trail" d="" fill="none" stroke="#8e82aa" stroke-width="2.5" stroke-dasharray="10 8"/>
+          <path id="flight-trail" d="" fill="none" stroke="#697a70" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 8"/>
+          <g id="bounce-marks" fill="none" stroke="#a56c2d" stroke-width="2"/>
+          <ellipse id="pip-shadow" cx="80" cy="349" rx="36" ry="7" fill="#CBD2DB"/>
+          <g id="pip">
+            <g id="pip-body" transform="translate(-12 0)">
+              <g transform="translate(96 297)">
+                <path d="M-11 30Q-25 41-16 52h-6M11 30Q25 41 16 52h6" fill="none" stroke="#353246" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M-11 30Q-25 41-16 52h-6M11 30Q25 41 16 52h6" fill="none" stroke="#b9ace6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+              <path id="pip-tail" d="M-26 20q-35 12-29-15 3-9 14-4L-26 6Z" fill="#a49bd2" stroke="#353246" stroke-width="2.5" stroke-linejoin="round"/>
+              <path d="m-27-23-2-36q0-9 8-2l21 21m12 0 25-21q8-6 6 5l-7 38" fill="#b9ace6" stroke="#353246" stroke-width="2.5"/>
+              <path id="pip-inner-ears" d="m-24-35-1-21 16 16Zm45-4 17-16-4 24Z" fill="#dcd3f2"/>
+              <path d="M-31-14q0-30 32-30 35 0 36 31l3 40q-4 20-37 20-35 0-37-22Z" fill="#b9ace6" stroke="#353246" stroke-width="2.5"/>
+              <g id="pip-face"><ellipse id="pip-belly" cx="2" cy="22" rx="17" ry="18" fill="#dcd3f2"/>
+                <ellipse cx="-12" cy="-14" rx="3" ry="4.5" fill="#353246"/><ellipse cx="15" cy="-14" rx="3" ry="4.5" fill="#353246"/><path id="pip-mouth" d="M-6-2q7 6 14 0" fill="none" stroke="#353246" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="-21" cy="-3" r="5" fill="#d895b2"/><circle cx="25" cy="-3" r="5" fill="#d895b2"/>
+                <path d="M-16 5 3 13 23 5" fill="none" stroke="#dca860" stroke-width="4"/><circle id="pip-bell" cx="3" cy="13" r="5" fill="#f4d394" stroke="#8b673f" stroke-width="1.5"/>
+              </g>
+                <g id="pip-off-arm" transform="rotate(0 -27 2)">
+                  <path id="pip-rest-arm-outline" d="M-27 2Q-38 10-27 21" fill="none" stroke="#353246" stroke-width="11" stroke-linecap="round"/>
+                  <path id="pip-rest-arm" d="M-27 2Q-38 10-27 21" fill="none" stroke="#b9ace6" stroke-width="6" stroke-linecap="round"/>
+                  <circle id="pip-rest-hand" cx="-27" cy="21" r="4.5" fill="#b9ace6" stroke="#353246" stroke-width="2"/>
+                </g>
+              </g>
+            </g>
+            <path id="pip-arm" d="M112 297Q134 279 120 256" fill="none" stroke="#353246" stroke-width="11" stroke-linecap="round"/>
+            <path id="pip-arm-colour" d="M112 297Q134 279 120 256" fill="none" stroke="#b9ace6" stroke-width="6" stroke-linecap="round"/>
+            <circle id="pip-hand" cx="120" cy="256" r="4.5" fill="#b9ace6" stroke="#353246" stroke-width="2"/>
+          </g>
+          <g id="ball" transform="translate(120 256)"><circle r="9" fill="#e88e45" stroke="#493e35" stroke-width="2"/><path d="M-7-4q8 2 12 9M-5 7q0-9 9-13" fill="none" stroke="#8b542d" stroke-width="1.5"/></g>
+          <path id="hoop-front" d="M525 174a16 31 0 0 1 0 62" fill="none" stroke="#bd4f2d" stroke-width="7"/>
+          <g id="hoop-success" visibility="hidden" aria-hidden="true"><circle r="12" fill="#FFFFFF" stroke="#2f7856" stroke-width="2"/><path d="m-5 0 4 4 7-8" fill="none" stroke="#2f7856" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g id="hoop-direct" visibility="hidden" aria-hidden="true"><circle r="12" fill="#FFFFFF" stroke="#895627" stroke-width="2"/><path d="M0-6v7M0 6v.1" fill="none" stroke="#895627" stroke-width="3" stroke-linecap="round"/></g>
+          <g id="confetti"/>
+        </svg>
+        <div class="arena-caption" id="arena-caption">A new pupil. No favourite throw yet.</div>
+      </div>
+      <div class="result" id="result"><span class="result-icon" id="result-icon" aria-hidden="true">○</span><div><p id="result-title">Pip is ready.</p><p id="result-detail">Choose what earns encouragement, then watch eight practice tries.</p></div><button id="replay" class="quiet" disabled aria-label="Replay the selected throw">↻ Replay</button></div>
+      <div class="scoreboard"><div><span class="score-label">PRACTICE USED</span><strong><span id="practice-count">0</span><small> / 64</small></strong></div><div><span class="score-label">BOUNCE TRICKS</span><strong id="practice-hoops">0</strong></div><div><span class="score-label">LATEST SHOW</span><strong id="show-score">—<small> / 5</small></strong></div></div>
+      <div class="recent"><div class="recent-heading"><span id="recent-title">Your eight most recent tries</span><span>select one to inspect</span></div><div id="recent-shots" class="shot-strip" aria-label="Recent throws"></div></div>
+      <div id="actions" class="actions"><button id="practice" class="primary">Practice 8 tries <span>→</span></button><button id="show" class="secondary">Showtime · 5 throws</button><button id="stop" class="quiet" hidden>Stop after this try</button></div>
+      <p class="small-print">Showtime keeps what Pip has learned. There are no extra random-choice bonuses and no learning during the show.</p>
+      <div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+    </div>
+    <aside class="training" aria-labelledby="training-title">
+      <p class="eyebrow">THE TRAINER'S DESK</p><h2 id="training-title">What earns<br> encouragement?</h2>
+      <fieldset class="reward-options"><legend class="sr-only">Practice encouragement</legend>
+        <label class="reward-card"><input type="radio" name="reward" value="hoop" checked><span class="card-icon" aria-hidden="true">◎</span><span><strong>The finished trick</strong><small>10 points for a bounce through the hoop.</small></span></label>
+        <label class="reward-card"><input type="radio" name="reward" value="bounce"><span class="card-icon" aria-hidden="true">↟</span><span><strong>Every bounce</strong><small>The trick earns 10. Each floor bounce earns 2 more.</small></span></label>
+        <label class="reward-card"><input type="radio" name="reward" value="close"><span class="card-icon" aria-hidden="true">◌</span><span><strong>A close pass</strong><small>The trick earns 10. A close pass earns up to 3 more.</small></span></label>
+      </fieldset>
+      <div class="exploration"><div><label for="explore">Experimentation</label><output id="explore-value" for="explore">35%</output></div><input id="explore" type="range" min="0" max="70" step="5" value="35"><div class="range-ends"><span>Familiar choices</span><span>New choices</span></div><p>Chance of picking a random option at each choice of aim or strength. More experimentation also loosens established preferences during practice.</p></div>
+      <div class="desk-note"><span aria-hidden="true">✳</span><p>Encouragement changes what Pip practises.<br> The show asks for a bounce before the hoop.</p></div>
+      <div id="stage-tools" class="stage-tools"><button id="reset" class="secondary">↻ Retry this stage</button><button id="new-stage" class="secondary">New stage →</button></div>
+      <p class="control-note" id="control-note">A new stage moves the hoop and keeps what Pip has learned. Retry restores the preferences she arrived with. Each stage has 64 practice tries.</p>
+    </aside>
+  </section>
+  <section id="tour-end" class="tour-end" aria-labelledby="tour-end-title" hidden><h2 id="tour-end-title">Pip’s tour is complete.</h2><p id="tour-final"></p><p id="tour-ranking"></p><div class="tour-end-actions"><button id="tour-replay" class="primary">Replay this tour</button><button id="tour-new" class="secondary">New tour</button></div></section>
+  <details id="tour-record" class="records" hidden><summary>Tour shows</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable tour results"><table><caption>Every scored show. Select a throw to inspect its flight; replaying does not change the score.</caption><thead><tr><th scope="col">Stage</th><th scope="col">Practice throws</th><th scope="col">Show tricks</th><th scope="col">The five show throws</th></tr></thead><tbody id="tour-results"></tbody></table></div></details>
+  <details class="records"><summary>Practice record</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable practice record"><table><caption>Every practice throw, with floor bounces across its flight, completed bounce tricks and training points.</caption><thead><tr><th scope="col">Try</th><th scope="col">Encouragement</th><th scope="col">Aim</th><th scope="col">Strength</th><th scope="col">Bounces</th><th scope="col">Bounce trick</th><th scope="col">Points</th></tr></thead><tbody id="records-body"></tbody></table></div></details>
+  <details class="explainer"><summary>The idea behind the game</summary><p>Pip makes two choices: an aim, then a strength. At first every option is equally likely. Practice scores are compared with a running expectation. A better-than-expected score makes the choices in that attempt more likely; a worse one makes them less likely. This is a small policy-gradient learner.</p><p>The encouragement rule changes the training reward. The show's goal stays fixed: bounce the ball through the hoop. A learner can therefore earn plenty of practice points while practising something that does not complete the trick. Experimentation adds random choices and keeps the preferences from becoming too fixed. Pip carries those preferences to each new hoop.</p><p>The ball physics and creature are an authored simulation. The throws, scores and learning updates are computed. Practice stays in this page and is not saved after you close it.</p></details>
+  
+  <footer>Module 5, Unit 2 · <span id="footer-stage">The first bounce</span></footer>
+</main>
+<script>/* An authored ball game with a tabular policy trained by policy gradients. */
+(function (root) {
+  'use strict';
+  const ANGLES = [-75, -65, -55, -45, -35, -25, -15, -5, 10];
+  const POWERS = [9, 11, 13, 15, 17, 19, 21, 23, 25];
+  const LIMIT = 64;
+  const INTRO = Object.freeze({id: 'first-bounce', name: 'The first bounce', x: 525, y: 205, radius: 31, floor: 350, gravity: .45, restitution: .83, drag: .985});
+  const STAGE_GRID = Object.freeze({minX: 400, maxX: 650, minY: 130, maxY: 250, step: 5, radius: 28});
+  const trajectoryCache = new WeakMap();
+  const REWARDS = [
+    {id: 'hoop', label: 'The finished trick', short: 'Hoop only', detail: '10 points for a bounce through the hoop.'},
+    {id: 'bounce', label: 'Every bounce', short: 'Bounce bonus', detail: '10 for the trick, plus 2 for every floor bounce.'},
+    {id: 'close', label: 'A close pass', short: 'Close-pass bonus', detail: '10 for the trick, plus up to 3 for passing close to the hoop.'},
+  ];
+  function random(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = Math.imul(a ^ (a >>> 15), a | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function softmax(values) {
+    const max = Math.max(...values);
+    const exp = values.map(v => Math.exp(v - max));
+    const total = exp.reduce((a, b) => a + b, 0);
+    return exp.map(v => v / total);
+  }
+  function sample(probs, rng) {
+    let u = rng();
+    for (let i = 0; i < probs.length; i++) {
+      u -= probs[i];
+      if (u < 0) return i;
+    }
+    return probs.length - 1;
+  }
+  function distribution(logits, explore) {
+    const pi = softmax(logits);
+    return {pi, behavior: pi.map(p => (1 - explore) * p + explore / pi.length)};
+  }
+  function simulate(stage, angleIndex, powerIndex) {
+    const angle = ANGLES[angleIndex] * Math.PI / 180;
+    const power = POWERS[powerIndex];
+    let x = 120, y = 256;
+    let vx = Math.cos(angle) * power, vy = -Math.sin(angle) * power;
+    let bounces = 0, hit = false, near = Infinity, crossing = null, resting = false, completed = null;
+    const points = [{x, y, bounce: false}];
+    for (let t = 0; t < 220; t++) {
+      const oldX = x, oldY = y;
+      if (!resting) vy += stage.gravity;
+      x += vx; y += vy;
+      let bounce = false;
+      if (y >= stage.floor - 8) {
+        y = stage.floor - 8;
+        if (vy > 1.4) {
+          bounces++; bounce = true;
+          vy = -vy * stage.restitution;
+          vx *= stage.drag;
+        } else { vy = 0; resting = true; vx *= .965; }
+      }
+      near = Math.min(near, Math.hypot(x - stage.x, y - stage.y));
+      if (oldX <= stage.x && x >= stage.x && x !== oldX) {
+        const frac = (stage.x - oldX) / (x - oldX);
+        const crossingY = oldY + (y - oldY) * frac;
+        const through = Math.abs(crossingY - stage.y) <= stage.radius - 9;
+        crossing = {x: stage.x, y: crossingY, bounces, through};
+        if (bounces > 0 && through) {
+          hit = true;
+          // Complete the learning episode here, but let the visible ball keep flying.
+          completed = {bounces, near, points: [...points, {x: stage.x + 10, y: crossingY, bounce: false}]};
+        }
+      }
+      points.push({x, y, bounce});
+      if (x > 735 || (resting && vx < .3)) break;
+    }
+    return {
+      angleIndex, powerIndex, angle: ANGLES[angleIndex], power,
+      points: completed ? completed.points : points,
+      flight: points,
+      bounces: completed ? completed.bounces : bounces,
+      hit, directPass: Boolean(crossing && crossing.through && crossing.bounces === 0),
+      near: completed ? completed.near : near, crossing,
+    };
+  }
+  function score(shot, reward) {
+    const goal = shot.hit ? 10 : 0;
+    const bonus = reward === 'bounce' ? 2 * shot.bounces :
+      reward === 'close' ? 3 * Math.max(0, 1 - shot.near / 180) : 0;
+    return {goal, bonus, total: goal + bonus};
+  }
+  function trajectories(stage) {
+    if (!trajectoryCache.has(stage)) {
+      trajectoryCache.set(stage, ANGLES.map((_, a) => POWERS.map((_, p) => simulate(stage, a, p))));
+    }
+    return trajectoryCache.get(stage);
+  }
+  function snapshot(model) {
+    return {aim: [...model.aim], power: model.power.map(row => [...row]), baseline: model.baseline};
+  }
+  function create(stage = INTRO, seed = 1, incoming = null) {
+    return {
+      stage, seed: seed >>> 0, count: 0, baseline: 0,
+      aim: ANGLES.map(() => 0),
+      power: ANGLES.map(() => POWERS.map(() => 0)),
+      ...(incoming ? {aim: [...incoming.aim], power: incoming.power.map(row => [...row]), baseline: incoming.baseline} : {}),
+      rng: random(seed), history: [],
+    };
+  }
+  function update(logits, index, dist, advantage) {
+    // Exact gradient of log((1-epsilon)*softmax(theta)[a] + epsilon/n).
+    const epsilon = dist.explore;
+    const correction = (1 - epsilon) * dist.pi[index] / dist.behavior[index];
+    const step = .75 * Math.max(-2, Math.min(2, advantage / 5));
+    // A uniform-prior regularizer keeps experimentation from hardening into a
+    // permanent habit. Its gradient is that of mean(log pi), so exploratory
+    // practice can reopen choices after the environment changes.
+    const openness = .12 * epsilon / (1 - epsilon);
+    for (let j = 0; j < logits.length; j++) {
+      logits[j] += step * correction * ((j === index ? 1 : 0) - dist.pi[j]) + openness * (1 / logits.length - dist.pi[j]);
+    }
+    const mean = logits.reduce((a, b) => a + b, 0) / logits.length;
+    for (let j = 0; j < logits.length; j++) logits[j] = Math.max(-7, Math.min(7, logits[j] - mean));
+  }
+  function attempt(model, reward = 'hoop', explore = .35, learn = true, rng = model.rng) {
+    if (learn && model.count >= LIMIT) throw new Error('Practice budget exhausted');
+    explore = Math.max(0, Math.min(.8, explore));
+    const aimDist = {...distribution(model.aim, explore), explore};
+    const a = sample(aimDist.behavior, rng);
+    const powerDist = {...distribution(model.power[a], explore), explore};
+    const p = sample(powerDist.behavior, rng);
+    const shot = trajectories(model.stage)[a][p];
+    const result = {...shot, reward, score: score(shot, reward), explore, baseline: model.baseline};
+    if (learn) {
+      const advantage = result.score.total - model.baseline;
+      update(model.aim, a, aimDist, advantage);
+      update(model.power[a], p, powerDist, advantage);
+      model.baseline = .85 * model.baseline + .15 * result.score.total;
+      model.count++;
+      result.attempt = model.count;
+      model.history.push(result);
+    }
+    return result;
+  }
+  function successChance(model, explore = 0) {
+    const ad = distribution(model.aim, explore).behavior;
+    let chance = 0;
+    ad.forEach((pa, a) => {
+      distribution(model.power[a], explore).behavior.forEach((pp, p) => {
+        if (trajectories(model.stage)[a][p].hit) chance += pa * pp;
+      });
+    });
+    return chance;
+  }
+  function favourite(model) {
+    const aim = softmax(model.aim);
+    let best = {probability: -1};
+    aim.forEach((pa, a) => softmax(model.power[a]).forEach((pp, p) => {
+      if (pa * pp > best.probability) best = {probability: pa * pp, shot: trajectories(model.stage)[a][p]};
+    }));
+    return best;
+  }
+  function screenStage(stage, incoming = null) {
+    const winners = trajectories(stage).flat().filter(s => s.hit).length;
+    if (winners < 4) return {accepted: false, winners, learned: 0};
+    // Fixed population seeds are independent of the player's practice seed.
+    // This screens geometry before play; the show still scores only its five visible throws.
+    let learned = 0;
+    const schedules = incoming ? [[0], [.1], [.7, .7, .35, .35, .1, .1, 0, 0], [.7, .7, .7, .7, .1, .1, 0, 0]] : [[.35]];
+    for (const reward of ['hoop', 'close']) for (const schedule of schedules) {
+      let total = 0;
+      for (let i = 0; i < 16; i++) {
+        const pupil = create(stage, (0x91E10DA5 + Math.imul(i, 0x9E3779B9)) >>> 0, incoming);
+        for (let n = 0; n < LIMIT; n++) attempt(pupil, reward, schedule.length === 1 ? schedule[0] : schedule[Math.floor(n / 8)]);
+        total += successChance(pupil);
+      }
+      learned = Math.max(learned, total / 16);
+    }
+    return {accepted: learned >= .8, winners, learned};
+  }
+  function transfer(previous, next) {
+    const before = trajectories(previous).flat(), after = trajectories(next).flat();
+    const winners = before.filter(s => s.hit).length;
+    return before.filter((s,i) => s.hit && after[i].hit).length / winners;
+  }
+  function generateStage(seed, previous = INTRO, incoming = null, kind = null) {
+    const rng = random(seed), grid = STAGE_GRID, positions = [];
+    for (let x = grid.minX; x <= grid.maxX; x += grid.step) {
+      for (let y = grid.minY; y <= grid.maxY; y += grid.step) positions.push({x, y});
+    }
+    // Shuffle a bounded grid so rejection cannot repeatedly sample the same position.
+    for (let i = positions.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [positions[i], positions[j]] = [positions[j], positions[i]];
+    }
+    for (const position of positions) {
+      if (Math.abs(position.x - previous.x) < 30 && Math.abs(position.y - previous.y) < 20) continue;
+      const stage = Object.freeze({...INTRO, ...position, radius: grid.radius, id: `stage-${seed >>> 0}`, name: 'A new bounce'});
+      if (kind === 'ordinary' && transfer(previous, stage) < .5) continue;
+      if (kind === 'outlier' && (transfer(previous, stage) > .2 || Math.abs(stage.y-previous.y) < 45 && Math.abs(stage.x-previous.x) < 100)) continue;
+      if (kind && !screenStage(stage).accepted) continue;
+      if (screenStage(stage, incoming).accepted) return stage;
+    }
+    throw new Error('No learnable stage in the bounded hoop grid');
+  }
+  function generateTour(seed) {
+    const rng = random(seed), kinds = ['ordinary', 'ordinary', 'outlier', 'outlier'];
+    for (let i = kinds.length-1; i > 0; i--) {
+      const j = Math.floor(rng()*(i+1));
+      [kinds[i], kinds[j]] = [kinds[j], kinds[i]];
+    }
+    const stages = [{stage: INTRO, practiceSeed: 1, kind: 'ordinary'}];
+    for (const kind of kinds) {
+      const previous = stages.at(-1).stage;
+      const reference = create(previous, 0x25A7D1);
+      for (let n = 0; n < LIMIT; n++) attempt(reference, 'hoop', 0);
+      const stageSeed = Math.floor(rng()*4294967296) >>> 0;
+      stages.push({stage: generateStage(stageSeed, previous, snapshot(reference), kind), practiceSeed: (stageSeed ^ 0xA341316C) >>> 0, kind});
+    }
+    return stages;
+  }
+  function tourTotals(results) {
+    return results.reduce((total,stage) => ({hits: total.hits+stage.hits, practices: total.practices+stage.practices, cleared: total.cleared+(stage.hits>=4?1:0)}), {hits:0, practices:0, cleared:0});
+  }
+  function compareScores(a,b) { return b.hits-a.hits || a.practices-b.practices; }
+  const api = {ANGLES, POWERS, INTRO, STAGE_GRID, REWARDS, LIMIT, random, softmax, distribution, simulate, score, snapshot, create, attempt, successChance, favourite, screenStage, generateStage, transfer, generateTour, tourTotals, compareScores};
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  root.StuntSchool = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>(function() {
+  'use strict';
+  const params=new URLSearchParams(location.search);
+  const course=document.documentElement.dataset.mode==='course'||params.get('mode')==='course';
+  if(course)document.documentElement.dataset.mode='course';
+  document.body.classList.toggle('embedded',course||params.get('embed')==='1');
+  const explanation=document.querySelector('.explainer');
+  if(course){explanation.hidden=true;explanation.open=true;}
+  window.ArcadeMode={course};
+  // Same-origin previews can resize their frame. The published course host is
+  // cross-origin, so its course page also supplies a measured fallback height.
+  function fit() {
+    try {
+      const frame=window.frameElement,main=document.querySelector('main');
+      if(frame&&main) {
+        const height=Math.ceil(main.getBoundingClientRect().bottom+window.scrollY+8);
+        if(Math.abs(frame.offsetHeight-height)>4)frame.style.height=height+'px';
+      }
+    }catch(e){}
+  }
+  if(course&&typeof ResizeObserver!=='undefined')new ResizeObserver(fit).observe(document.body);
+})();
+</script>
+<script>(function () {
+  'use strict';
+  const M = window.StuntSchool;
+  const $ = id => document.getElementById(id);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const COURSE=window.ArcadeMode.course;
+  let model = M.create(), incoming = null, stageNumber = 0, busy = false, stopped = false, lastShot = null, recent = [], showNumber = 0, lastShow = null;
+  const seedText = new URLSearchParams(location.search).get('seed');
+  const firstSeed = seedText !== null && /^\d+$/.test(seedText) ? Number(seedText) >>> 0 :
+    window.crypto ? window.crypto.getRandomValues(new Uint32Array(1))[0] : Date.now() >>> 0;
+  let stageSeed = firstSeed;
+  let tour = COURSE ? null : {seed:firstSeed, stages:M.generateTour(firstSeed), results:[], complete:false};
+  let animationToken = 0, runToken = 0, busyKind = '';
+  const controls = ['practice', 'show', 'reset', 'new-stage', 'explore', 'tour-replay', 'tour-new'];
+  function announcement(message) { $('live').textContent = message; }
+  function reward() { return document.querySelector('input[name="reward"]:checked').value; }
+  function exploration() { return Number($('explore').value) / 100; }
+  function round(value) { return Number(value.toFixed(1)); }
+  function setBusy(value) {
+    busy = value;
+    controls.forEach(id => { $(id).disabled = value; });
+    if (!COURSE) $('reset').disabled = false;
+    document.querySelectorAll('input[name="reward"]').forEach(e => { e.disabled = value; });
+    $('replay').disabled = value || !lastShot;
+    $('stop').hidden = !value || busyKind === 'replay' || !COURSE && busyKind === 'show';
+    if (value) $('stop').textContent = 'Stop after this try';
+    document.querySelectorAll('.shot').forEach(b => { b.disabled = value || b.classList.contains('empty'); });
+    document.querySelectorAll('[data-tour-shot]').forEach(b => { b.disabled = value; });
+  }
+  function configureStage(s = model.stage, number = stageNumber) {
+    const name = COURSE ? number ? `Practice stage ${number + 1}` : s.name : `Stage ${number + 1} of 5${number !== stageNumber ? ' · show review' : ''}`;
+    $('stage-name').textContent = name;
+    $('footer-stage').textContent = name;
+    $('stage-description').textContent = `Pip stands to the left of a hoop at stage position ${s.x}, ${s.y}. The hoop stays here throughout practice and the show. A dotted line records the ball's flight.`;
+    $('hoop-stand').setAttribute('d', `M${s.x} ${s.y}V350`);
+    ['hoop-rear', 'hoop-shadow'].forEach(id => $(id).setAttribute('cx', s.x));
+    $('hoop-rear').setAttribute('cy', s.y);
+    $('hoop-rear').setAttribute('ry', s.radius);
+    $('hoop-front').setAttribute('d', `M${s.x} ${s.y-s.radius}a16 ${s.radius} 0 0 1 0 ${2*s.radius}`);
+    ['hoop-success', 'hoop-direct'].forEach(id => $(id).setAttribute('transform', `translate(${s.x+35} ${s.y-s.radius-5})`));
+    markHoop(false);
+  }
+  function showIncomingHabit() {
+    $('habit-trail').setAttribute('d', '');
+    if (!incoming) return;
+    const habit = M.favourite(model);
+    if (habit.probability <= 1 / (M.ANGLES.length * M.POWERS.length) + 1e-8) return;
+    $('habit-trail').setAttribute('d', path(flight(habit.shot)));
+    $('arena-caption').textContent = `Pip arrives favouring aim ${habit.shot.angle}° and strength ${habit.shot.power}. The pale path shows that throw at this hoop.`;
+    $('stage-description').textContent += ` Her incoming favourite throw has aim ${habit.shot.angle} degrees and strength ${habit.shot.power}; its projected flight is shown as a pale dashed path.`;
+  }
+  function markHoop(passed, direct = false) {
+    $('hoop-rear').setAttribute('stroke', passed ? '#2f7856' : direct ? '#a56c2d' : '#e46d3d');
+    $('hoop-front').setAttribute('stroke', passed ? '#235f45' : direct ? '#895627' : '#bd4f2d');
+    $('hoop-success').setAttribute('visibility', passed ? 'visible' : 'hidden');
+    $('hoop-direct').setAttribute('visibility', direct ? 'visible' : 'hidden');
+  }
+  function ball(point) { $('ball').setAttribute('transform', `translate(${round(point.x)} ${round(point.y)})`); }
+  function flight(shot) { return shot.flight || shot.points; }
+  function path(points) { return points.map((p, i) => `${i ? 'L' : 'M'}${round(p.x)} ${round(p.y)}`).join(' '); }
+  function marks(shot) {
+    $('bounce-marks').innerHTML = flight(shot).filter(p => p.bounce).map(p => `<path d="M${round(p.x)-6} 354l6-8 6 8"/>`).join('');
+  }
+  function pose(shot, phase = 'settled', progress = 1, passed = phase === 'settled' && shot.hit) {
+    const power = (shot.power - M.POWERS[0]) / (M.POWERS.at(-1) - M.POWERS[0]);
+    const radians = shot.angle * Math.PI / 180;
+    const direction = {x: Math.cos(radians), y: -Math.sin(radians)};
+    const release = flight(shot)[0];
+    const windLength = 25 + 28 * power;
+    const followLength = 22 + 20 * power;
+    const p = Math.max(0, Math.min(1, progress));
+    const balanceEase = p*p*p*(p*(6*p-15)+10);
+    const backSwing = 20+6*power, frontSwing = 32+8*power;
+    let lean = 0, squash = 0, shift = 0, offAngle = 0, hand = {x: 144, y: 291};
+    if (phase === 'ready') hand = release;
+    if (phase === 'windup') {
+      const t = 1 - (1-p)*(1-p);
+      hand = {x: release.x - direction.x*windLength*t, y: release.y - direction.y*windLength*t};
+      lean = -(4+5*power)*t; squash = (.025+.04*power)*t; shift = -2*power*t;
+      offAngle = -backSwing*balanceEase;
+    }
+    if (phase === 'swing') {
+      const t = p*p;
+      hand = {x: release.x - direction.x*windLength*(1-t), y: release.y - direction.y*windLength*(1-t)};
+      lean = -(4+5*power)*(1-t) + (3+3*power)*t;
+      squash = (.025+.04*power)*(1-t); shift = -2*power*(1-t)+2*power*t;
+      offAngle = -backSwing+(backSwing+frontSwing)*balanceEase;
+    }
+    if (phase === 'follow') {
+      const extended = {x: release.x + direction.x*followLength, y: release.y + direction.y*followLength};
+      if (p < .3) {
+        const t = 1 - Math.pow(1-p/.3, 2);
+        hand = {x: release.x + direction.x*followLength*t, y: release.y + direction.y*followLength*t};
+      } else {
+        const t = (p-.3)/.7, ease = t*t*(3-2*t);
+        hand = {x: extended.x+(144-extended.x)*ease, y: extended.y+(291-extended.y)*ease};
+      }
+      lean = (3+3*power)*(1-p)+(4+4*power)*Math.sin(Math.PI*p);
+      shift = 2*power*(1-p)+2*power*Math.sin(Math.PI*p);
+      offAngle = frontSwing*(1-balanceEase);
+    }
+    const sx = 1+squash*.45, sy = 1-squash, rot = lean*Math.PI/180;
+    const shoulderX = (127-96)*sx, shoulderY = (297-349)*sy;
+    const shoulder = {x: 84+shift+Math.cos(rot)*shoulderX-Math.sin(rot)*shoulderY, y: 349+Math.sin(rot)*shoulderX+Math.cos(rot)*shoulderY};
+    $('pip-body').setAttribute('transform', `translate(${round(-12+shift)} 0) translate(96 349) rotate(${round(lean)}) scale(${sx} ${sy}) translate(-96 -349)`);
+    $('pip-shadow').setAttribute('rx', round(36*(1+squash)));
+    const elbow = {x: (shoulder.x+hand.x)/2+13, y: (shoulder.y+hand.y)/2+5};
+    const d = `M${round(shoulder.x)} ${round(shoulder.y)}Q${round(elbow.x)} ${round(elbow.y)} ${round(hand.x)} ${round(hand.y)}`;
+    $('pip-arm').setAttribute('d', d); $('pip-arm-colour').setAttribute('d', d);
+    $('pip-hand').setAttribute('cx', round(hand.x)); $('pip-hand').setAttribute('cy', round(hand.y));
+    $('pip-off-arm').setAttribute('transform', `rotate(${round(offAngle)} -27 2)`);
+    $('pip-mouth').setAttribute('d', passed ? 'M-8-3q10 14 20 0Z' : phase === 'windup' || phase === 'swing' ? 'M-5 0q7-4 14 0' : 'M-6-2q7 6 14 0');
+    return hand;
+  }
+  function settled(shot) {
+    if (shot.stage) configureStage(shot.stage, shot.stageNumber);
+    const points = flight(shot);
+    $('flight-trail').setAttribute('d', path(points));
+    marks(shot); ball(points[points.length - 1]); pose(shot); markHoop(shot.hit, shot.directPass);
+  }
+  function animate(shot, duration = 850) {
+    const points = flight(shot);
+    const token = ++animationToken;
+    $('confetti').innerHTML = '';
+    $('flight-trail').setAttribute('d', ''); $('bounce-marks').innerHTML = '';
+    markHoop(false);
+    ball(pose(shot, 'ready'));
+    if (reduced.matches || document.hidden) { settled(shot); return Promise.resolve(); }
+    return new Promise(resolve => {
+      let start;
+      const power = (shot.power-M.POWERS[0])/(M.POWERS.at(-1)-M.POWERS[0]);
+      const windup = 170+80*power, swing = 160-35*power, releaseTime = windup+swing;
+      function frame(now) {
+        if (token !== animationToken) { resolve(); return; }
+        if (start === undefined) start = now;
+        const elapsed = Math.max(0, now-start);
+        if (elapsed < releaseTime) {
+          ball(elapsed < windup ? pose(shot, 'windup', elapsed/windup) : pose(shot, 'swing', (elapsed-windup)/swing));
+        } else {
+          const flightTime = elapsed-releaseTime;
+          const p = Math.min(1, flightTime/duration);
+          const cursor = p*(points.length-1), index = Math.floor(cursor);
+          const from = points[index], to = points[Math.min(index+1, points.length-1)], part = cursor-index;
+          const position = {x: from.x+(to.x-from.x)*part, y: from.y+(to.y-from.y)*part};
+          $('flight-trail').setAttribute('d', path([...points.slice(0,index+1), position]));
+          const passed = shot.hit && position.x >= shot.crossing.x;
+          ball(position); pose(shot, 'follow', Math.min(1,flightTime/360), passed);
+          markHoop(passed, shot.directPass && position.x >= shot.crossing.x);
+        }
+        if (elapsed < releaseTime+duration && !document.hidden) requestAnimationFrame(frame);
+        else { settled(shot); resolve(); }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+  function describe(shot, context) {
+    lastShot = shot;
+    $('result').dataset.hit = shot.hit ? 'yes' : 'no';
+    $('result-icon').textContent = shot.hit ? '✓' : shot.directPass ? '!' : '↟';
+    const name = context === 'show' ? 'Show throw' : `Practice ${shot.attempt}`;
+    $('result-title').textContent = shot.hit ? `${name}: through the hoop!` : shot.directPass ? `${name}: through, without a bounce.` : `${name}: ${shot.bounces} ${shot.bounces === 1 ? 'bounce' : 'bounces'}, no hoop.`;
+    const explanation = shot.directPass ? 'The ball passed through before touching the floor. The trick requires a bounce first. ' : '';
+    $('result-detail').textContent = explanation + (context === 'show' ?
+      `${shot.hit ? 'One completed bounce trick.' : 'No completed bounce trick.'} Pip's learning stays unchanged.` :
+      `${round(shot.score.total)} practice points: ${shot.score.goal} for the trick${shot.score.bonus > 0 ? ` + ${round(shot.score.bonus)} encouragement` : ''}.`);
+    $('arena-caption').textContent = `Aim ${shot.angle}°. Strength ${shot.power}. ${context === 'show' ? 'Showtime.' : M.REWARDS.find(r => r.id === shot.reward).short + '.'}`;
+    $('stage-description').textContent = `${name}. Aim ${shot.angle} degrees, strength ${shot.power}. ${shot.bounces} floor bounces in the flight. ${shot.hit ? 'The ball passed through the hoop after bouncing.' : shot.directPass ? explanation : 'The ball did not pass through the hoop after bouncing.'}${context === 'show' ? '' : ` ${round(shot.score.total)} practice points.`}`;
+  }
+  function renderRecent() {
+    $('recent-shots').innerHTML = Array.from({length: 8}, (_, i) => {
+      const shot = recent[i];
+      if (!shot) return '<button class="shot empty" disabled aria-label="No throw yet">·</button>';
+      const label = `${shot.context === 'show' ? 'Show throw' : 'Practice'} ${shot.context === 'show' ? i + 1 : shot.attempt}: ${shot.hit ? 'bounce trick' : shot.directPass ? 'through the hoop without a bounce first' : 'no hoop'}, ${shot.bounces} bounces in the flight${shot.context === 'show' ? '' : `, ${round(shot.score.total)} points`}. Inspect this throw.`;
+      return `<button class="shot ${shot.hit ? 'hit' : ''}" data-shot="${i}" ${busy ? 'disabled' : ''} aria-label="${label}"><small>${shot.context === 'show' ? i + 1 : shot.attempt}</small>${shot.hit ? '✓' : shot.directPass ? '!' : '↟'}</button>`;
+    }).join('');
+    document.querySelectorAll('[data-shot]').forEach(button => button.addEventListener('click', () => {
+      if (busy) return;
+      const shot = recent[Number(button.dataset.shot)];
+      document.querySelectorAll('.shot').forEach(b => b.classList.toggle('active', b === button));
+      settled(shot); describe(shot, shot.context);
+      $('replay').disabled = false;
+      announcement($('result-title').textContent + ' ' + $('result-detail').textContent);
+    }));
+  }
+  function counters() {
+    $('practice-count').textContent = model.count;
+    $('practice-hoops').textContent = model.history.filter(s => s.hit).length;
+    $('show-score').innerHTML = `${lastShow === null ? '—' : lastShow}<small> / 5</small>`;
+    $('practice').innerHTML = model.count < M.LIMIT ? `Practice ${Math.min(8, M.LIMIT - model.count)} tries <span>→</span>` : 'Practice complete';
+    $('practice').disabled = busy || model.count >= M.LIMIT || Boolean(tour && tour.complete);
+    $('show').disabled = busy || Boolean(tour && tour.complete);
+    $('actions').hidden = Boolean(tour && tour.complete);
+    if (COURSE) document.querySelector('.explainer').hidden = !($('school').classList.contains('success') || model.count >= M.LIMIT);
+    renderTour();
+  }
+  function records() {
+    $('records-body').innerHTML = model.history.map(s => `<tr><th scope="row">${s.attempt}</th><td>${M.REWARDS.find(r => r.id === s.reward).short}</td><td>${s.angle}°</td><td>${s.power}</td><td>${s.bounces}</td><td>${s.hit ? 'Yes' : s.directPass ? 'No: direct pass' : 'No'}</td><td>${round(s.score.total)}</td></tr>`).join('');
+  }
+  async function practice() {
+    if (busy || model.count >= M.LIMIT || tour && tour.complete) return;
+    const session = runToken;
+    busyKind = 'practice'; configureStage();
+    $('habit-trail').setAttribute('d', '');
+    setBusy(true); stopped = false; recent = [];
+    $('school').classList.remove('success');
+    $('recent-title').textContent = 'This practice';
+    const n = Math.min(8, M.LIMIT - model.count);
+    for (let i = 0; i < n; i++) {
+      const shot = M.attempt(model, reward(), exploration());
+      Object.assign(shot, {context:'practice', stage:model.stage, stageNumber});
+      $('phase').textContent = `Practice ${shot.attempt} of 64`;
+      $('arena-caption').textContent = `Practice ${shot.attempt}. Pip chose aim ${shot.angle}° and strength ${shot.power}.`;
+      $('result-title').textContent = `Practice ${shot.attempt}: in flight.`;
+      $('result-detail').textContent = 'The result will be scored when the throw ends.';
+      $('result').removeAttribute('data-hit'); $('result-icon').textContent = '○';
+      await animate(shot, 700);
+      if (session !== runToken) return;
+      recent.push(shot); describe(shot, 'practice'); renderRecent(); counters();
+      if (stopped) break;
+    }
+    setBusy(false); counters(); records();
+    $('phase').textContent = model.count >= M.LIMIT ? 'Practice complete' : 'Ready for another try';
+    announcement(`${model.count} of 64 practice tries used. ${recent.filter(s => s.hit).length} completed bounce tricks in this practice. ${$('result-detail').textContent}`);
+  }
+  function celebrate() {
+    $('confetti').innerHTML = Array.from({length: 14}, (_, i) => {
+      const x = 420 + (i * 43 % 250), y = 52 + (i * 29 % 120);
+      return `<path d="M${x} ${y}l${i % 2 ? 6 : -6} 9" stroke="${['#65528b', '#bd4f2d', '#4c8061'][i % 3]}" stroke-width="4" stroke-linecap="round"/>`;
+    }).join('');
+  }
+  async function showtime() {
+    if (busy || tour && tour.complete) return;
+    const session = runToken;
+    busyKind = 'show'; configureStage();
+    $('habit-trail').setAttribute('d', '');
+    setBusy(true); stopped = false; recent = []; lastShow = 0;
+    $('school').classList.remove('success');
+    $('recent-title').textContent = 'This show · 4 bounce tricks needed';
+    const rng = M.random((model.seed ^ 0xA55101 ^ ++showNumber * 31) >>> 0);
+    for (let i = 0; i < 5; i++) {
+      const shot = M.attempt(model, 'hoop', 0, false, rng);
+      Object.assign(shot, {context:'show', stage:model.stage, stageNumber});
+      $('phase').textContent = `Show throw ${i + 1} of 5`;
+      $('arena-caption').textContent = `Show throw ${i + 1}. Pip chose aim ${shot.angle}° and strength ${shot.power}.`;
+      $('result-title').textContent = `Show throw ${i + 1}: in flight.`;
+      $('result-detail').textContent = 'The result will be scored when the throw ends.';
+      $('result').removeAttribute('data-hit'); $('result-icon').textContent = '○';
+      await animate(shot, 1100);
+      if (session !== runToken) return;
+      if (shot.hit) lastShow++;
+      recent.push(shot); describe(shot, 'show'); renderRecent(); counters();
+      if (stopped && COURSE) break;
+    }
+    const complete = recent.length === 5;
+    const passed = complete && lastShow >= 4;
+    $('school').classList.toggle('success', passed);
+    if (passed) celebrate();
+    $('result-title').textContent = passed ? `${lastShow} of 5. Pip has a trick!` : `${lastShow} of ${recent.length} bounce tricks completed.`;
+    $('result-detail').textContent = passed ? 'Four bounce tricks were needed. The show is complete.' : complete ? `${5-lastShow} ${5-lastShow === 1 ? 'throw did' : 'throws did'} not complete the bounce trick. Four completed tricks were needed.` : 'This show stopped before all five throws.';
+    $('result-icon').textContent = passed ? '★' : '○';
+    $('result').dataset.hit = passed ? 'yes' : 'no';
+    $('phase').textContent = passed ? 'A trick worth showing' : 'Show finished';
+    setBusy(false); counters();
+    if (tour && complete) finishTourStage();
+    announcement($('result-title').textContent + ' ' + $('result-detail').textContent);
+  }
+  function reset(nextStage = false) {
+    if (!COURSE) { if (!nextStage) restartTour(false); return; }
+    if (busy) return;
+    let stage = model.stage, seed = model.seed;
+    if (nextStage) {
+      incoming = M.snapshot(model);
+      stageSeed = (stageSeed + 0x9E3779B9) >>> 0;
+      stage = M.generateStage(stageSeed, stage, incoming);
+      seed = (stageSeed ^ 0xA341316C) >>> 0;
+      stageNumber++;
+    }
+    model = M.create(stage, seed, incoming);
+    prepareStage(false, !nextStage);
+    announcement(`${$('stage-name').textContent}. ${nextStage ? 'The hoop has moved. Pip keeps her earlier practice.' : 'The hoop is in the same place. Pip returns to the preferences she arrived with.'}`);
+  }
+  function prepareStage(keepShow = false, retry = false) {
+    if (!keepShow) { recent = []; lastShot = null; lastShow = null; }
+    showNumber = 0;
+    $('school').classList.remove('success'); $('confetti').innerHTML = '';
+    $('flight-trail').setAttribute('d', ''); $('bounce-marks').innerHTML = '';
+    ball({x: 120, y: 256});
+    pose({power: 9, angle: -45, points: [{x: 120, y: 256}]}, 'ready');
+    $('result-title').textContent = incoming ? 'A familiar pupil at a new hoop.' : 'A fresh start for Pip.';
+    $('result-detail').textContent = incoming ? 'Pip keeps her earlier practice. This stage has 64 practice tries.' : 'Every aim and strength is equally likely again.';
+    if (incoming && retry) {
+      $('result-title').textContent = 'Back to the start of this stage.';
+      $('result-detail').textContent = 'Pip has the preferences she arrived with. This stage has 64 practice tries again.';
+    }
+    $('result-icon').textContent = '○'; $('result').removeAttribute('data-hit');
+    $('arena-caption').textContent = 'A new pupil. No favourite throw yet.';
+    $('phase').textContent = 'Ready to practise';
+    $('recent-title').textContent = keepShow ? `Stage ${recent[0].stageNumber+1} show` : 'Your eight most recent tries';
+    configureStage(); showIncomingHabit(); renderRecent(); setBusy(false); counters(); records();
+  }
+  function renderTour() {
+    if (!tour) return;
+    const total = M.tourTotals(tour.results);
+    $('tour-board').hidden = false;
+    $('tour-label').textContent = `Tour ${tour.seed} · ${tour.complete ? 'complete' : `stage ${stageNumber+1} of 5`}`;
+    $('tour-hits').textContent = total.hits;
+    $('tour-practice').textContent = total.practices + (tour.complete ? 0 : model.count);
+    $('tour-cleared').textContent = total.cleared;
+    $('tour-steps').innerHTML = tour.stages.map((_,i) => `<li ${i===stageNumber&&!tour.complete?'aria-current="step"':''} class="${tour.results[i]?'finished':''}"><span>${i+1}</span>${tour.results[i]?`${tour.results[i].hits}/5`:'Pending'}</li>`).join('');
+    $('tour-record').hidden = false;
+    $('tour-results').innerHTML = tour.stages.map((_,i) => {
+      const result = tour.results[i];
+      return `<tr><th scope="row">${i+1}</th><td>${result?result.practices:'—'}</td><td>${result?`${result.hits}/5`:'—'}</td><td>${result?result.shots.map((shot,j)=>`<button class="tour-shot" data-tour-shot="${i}:${j}" ${busy?'disabled':''} aria-label="Stage ${i+1}, show throw ${j+1}: ${shot.hit?'bounce trick':shot.directPass?'direct pass without a bounce first':'miss'}. Inspect and replay.">${shot.hit?'✓':shot.directPass?'!':'○'}</button>`).join(''):'Awaiting show'}</td></tr>`;
+    }).join('');
+    document.querySelectorAll('[data-tour-shot]').forEach(button => button.addEventListener('click', () => {
+      if (busy) return;
+      const [stage,index] = button.dataset.tourShot.split(':').map(Number);
+      const shot = tour.results[stage].shots[index];
+      settled(shot); describe(shot,'show'); $('replay').disabled = false;
+      announcement(`Stage ${stage+1}, show throw ${index+1}. ${$('result-title').textContent} ${$('result-detail').textContent}`);
+    }));
+    $('tour-end').hidden = !tour.complete;
+  }
+  function saveTourScore() {
+    const total = M.tourTotals(tour.results), key = `stunt-school-tour-v1:${tour.seed}`;
+    try {
+      const raw = JSON.parse(window.localStorage.getItem(key) || '[]');
+      const previous = Array.isArray(raw) ? raw.filter(s => Number.isInteger(s.hits)&&s.hits>=0&&s.hits<=25&&Number.isInteger(s.practices)&&s.practices>=0&&s.practices<=320) : [];
+      const rank = 1 + previous.filter(s => M.compareScores(s,total)<0).length;
+      const best = [...previous,total].sort(M.compareScores)[0];
+      window.localStorage.setItem(key, JSON.stringify([...previous,total]));
+      $('tour-ranking').textContent = `Rank ${rank} of ${previous.length+1} completed attempts on this tour in this browser. Best: ${best.hits}/25 with ${best.practices} practice throws.`;
+    } catch (e) {
+      $('tour-ranking').textContent = 'Your result is shown here. Personal rankings could not be saved in this browser.';
+    }
+  }
+  function finishTourStage() {
+    const completedStage = stageNumber+1, hits = lastShow;
+    tour.results.push({practices:model.count, hits, shots:[...recent]});
+    if (tour.results.length===5) {
+      tour.complete = true;
+      const total = M.tourTotals(tour.results);
+      $('result-title').textContent = `Tour complete: ${total.hits} of 25 bounce tricks.`;
+      $('result-detail').textContent = `${total.cleared} of 5 stages cleared, using ${total.practices} practice throws. Successes rank first; fewer practice throws break ties.`;
+      $('phase').textContent = 'Tour complete';
+      $('tour-final').textContent = `${total.hits}/25 show tricks with ${total.practices} practice throws`;
+      saveTourScore(); $('tour-record').open = true;
+      counters();
+      return;
+    }
+    incoming = M.snapshot(model); stageNumber++;
+    const next = tour.stages[stageNumber];
+    model = M.create(next.stage,next.practiceSeed,incoming);
+    prepareStage(true);
+    $('result-title').textContent = `Stage ${completedStage}: ${hits} of 5 bounce tricks.`;
+    $('result-detail').textContent = `Stage ${stageNumber+1} is ready. Pip keeps what she learned. The previous show's throws are available to inspect and replay.`;
+    $('result-icon').textContent = hits>=4?'★':'○';
+    $('result').dataset.hit = hits>=4?'yes':'no';
+  }
+  function restartTour(newTour) {
+    runToken++; animationToken++; stopped = false;
+    const seed = newTour ? window.crypto ? window.crypto.getRandomValues(new Uint32Array(1))[0] : (tour.seed+0x9E3779B9)>>>0 : tour.seed;
+    tour = {seed, stages:newTour?M.generateTour(seed):tour.stages, results:[], complete:false};
+    incoming = null; stageNumber = 0; stageSeed = seed;
+    model = M.create(tour.stages[0].stage,tour.stages[0].practiceSeed);
+    $('tour-record').open = false; prepareStage();
+    $('result-title').textContent = 'A fresh start for Pip.';
+    $('result-detail').textContent = 'The whole tour starts again. Pip has no favourite throw yet.';
+    announcement(`Tour ${seed} starts over. Stage 1 of 5. No practice used and no show results yet.`);
+  }
+  $('practice').addEventListener('click', practice);
+  $('show').addEventListener('click', showtime);
+  $('stop').addEventListener('click', () => { stopped = true; $('stop').textContent = 'Stopping after this try…'; });
+  $('reset').addEventListener('click', () => reset(false));
+  $('new-stage').addEventListener('click', () => reset(true));
+  $('tour-replay').addEventListener('click', () => { if (tour) restartTour(false); });
+  $('tour-new').addEventListener('click', () => { if (tour) restartTour(true); });
+  $('explore').addEventListener('input', () => { $('explore-value').textContent = $('explore').value + '%'; });
+  $('replay').addEventListener('click', async () => {
+    if (busy || !lastShot) return;
+    const session = runToken; busyKind = 'replay';
+    if (lastShot.stage) configureStage(lastShot.stage,lastShot.stageNumber);
+    setBusy(true); await animate(lastShot, 1500);
+    if (session!==runToken) return;
+    setBusy(false); counters();
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopped = true; });
+  if (!COURSE) {
+    $('brief').textContent = 'Choose what earns encouragement while Pip learns to bounce a ball through a hoop across five stages. Each stage allows up to 64 practice throws and one five-throw show. Your tour ranks by show successes, then fewer practice throws.';
+    $('reset').textContent = '↻ Start over'; $('reset').setAttribute('aria-label','Start the whole tour over');
+    $('tour-controls').appendChild($('reset')); $('stage-tools').hidden = true;
+    $('new-stage').hidden = true;
+    $('control-note').textContent = 'Each show moves to the next stage automatically, carrying Pip’s learning forward. Start over restarts the same tour with a fresh Pip.';
+  }
+  configureStage(); renderRecent(); counters();
+  // Read-only observations for the local browser check. No training data leaves the page.
+  window.stuntSchoolState = () => ({stage: stageNumber, geometry: {...model.stage}, seed: model.seed, stageSeed, policy: M.snapshot(model), incoming, practice: model.count, hits: model.history.filter(s => s.hit).length, busy, lastShow, chance: M.successChance(model), tour:tour&&{seed:tour.seed,complete:tour.complete,stages:tour.stages.map(s=>({...s.stage,kind:s.kind})),results:tour.results.map(r=>({hits:r.hits,practices:r.practices,outcomes:r.shots.map(s=>({hit:s.hit,directPass:s.directPass}))})),...M.tourTotals(tour.results)}, lastShot: lastShot && {hit: lastShot.hit, directPass:lastShot.directPass, bounces: lastShot.bounces, points: lastShot.score.total}});
+})();
+</script>
+</body>
+</html>

@@ -14,6 +14,13 @@ the lesson.
 | [Order and visibility](https://codey-m.github.io/cv_nlp/widgets/widget-order-and-visibility.html) | Unit 2, Lec. 4: Attention and transformers |  |
 | [How context reaches a prediction](https://codey-m.github.io/cv_nlp/widgets/unit-summary-how-context-reaches-prediction.html) | Unit 2, Lec. 4: Attention and transformers | Unit 2 synthesis: how context reaches a prediction |
 
+## 6.4600.5x Multimodal AI: Systems and Engineering
+
+| Widget | Where | What it shows |
+| --- | --- | --- |
+| [Crossfade](https://codey-m.github.io/cv_nlp/widgets/widget-crossfade.html) | Unit 1 overview | Crossfade: combining picture and sound |
+| [Stunt School](https://codey-m.github.io/cv_nlp/widgets/widget-stunt-school.html) | Unit 2 overview | Stunt School: learning a trick from rewards |
+
 ## Review tips
 
 - Each widget is one self-contained HTML file. It makes no network requests, so a downloaded copy works too.

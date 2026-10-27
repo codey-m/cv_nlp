@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en" data-mode="course">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>Crossfade</title><style>:root{--ground:#F3F4F8;--ink:#212326;--muted:#626A73;--line:#DDE1E6;--purple:#750014;--green:#2f6855;--panel:#FFFFFF;font-family:"neue-haas-grotesk-text","Helvetica Neue",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--ground)}
+*{box-sizing:border-box}body{margin:0}main{max-width:1260px;margin:auto;padding:0 40px}button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:default}button,input,summary{-webkit-tap-highlight-color:transparent}button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #915f18;outline-offset:4px}p,h1,h2,h3{margin:0}a{color:inherit}button{border:0}h1,h2{letter-spacing:-.05em}.masthead{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:24px 0;border-bottom:1px solid var(--line)}.wordmark{font-size:15px;letter-spacing:.13em;font-weight:850;text-decoration:none;display:flex;align-items:center;gap:14px}.badge{font-size:9px;letter-spacing:.12em;border:1px solid #B8C2CC;color:var(--purple);padding:5px 7px;border-radius:4px}.edition{font-family:Georgia,serif;font-style:italic;color:var(--muted);font-size:15px}.intro{display:flex;align-items:flex-end;justify-content:space-between;gap:30px;padding:32px 0 28px}.eyebrow{font-size:10px;font-weight:800;letter-spacing:.15em;color:var(--purple);margin-bottom:12px}h1{font-family:Georgia,serif;font-size:49px;font-weight:400;line-height:1.04}.brief{max-width:410px;font-size:15px;line-height:1.7;color:#40464C}.brief strong{font-weight:650;color:var(--ink)}.game{border:1px solid var(--line);border-radius:16px;display:grid;grid-template-columns:minmax(0,1fr) 310px;background:var(--panel);overflow:hidden}.stage-column{min-width:0}.stage-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:17px 22px;font-size:12px;font-weight:650;border-bottom:1px solid var(--line)}#phase{font-size:11px;font-weight:500;color:var(--muted)}.arena{position:relative;overflow:hidden;background:#282b3b}.arena svg{display:block;width:100%;height:auto}.arena-caption{position:absolute;top:48px;left:22px;right:22px;display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#ddd7de;pointer-events:none}.arena-caption span{background:#282b3bba;padding:5px 7px;border-radius:4px}.transport{padding:19px 20px;display:flex;gap:20px;align-items:center}.primary{padding:13px 16px;min-height:46px;min-width:170px;border-radius:8px;background:var(--purple);color:white;font-size:12px;font-weight:650;display:flex;align-items:center;justify-content:space-between;gap:12px}.timeline{flex:1;min-width:0}.timeline>div{display:flex;justify-content:space-between;gap:8px;font-size:10px;font-weight:600}.timeline output{font-variant-numeric:tabular-nums;color:var(--muted)}.timeline input{width:100%;margin:9px 0 2px;accent-color:var(--purple)}.timeline p{font-size:9px;color:var(--muted)}.result{display:flex;align-items:center;gap:12px;min-height:105px;padding:16px 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.result-icon{width:31px;height:31px;flex:0 0 31px;display:grid;place-items:center;font-size:22px;color:var(--purple);background:#F9E9ED;border-radius:50%}.result[data-outcome="pass"] .result-icon{background:#e4f0e5;color:var(--green)}.result[data-outcome="miss"] .result-icon{background:#f6ecde;color:#895627}#result-title{font-size:14px;font-weight:700;line-height:1.4}#result-detail{font-size:11px;line-height:1.6;margin-top:4px;color:var(--muted)}.coverage{margin-left:auto;text-align:right;flex:0 0 84px}.coverage strong{display:block;font-size:27px;font-weight:550;letter-spacing:-.05em;font-variant-numeric:tabular-nums}.coverage small{font-size:8px;letter-spacing:.09em;font-weight:700;color:var(--muted)}.moments{padding:16px 20px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;min-height:74px}.moment{border:1px solid #CBD2DB;border-radius:5px;padding:7px 3px;background:#F3F4F8;color:#5f665d;position:relative;font-size:9px}.moment span{display:block;font-size:11px;font-weight:650;margin-bottom:4px}.moment.active{outline:2px solid var(--purple);outline-offset:1px}.moment.fail{background:#f6ecde;border-color:#d0b799}.moment.pass{background:#e9f0e5;border-color:#b8c9b5}.booth{background:#F3F4F8;border-left:1px solid var(--line);padding:24px 21px}.booth h2{font-family:Georgia,serif;font-size:30px;font-weight:400;line-height:1.12}.booth-intro{font-size:11px;line-height:1.65;margin-top:13px;color:#40464C}.feed{margin-top:19px;padding-top:17px;border-top:1px solid #DDE1E6}.feed-heading{display:flex;align-items:center;justify-content:space-between}h3{font-size:13px;font-weight:650}h3 span{font-size:19px;vertical-align:-1px;margin-right:5px}.camera h3,.camera .feed-tag{color:#345b76}.audio h3,.audio .feed-tag{color:#8c592e}.feed-tag{border:1px solid currentColor;border-radius:4px;font-size:10px;padding:2px 5px;font-weight:750}.feed>p{font-size:10px;line-height:1.6;color:#40464C;margin-top:5px}.feed-status{display:flex;justify-content:space-between;gap:10px;font-size:10px;margin-top:12px;font-variant-numeric:tabular-nums}.feed-status strong{color:var(--green);font-size:9px;font-weight:700}.feed-status strong[data-blocked="yes"]{color:#80542b}.gate-wrap{position:relative;margin:5px -3px 0}.gate-wrap svg{display:block;width:100%;height:auto}.gate-wrap text{font-size:9px;fill:#626A73}.gate-wrap input{position:absolute;left:3.85%;top:5%;width:92.3%;height:70%;margin:0;background:transparent;appearance:none;-webkit-appearance:none;cursor:ew-resize;border:0}.gate-wrap input::-webkit-slider-runnable-track{height:4px;background:transparent}.gate-wrap input::-moz-range-track{height:4px;background:transparent}.gate-wrap input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;height:38px;width:14px;margin-top:-17px;background:transparent;border:0;border-radius:3px;box-shadow:0 0 0 1px #53534e22}.gate-wrap input::-moz-range-thumb{height:38px;width:14px;background:transparent;border:0}.gate-wrap input:focus-visible{outline-offset:0;border-radius:4px}.gate-label{display:flex;justify-content:space-between;font-size:10px;align-items:center;margin-top:2px}.gate-label output{font-size:10px;font-weight:750;background:#F9E9ED;color:var(--purple);padding:3px 6px;border-radius:4px}.feed .contribution{font-size:10px;margin-top:7px;font-weight:650;color:#40464C}.booth-note{font-size:10px;line-height:1.7;margin-top:19px;padding-top:16px;border-top:1px solid #DDE1E6;color:#40464C}.booth-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:10px;margin-top:17px}.booth-tools label{display:flex;align-items:center;gap:5px}.booth-tools input{accent-color:var(--purple);margin:0}.quiet{background:transparent;color:var(--purple);padding:6px 0;font-size:10px}.records,.explainer{border-bottom:1px solid var(--line);padding:18px 0;font-size:13px;line-height:1.7}.records{margin-top:14px}summary{cursor:pointer;font-weight:600;width:fit-content}.records>p,.explainer>p{margin-top:12px;max-width:880px;color:var(--muted)}.table-scroll{overflow:auto;margin-top:12px}table{width:100%;border-collapse:collapse;font-size:11px;min-width:520px}caption{text-align:left;color:var(--muted);font-size:11px;margin-bottom:9px}th,td{text-align:left;padding:8px 12px;border-bottom:1px solid #E6E9EE}footer{font-size:10px;letter-spacing:.04em;padding:20px 0 30px;color:var(--muted)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}[hidden]{display:none!important}.game.success .arena{box-shadow:inset 0 0 0 4px #6c9472}.game.success #phase{color:var(--green)}
+@media(max-width:1000px){main{padding:0 22px}.game{grid-template-columns:minmax(0,1fr) 270px}.booth{padding:22px 16px}.booth h2{font-size:28px}.brief{max-width:340px;font-size:13px}.edition{display:none}.transport{gap:12px;padding:16px}.primary{min-width:145px;font-size:11px;padding:12px}.result{padding:15px}.moments{padding:14px}.arena-caption{top:37px;left:12px;right:12px;font-size:8px}.coverage{flex-basis:76px}}
+@media(max-width:720px){main{padding:0 15px}.masthead{padding:18px 0}.wordmark{font-size:12px;gap:10px}.intro{display:block;padding:26px 0 22px}h1{font-size:43px}h1 br{display:none}.brief{margin-top:16px;max-width:none;font-size:12px}.brief br{display:none}.game{grid-template-columns:1fr}.booth{border-left:0;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;column-gap:20px;padding:20px 16px}.booth>.eyebrow,.booth>h2,.booth-intro,.booth-note,.booth-tools{grid-column:1/-1}.booth h2{font-size:27px}.booth h2 br{display:none}.booth-intro{margin-top:10px;font-size:11px}.feed{margin-top:15px;padding-top:13px;min-width:0}.feed-heading h3{font-size:12px}.feed>p{min-height:32px;font-size:9px}.feed-status{font-size:9px;gap:4px}.feed-status strong{font-size:8px}.gate-wrap{margin-top:10px}.gate-wrap input::-webkit-slider-thumb{height:29px;margin-top:-12px}.gate-label{font-size:9px}.feed .contribution{font-size:9px;min-height:0}.booth-note{margin-top:12px;padding-top:13px}.booth-tools{margin-top:12px}.arena-caption{top:34px;left:8px;right:8px;font-size:8px}.stage-top{padding:14px 16px;font-size:11px}#phase{font-size:10px}.transport{padding:15px 13px;gap:12px}.primary{min-width:138px;font-size:10px;padding:12px}.timeline>div{font-size:9px}.timeline p{font-size:8px}.result{gap:9px;min-height:112px;padding:13px}.result-icon{width:25px;height:25px;flex-basis:25px;font-size:18px}#result-title{font-size:12px}#result-detail{font-size:10px}.coverage{flex-basis:68px}.coverage strong{font-size:23px}.coverage small{font-size:7px}.moments{gap:4px;padding:14px 12px}.moment{font-size:8px;padding:7px 1px}.moment span{font-size:10px}.records,.explainer{font-size:12px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.sound-note{font-size:11px;line-height:1.6;margin-top:11px;color:#626A73}.stage-legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 20px;background:#F3F4F8;color:#626A73;font-size:10px;border-bottom:1px solid var(--line)}.stage-legend .camera-key{color:#345b76;font-weight:650}.stage-legend .audio-key{color:#8c592e;font-weight:650}.feed .gate-wrap input::-webkit-slider-thumb{width:18px;background:#750014;border:3px solid #FFFFFF;box-shadow:0 1px 4px #21232655}.feed .gate-wrap input::-moz-range-thumb{width:15px;background:#750014;border:3px solid #FFFFFF;box-shadow:0 1px 4px #21232655}.gate-wrap input:disabled{cursor:default;opacity:.6}.gate-example{font-size:10px;line-height:1.7;color:#40464C;background:#FFFFFF;border:1px solid #DDE1E6;border-radius:6px;padding:10px;margin-top:16px}.booth-note{margin-top:13px;padding-top:13px}
+@media(max-width:720px){.gate-example{grid-column:1/-1;margin-top:13px}.stage-legend{font-size:9px;gap:5px 12px;padding:9px 13px}.sound-note{font-size:10px}}
+.gate-label{gap:8px;line-height:1.5;align-items:baseline}.gate-label label{max-width:170px}.gate-label output{white-space:nowrap;flex-shrink:0}
+.sound-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:12px 20px;border-bottom:1px solid var(--line);font-size:10px}.sound-controls button{background:#F9E9ED;color:var(--purple);border:1px solid #B8C2CC;border-radius:5px;padding:7px 9px;font-size:10px;font-weight:650;min-height:32px}.sound-controls button[aria-pressed="false"]{background:#F3F4F8;color:#626A73;border-color:#CBD2DB}.sound-controls input{width:100px;accent-color:var(--purple);margin:0}.sound-controls output{min-width:28px;color:#626A73;font-variant-numeric:tabular-nums}#sound-help{color:#626A73;line-height:1.5;flex:1 1 200px}#listen{margin-left:auto}
+@media(max-width:720px){.sound-controls{padding:10px 13px;gap:8px 10px}.sound-controls input{width:90px}#sound-help{flex-basis:100%;font-size:9px}}
+
+/* MIT Learn arcade chrome: cool gray page, white panels, MIT red actions.
+   Scene palettes and Pip's lilac costume are independent of the interface. */
+.gamebar{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:16px;background:#FFFFFF;border-bottom:1px solid #E6E9EE;padding:12px 16px}
+.back{display:flex;align-items:center;justify-content:center;width:44px;height:44px;color:#0C0C0D;border-radius:4px}.back svg{width:26px;height:26px}.game-name{text-align:center;font-size:30px;line-height:1.2;font-weight:700;color:#0C0C0D;letter-spacing:-.02em}
+h1,h2,.edition{font-family:inherit}h1{font-size:38px;font-weight:700;letter-spacing:-.03em}.booth h2,.training h2{font-family:inherit;font-size:26px;font-weight:600;letter-spacing:-.03em}
+.primary:hover:enabled{background:#5A0010}button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{outline-color:#1472AE}.quiet{min-height:44px}.game,.school{border-radius:6px}.review-about{font-size:12px;line-height:1.6;margin-top:18px}.review-about a{color:#750014}
+body.embedded .gamebar,body.embedded footer,body.embedded .review-about,html[data-mode="course"] .gamebar,html[data-mode="course"] footer,html[data-mode="course"] .review-about{display:none}
+body.embedded main{padding:12px}html[data-mode="course"] .explainer>summary{display:none}
+#source-feedback{font-size:11px;line-height:1.6;margin-top:8px;color:#40464C}
+@media(max-width:720px){.game-name{font-size:26px}h1{font-size:32px}.intro{padding-top:20px}body.embedded main{padding:10px}#source-feedback{font-size:10px}}
+
+.table-scroll{max-height:360px;overflow:auto}
+</style></head>
+<body><main>
+  <header class="gamebar"><a href="index.html" class="back" aria-label="Back to AI Arcade"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7M7 12h14" fill="none" stroke="currentColor" stroke-width="2"/></svg></a><p class="game-name">Crossfade</p><span></span></header>
+  <section class="intro" aria-labelledby="title"><div><p class="eyebrow">YOU'RE IN THE LIGHTING BOOTH</p><h1 id="title">Keep Pip<br> in the light.</h1></div><div class="brief"><p>Pip needs the spotlight to follow her through a somersault and a ribbon routine. Choose which camera and microphone readings it uses, keeping her centre inside the dashed ring for <span id="goal-target">97%</span> of the act.</p><p class="sound-note">A louder bell means a clearer microphone reading.</p></div></section>
+  <section class="game" id="show" aria-label="Crossfade game">
+    <div class="stage-column">
+      <div class="stage-top"><span>The ribbon revue</span><span id="phase">Ready for rehearsal</span></div>
+      <div class="arena">
+        <svg id="stage" viewBox="0 0 800 430" role="img" aria-labelledby="stage-title" aria-describedby="stage-desc">
+          <title id="stage-title">Pip's ribbon revue</title><desc id="stage-desc">Pip waits by a springboard. A spotlight follows the combined camera and sound estimates.</desc>
+          <defs>
+            <radialGradient id="spot-glow"><stop stop-color="#fff4b6" stop-opacity=".95"/><stop offset=".75" stop-color="#f6db91" stop-opacity=".48"/><stop offset="1" stop-color="#f6db91" stop-opacity="0"/></radialGradient>
+            <linearGradient id="beam-glow" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f7e6b6" stop-opacity=".04"/><stop offset="1" stop-color="#f7e6b6" stop-opacity=".2"/></linearGradient>
+            <pattern id="boards" width="70" height="25" patternUnits="userSpaceOnUse"><path d="M0 0H70V25" fill="none" stroke="#60564e" stroke-width="1"/></pattern>
+          </defs>
+          <rect width="800" height="430" fill="#282b3b"/>
+          <path d="M70 50H730M70 54V340M730 54V340" fill="none" stroke="#414353" stroke-width="2"/>
+          <g fill="#626174"><path d="m230 85 3-7 3 7 7 3-7 3-3 7-3-7-7-3Z"/><path d="m650 136 3-7 3 7 7 3-7 3-3 7-3-7-7-3Z"/><circle cx="510" cy="79" r="3"/><circle cx="135" cy="185" r="3"/></g>
+          <path d="M0 342H800V430H0Z" fill="#514a48"/><path d="M0 342H800V430H0Z" fill="url(#boards)"/>
+          <ellipse id="pip-shadow" cx="110" cy="343" rx="36" ry="7" fill="#1c1d27" opacity=".7"/>
+          <g id="drums"><ellipse cx="680" cy="317" rx="29" ry="9" fill="#cda785"/><path d="M651 317v29q29 14 58 0v-29" fill="#865e63" stroke="#be9592" stroke-width="2"/><ellipse cx="680" cy="317" rx="29" ry="9" fill="none" stroke="#be9592" stroke-width="2"/><path id="drum-sticks" d="m658 293 26 26m15-25-21 24" stroke="#e0c29c" stroke-width="4" stroke-linecap="round"/><g id="drum-sound" fill="none" stroke="#e4b477" stroke-width="2"><path d="M716 300q10 8 0 16M725 293q18 15 0 30M642 300q-10 8 0 16"/></g></g>
+          <g id="trampoline"><path d="m190 327 8 15m64-15-8 15M199 326v16m54-16v16" stroke="#b7c5bd" stroke-width="4" stroke-linecap="round"/><ellipse id="trampoline-deck" cx="230" cy="326" rx="45" ry="8" fill="#799c98" stroke="#c4dbd1" stroke-width="3"/></g>
+          <g id="ribbon-stand"><path d="M586 310v32m-14 0h28m-21-34q7-9 14 0" fill="none" stroke="#b7a28f" stroke-width="3" stroke-linecap="round"/><path id="waiting-wand" d="m586 310 13-16" stroke="#f3d5b3" stroke-width="3" stroke-linecap="round"/></g>
+          <path id="beam" fill="url(#beam-glow)"/>
+          <ellipse id="spotlight" cx="110" cy="282" rx="56" ry="70" fill="url(#spot-glow)"/>
+          <path id="ribbon-back" d="" fill="#ca8ca8"/><path id="ribbon-back-shine" d="" fill="none" stroke="#edd2e0" stroke-width="1.2" opacity=".65"/>
+          <g id="pip-position">
+            <path id="pip-leg-outline" fill="none" stroke="#353246" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+            <path id="pip-legs" fill="none" stroke="#b9ace6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path id="pip-arm-back" fill="none" stroke="#353246" stroke-width="11" stroke-linecap="round"/><path id="pip-arm-back-colour" fill="none" stroke="#b9ace6" stroke-width="6" stroke-linecap="round"/>
+            <path id="wand-back" fill="none" stroke="#f3d5b3" stroke-width="3" stroke-linecap="round"/>
+            <g id="pip-torso">
+              <path id="pip-tail" d="M-26 20q-35 12-29-15 3-9 14-4L-26 6Z" fill="#a49bd2" stroke="#353246" stroke-width="2.5" stroke-linejoin="round"/>
+              <path d="m-27-23-2-36q0-9 8-2l21 21m12 0 25-21q8-6 6 5l-7 38" fill="#b9ace6" stroke="#353246" stroke-width="2.5"/>
+              <path id="pip-inner-ears" d="m-24-35-1-21 16 16Zm45-4 17-16-4 24Z" fill="#dcd3f2"/>
+              <path d="M-31-14q0-30 32-30 35 0 36 31l3 40q-4 20-37 20-35 0-37-22Z" fill="#b9ace6" stroke="#353246" stroke-width="2.5"/>
+              <g id="pip-face"><ellipse id="pip-belly" cx="2" cy="22" rx="17" ry="18" fill="#dcd3f2"/>
+                <ellipse cx="-12" cy="-14" rx="3" ry="4.5" fill="#353246"/><ellipse cx="15" cy="-14" rx="3" ry="4.5" fill="#353246"/><path id="pip-mouth" d="M-6-2q7 6 14 0" fill="none" stroke="#353246" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="-21" cy="-3" r="5" fill="#d895b2"/><circle cx="25" cy="-3" r="5" fill="#d895b2"/>
+                <path d="M-16 5 3 13 23 5" fill="none" stroke="#dca860" stroke-width="4"/><circle id="pip-bell" cx="3" cy="13" r="5" fill="#f4d394" stroke="#8b673f" stroke-width="1.5"/>
+              </g>
+            </g>
+            <path id="pip-arm-front" fill="none" stroke="#353246" stroke-width="11" stroke-linecap="round"/><path id="pip-arm-front-colour" fill="none" stroke="#b9ace6" stroke-width="6" stroke-linecap="round"/>
+            <path id="wand-front" fill="none" stroke="#f3d5b3" stroke-width="3" stroke-linecap="round"/>
+          </g>
+          <path id="ribbon-front" d="" fill="#e8a6c1"/><path id="ribbon-front-shine" d="" fill="none" stroke="#fae2ed" stroke-width="1.3" opacity=".7"/>
+          <g id="fog" fill="#c1c4d3"><ellipse cx="435" cy="280" rx="80" ry="60"/><ellipse cx="520" cy="254" rx="95" ry="84"/><ellipse cx="603" cy="288" rx="72" ry="65"/><ellipse cx="517" cy="324" rx="141" ry="28"/></g>
+          <circle id="aim-ring" cx="110" cy="282" r="22" fill="none" stroke="#ecd69c" stroke-width="1.5" stroke-dasharray="3 5" opacity=".8"/>
+          <g id="feed-markers"><path id="camera-link" fill="none" stroke="#a5dbff" stroke-width="1.5" stroke-dasharray="3 4"/><path id="audio-link" fill="none" stroke="#f0b878" stroke-width="1.5" stroke-dasharray="3 4"/><g id="camera-marker" fill="none" stroke="#a5dbff" stroke-width="2.5"><path d="M-11-15h-5v10M11-15h5v10M-11 15h-5V5M11 15h5V5M-4 0h8M0-4v8"/><path id="camera-marker-blocked" d="M-18 18 18-18" visibility="hidden"/><text y="-23" text-anchor="middle" fill="#c0e6ff" stroke="none" font-size="11" font-weight="700">C</text></g><g id="audio-marker" fill="none" stroke="#f0b878" stroke-width="2.5"><path d="m0-12 12 12L0 12-12 0Z"/><path id="audio-marker-blocked" d="M-16 16 16-16" visibility="hidden"/><text y="-21" text-anchor="middle" fill="#ffcf97" stroke="none" font-size="11" font-weight="700">M</text></g></g>
+          <path d="M0 0H68q-18 96-6 169-34 54-62 25ZM800 0H732q18 96 6 169 34 54 62 25Z" fill="#694858"/><path d="M0 0H800V24q-100 38-200 0-100 38-200 0-100 38-200 0Q100 62 0 24Z" fill="#795365"/>
+          <g transform="translate(400 30)"><path d="M-17-18h34l10 22h-54Z" fill="#151923" stroke="#777785" stroke-width="2"/><ellipse cy="4" rx="27" ry="6" fill="#e9ce8f"/></g>
+          <g id="payoff" visibility="hidden" fill="#e9ce8f"><path d="m180 110 4-10 4 10 10 4-10 4-4 10-4-10-10-4Zm380-4 4-10 4 10 10 4-10 4-4 10-4-10-10-4Z"/><text x="400" y="92" text-anchor="middle" font-size="18" font-family="Georgia,serif">Take a bow, Pip.</text></g>
+          <text id="stage-trick" x="400" y="400" text-anchor="middle" fill="#e8ded1" font-size="13">Entrance</text>
+        </svg>
+        <div class="arena-caption"><span id="conditions">Clear view · quiet stage</span><span id="beam-state">Pip is in the light</span></div>
+      </div>
+      <div class="stage-legend"><span class="camera-key">⌗ C: camera's guess</span><span class="audio-key">◇ M: microphones' guess</span><span>A crossed-out guess is ignored.</span></div>
+      <div class="sound-controls"><button id="sound-toggle" type="button" aria-pressed="true">Sound on</button><label for="volume">Volume</label><input id="volume" type="range" min="0" max="100" step="5" value="35" aria-label="Playback volume"><output id="volume-value" for="volume">35%</output><button id="listen" type="button" hidden>Hear the act</button><span id="sound-help">Sound starts with rehearsal. The bell gets louder as microphone clarity improves.</span></div>
+      <div class="transport"><button id="play" class="primary">Rehearse the act <span>▶</span></button><div class="timeline"><div><label for="scrub">Inspect the act</label><output id="clock">0.0 / 14.0 s</output></div><input id="scrub" type="range" min="0" max="420" step="1" value="0" aria-describedby="scrub-help"><p id="scrub-help">Pause or scrub to inspect any moment.</p></div></div>
+      <div class="result" id="result"><span class="result-icon" id="result-icon" aria-hidden="true">○</span><div><p id="result-title">The booth is yours.</p><p id="result-detail">C and M each mark a guess at Pip's position. The light follows the accepted guesses.</p><p id="source-feedback"></p></div><div class="coverage"><strong id="coverage">?</strong><small>OF ACT LIT</small></div></div>
+      <div class="moments" id="moments" aria-label="Moments from the act"></div>
+      <div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+    </div>
+    <aside class="booth" aria-labelledby="booth-title"><p class="eyebrow">THE LIGHTING BOOTH</p><h2 id="booth-title">Which guesses<br> should count?</h2><p class="booth-intro">Move a slider right to ignore less-clear readings, or left to use more. The dot or diamond shows how clear the current reading is.</p>
+      <section class="feed camera"><div class="feed-heading"><h3><span aria-hidden="true">⌗</span> Camera</h3><span class="feed-tag">C</span></div><p>Estimates Pip's position from the picture.</p><div class="feed-status"><span id="camera-reading">Clarity now: 89%</span><strong id="camera-status">Accepted</strong></div><div class="gate-wrap"><svg viewBox="0 0 260 60" aria-hidden="true"><defs><pattern id="camera-hatch" width="6" height="6" patternUnits="userSpaceOnUse"><path d="m-1 1 6 6m-1-7 3 3" stroke="#8497a6" stroke-width="1"/></pattern></defs><rect x="10" y="14" width="240" height="25" rx="4" fill="#dbe2e8"/><rect id="camera-rejected" x="10" y="14" width="0" height="25" fill="url(#camera-hatch)"/><rect id="camera-band" x="10" y="14" width="240" height="25" rx="4" fill="#54748b" opacity=".22"/><path id="camera-cut" d="M10 7v39" stroke="#345b76" stroke-width="3"/><circle id="camera-dot" cx="225" cy="26" r="7" fill="#345b76" stroke="#fffdf7" stroke-width="2"/><text x="10" y="57">Less clear</text><text x="250" y="57" text-anchor="end">More clear</text></svg><input id="camera-gate" type="range" min="0" max="100" step="5" value="0" aria-label="Ignore camera readings below this clarity" aria-describedby="gate-help camera-gate-example"></div><div class="gate-label"><label for="camera-gate">Ignore camera readings below</label><output id="camera-value" for="camera-gate">0% clarity</output></div><p class="contribution" id="camera-share">Shares the aim with microphones.</p></section>
+      <section class="feed audio"><div class="feed-heading"><h3><span aria-hidden="true">◇</span> Microphones</h3><span class="feed-tag">M</span></div><p>Estimate Pip's position from the costume bell.</p><div class="feed-status"><span id="audio-reading">Clarity now: 93%</span><strong id="audio-status">Accepted</strong></div><div class="gate-wrap"><svg viewBox="0 0 260 60" aria-hidden="true"><defs><pattern id="audio-hatch" width="6" height="6" patternUnits="userSpaceOnUse"><path d="m-1 1 6 6m-1-7 3 3" stroke="#a6937e" stroke-width="1"/></pattern></defs><rect x="10" y="14" width="240" height="25" rx="4" fill="#eadfcf"/><rect id="audio-rejected" x="10" y="14" width="0" height="25" fill="url(#audio-hatch)"/><rect id="audio-band" x="10" y="14" width="240" height="25" rx="4" fill="#9a6533" opacity=".22"/><path id="audio-cut" d="M10 7v39" stroke="#8c592e" stroke-width="3"/><path id="audio-dot" d="M0-8 8 0 0 8-8 0Z" transform="translate(233 26)" fill="#8c592e" stroke="#fffdf7" stroke-width="2"/><text x="10" y="57">Less clear</text><text x="250" y="57" text-anchor="end">More clear</text></svg><input id="audio-gate" type="range" min="0" max="100" step="5" value="0" aria-label="Ignore microphone readings below this clarity" aria-describedby="gate-help camera-gate-example"></div><div class="gate-label"><label for="audio-gate">Ignore microphone readings below</label><output id="audio-value" for="audio-gate">0% clarity</output></div><p class="contribution" id="audio-share">Shares the aim with the camera.</p></section>
+      <p class="gate-example" id="camera-gate-example">For example, at 60%: a 75%-clear reading is used; a 40%-clear reading is ignored.</p><p class="booth-note" id="gate-help">Two accepted guesses share the aim equally. One accepted guess sets the aim. If both are blocked, the light stays still.</p><div class="booth-tools"><label><input id="markers" type="checkbox" checked> Show C / M guesses</label><button id="reset" class="quiet">Reset sliders</button></div>
+    </aside>
+  </section>
+  <details class="records"><summary>Read this moment</summary><p id="moment-text"></p><div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable position readings"><table><caption>Position estimates in stage pixels, measured from the top left.</caption><thead><tr><th>Source</th><th>Across</th><th>Down</th><th>Clarity</th><th>Used in aim</th></tr></thead><tbody id="reading-rows"></tbody></table></div></details>
+  <details class="explainer"><summary>The idea behind the game</summary><p>The camera and microphones each guess the same position. Averaging their accepted guesses is additive fusion. Each minimum-clarity rule switches a source on or off according to its current reading. This is a small example of hard gated fusion.</p><p>A higher minimum clarity ignores more readings, including some useful ones. When both reject a reading, the spotlight holds still while Pip keeps moving. The target measures the whole visible act: Pip's centre must stay within <span id="rule-radius">22</span> stage pixels of the beam's centre for at least <span id="rule-target">97%</span> of its duration.</p><p>The motion, clarity cues and sensor errors are an authored simulation. The spotlight, contributions and score are computed from those inputs. Real multimodal models learn gates from data; here you set two thresholds to explore their effect.</p></details>
+  
+  <footer>Module 5, Unit 1 · The ribbon revue</footer>
+</main><script>(function(root) {
+  'use strict';
+  const DURATION = 14, FPS = 30, RADIUS = 22, TARGET = .97;
+  const clamp = (x, a=0, b=1) => Math.max(a, Math.min(b, x));
+  const smooth = x => { x=clamp(x); return x*x*(3-2*x); };
+  const windowed = (t,a,b,r=.3) => smooth((t-a)/r)*smooth((b-t)/r);
+  const EQUIP = 6.25;
+  const ribbonPhase=t=>2*Math.PI*.8*(t-6.75);
+  function truth(t) {
+    t=clamp(t,0,DURATION);
+    let x=110,y=290,crouch=0,tuck=0,rotation=0,bow=0,turn=0,reach=0,wave=0,gait=0,lean=0;
+    let trick='Entrance',surface=342;
+    if(t<.65) { x=110+65*smooth(t/.65);gait=Math.sin(t/.65*Math.PI*2)*Math.sin(t/.65*Math.PI); }
+    else if(t<.85) { x=175;crouch=.65*smooth((t-.65)/.2);trick='Preparing to hop'; }
+    else if(t<1.35) {
+      const u=(t-.85)/.5;x=175+55*smooth(u);crouch=.65-.4*smooth(u);
+      surface=342-16*smooth(u)-30*Math.sin(Math.PI*u);trick='Hop onto trampoline';
+    } else if(t<1.75) {
+      const u=smooth((t-1.35)/.4);x=230;surface=326+10*u;crouch=.25+.65*u;trick='Loading the trampoline';
+    } else if(t<1.95) {
+      const u=smooth((t-1.75)/.2);x=230;surface=336-10*u;crouch=.9*(1-u);trick='Takeoff';
+    } else if(t<4.15) {
+      const u=(t-1.95)/2.2;x=230+250*smooth(u);y=274+16*smooth(u)-140*4*u*(1-u);
+      rotation=360*smooth((u-.1)/.78);tuck=smooth((t-1.95)/.16)*(1-smooth((t-3.8)/.3));trick='Springboard somersault';
+    } else if(t<4.5) { x=480;crouch=.75*Math.sin(Math.PI*(t-4.15)/.35);trick='Landing'; }
+    else if(t<5.4) { x=480;bow=windowed(t,4.5,5.4,.28);trick='Somersault bow'; }
+    else if(t<7) {
+      const u=clamp((t-5.4)/.65);x=480+55*smooth(u);gait=Math.sin(u*Math.PI*2)*Math.sin(u*Math.PI);reach=windowed(t,5.8,6.75,.4);trick=t<EQUIP?'Picking up the ribbon':'Ready with the ribbon';
+    } else if(t<11) {
+      const phase=ribbonPhase(t),dance=windowed(t,7,11,.35);
+      x=535+30*Math.sin(phase)*dance;gait=.85*Math.sin(2*phase)*dance;
+      crouch=.28*(.5-.5*Math.cos(2*phase))*dance;trick='Ribbon flourish';
+    } else if(t<11.65) { x=535;trick='Ribbon finish'; }
+    else if(t<12.8) { x=535;bow=windowed(t,11.65,12.8,.35);trick='Ribbon bow'; }
+    else { x=535;trick='Curtain call'; }
+    wave=windowed(t,6.65,11.5,.65);
+    lean=6*wave*Math.sin(ribbonPhase(t)-.4);
+    if(trick!=='Springboard somersault') y=surface-(52-8*crouch);
+    return {t,x,y,rotation,scale:1,crouch,tuck,bow,turn,reach,wave,gait,lean,surface,equipped:t>=EQUIP,trick};
+  }
+  // One rig supplies the same feet, hands and wand anchor to both renderer and
+  // ribbon simulation. Crouching shortens the stance while feet stay planted.
+  function rig(p) {
+    const yaw=p.turn, roll=p.rotation*Math.PI/180, bow=(p.bow*25+p.lean)*Math.PI/180;
+    const width=.4+.6*Math.cos(yaw)**2, sx=1+.07*p.crouch, sy=1-.13*p.crouch-.04*p.tuck;
+    function body(x,y,z=0) {
+      const projectedX=(x*Math.cos(yaw)+z*Math.sin(yaw))*sx;
+      const projectedY=(y-24)*sy;
+      return {x:projectedX*Math.cos(bow)-projectedY*Math.sin(bow),y:24+projectedX*Math.sin(bow)+projectedY*Math.cos(bow),z:-x*Math.sin(yaw)+z*Math.cos(yaw)};
+    }
+    function world(q) {return {x:p.x+q.x*Math.cos(roll)-q.y*Math.sin(roll),y:p.y+q.x*Math.sin(roll)+q.y*Math.cos(roll),z:q.z};}
+    const swing=ribbonPhase(p.t);
+    const handX=(48+3*p.reach+p.wave*(-13+32*Math.cos(swing)))*(1-p.tuck)+12*p.tuck;
+    const handY=(-21+41*p.reach+p.wave*(1+28*Math.sin(swing)))*(1-p.tuck)+18*p.tuck;
+    const handDepth=18+p.wave*35*Math.sin(swing);
+    const rightHand=body(handX,handY,handDepth);
+    const leftHand=body(-45+33*p.tuck+8*p.wave*Math.sin(swing),17-32*p.wave*(.5+.5*Math.cos(swing))+3*p.tuck,10);
+    const rightShoulder=body(31,0),leftShoulder=body(-27,0);
+    const wandTip=body(handX+13,handY-16,handDepth);
+    function leg(side) {
+      const hip={x:side*11,y:30};
+      const foot={x:side*(16-6*p.tuck)+p.gait*2,y:(52-8*p.crouch)*(1-p.tuck)+34*p.tuck-Math.max(0,side*p.gait)*3};
+      const dx=foot.x-hip.x,dy=foot.y-hip.y,d=Math.hypot(dx,dy),h=Math.sqrt(Math.max(0,13*13-d*d/4));
+      const knee={x:(hip.x+foot.x)/2+side*h*dy/(d||1),y:(hip.y+foot.y)/2-side*h*dx/(d||1)};
+      return {hip,knee,foot};
+    }
+    return {rightHand,leftHand,rightShoulder,leftShoulder,wandTip,wandWorld:world(wandTip),world,project:(x,y,z)=>world(body(x,y,z)),legs:[leg(-1),leg(1)],width,sx,sy,bow:p.bow*25+p.lean,front:Math.cos(yaw)>=0};
+  }
+  // The wrist and ribbon share a phase. Material farther down the strip trails
+  // the wrist through a wider orbit, passing in front of and behind Pip.
+  // This is expressive animation, not a cable or a physical cloth simulation.
+  let ribbonCache;
+  function ribbonFrames() {
+    if(ribbonCache)return ribbonCache;
+    const stand=rig(truth(EQUIP)).wandWorld;
+    ribbonCache=[];
+    for(let i=0;i<=DURATION*FPS;i++) {
+      const t=i/FPS,p=truth(t),pose=rig(p),anchor=p.equipped?pose.wandWorld:stand;
+      const flutter=p.wave,phase=ribbonPhase(t),chain=[];
+      const orbitStart=pose.project(48+32*Math.cos(phase),-36+28*Math.sin(phase),18+35*Math.sin(phase));
+      for(let j=0;j<=64;j++) {
+        const u=j/64,envelope=Math.sin(Math.PI*u);
+        const restX=20*u+15*Math.sin(2*Math.PI*u)*envelope;
+        const restY=Math.min(339-anchor.y,130*u);
+        const lag=phase-2.3*Math.PI*u,spread=Math.sin(Math.PI*u/2);
+        const orbit=pose.project(48+(32+60*spread)*Math.cos(lag),-36+(28+15*u)*Math.sin(lag)+25*u,18+(35+50*spread)*Math.sin(lag));
+        chain.push({
+          x:anchor.x+(1-flutter)*restX+flutter*(orbit.x-orbitStart.x),
+          y:Math.min(339,anchor.y+(1-flutter)*restY+flutter*(orbit.y-orbitStart.y)),
+          z:anchor.z+flutter*(orbit.z-orbitStart.z),
+          width:(7.5-4.5*u)*(1+.18*flutter*Math.sin(phase-5*u))
+        });
+      }
+      ribbonCache.push(chain);
+    }
+    return ribbonCache;
+  }
+  function observations(t) {
+    const p=truth(t), fog=windowed(t,3.65,8.25,.6), drums=Math.max(windowed(t,1.6,3.8,.4),windowed(t,8.6,10.6,.4));
+    const faintBell=windowed(t,6.7,8.4,.5);
+    const cq=clamp(.88-.42*fog+.09*Math.sin(t*3.7)+.035*Math.cos(t*9),.08,.99);
+    const aq=clamp(.65-.46*drums-.20*faintBell+.11*Math.cos(t*2.8)+.045*Math.sin(t*8.3),.06,.99);
+    // The feeds have different error profiles: smoke can spoil a moderately
+    // clear picture, while a faint bell can still give a useful position.
+    // Clarity is an imperfect cue within each feed, not a shared accuracy scale.
+    const cameraAmplitude=5+95*smooth((.78-cq)/.35), audioAmplitude=5+145*smooth((.35-aq)/.20);
+    const camera={q:cq,x:clamp(p.x+cameraAmplitude*(.75*Math.sin(t*4.1)+.7*Math.cos(t*2.1)),45,735),y:clamp(p.y+cameraAmplitude*.7*Math.cos(t*4.5),70,325)};
+    const audio={q:aq,x:clamp(p.x+audioAmplitude*(.8*Math.sin(t*3.2+1.8)+.7*Math.cos(t*5.1)),45,735),y:clamp(p.y+audioAmplitude*.7*Math.sin(t*4.4+.6),70,325)};
+    return {t,p,camera,audio,fog,drums,faintBell};
+  }
+  // A gate is hard acceptance of the current clarity reading, followed by equal
+  // fusion of accepted estimates. With no accepted input the lamp holds still.
+  // Clarity is an authored imperfect cue, not an oracle for the actual error.
+  function run(cameraGate=0,audioGate=0) {
+    cameraGate=clamp(cameraGate,0,100); audioGate=clamp(audioGate,0,100);
+    let aim={x:truth(0).x,y:truth(0).y};
+    const frames=[];
+    for(let i=0;i<=DURATION*FPS;i++) {
+      const f=observations(i/FPS), cameraOn=f.camera.q*100>=cameraGate, audioOn=f.audio.q*100>=audioGate;
+      const count=Number(cameraOn)+Number(audioOn);
+      if(count) aim={x:(Number(cameraOn)*f.camera.x+Number(audioOn)*f.audio.x)/count,y:(Number(cameraOn)*f.camera.y+Number(audioOn)*f.audio.y)/count};
+      const error=Math.hypot(aim.x-f.p.x,aim.y-f.p.y);
+      frames.push({...f,aim:{...aim},cameraOn,audioOn,cameraWeight:count?Number(cameraOn)/count:0,audioWeight:count?Number(audioOn)/count:0,error,lit:error<=RADIUS});
+    }
+    // The last frame is a display endpoint, not an extra fraction of the act.
+    const judged=frames.slice(0,-1), lit=judged.filter(f=>f.lit).length;
+    const worst=judged.reduce((a,f,i)=>f.error>judged[a].error?i:a,0);
+    return {cameraGate,audioGate,frames,lit,total:judged.length,coverage:lit/judged.length,success:lit/judged.length>=TARGET,worst};
+  }
+  const api={DURATION,FPS,RADIUS,TARGET,EQUIP,truth,rig,ribbonFrames,observations,run};
+  if(typeof module!=='undefined'&&module.exports) module.exports=api;
+  root.Crossfade=api;
+})(typeof globalThis!=='undefined'?globalThis:this);
+</script><script>(function(root) {
+  'use strict';
+  const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+  const BELL_TIMES=[.15,.58,1.0,1.42,1.85,2.05,2.32,2.58,2.86,3.13,3.41,3.69,4.1,4.65,5.5,5.9,6.35,6.8,7.15,7.5,7.85,8.2,8.55,8.9,9.25,9.6,9.95,10.3,10.65,11.05,11.8,12.3,13.1,13.65];
+  const bellGain=q=>.08+.92*clamp(q)**1.6;
+  function events(model) {
+    const bells=BELL_TIMES.filter(t=>t<model.DURATION).map((t,i)=>({t,pitch:[1174.66,1318.51,1567.98,1318.51][i%4],pan:clamp((model.truth(t).x-400)/350,-.8,.8),clarity:model.observations(t).audio.q}));
+    const drums=[];
+    for(let i=0;i<model.DURATION*4;i++) {
+      const t=.1+i*.25, level=model.observations(t).drums;
+      if(level>.01) drums.push({t,level,snare:i%2===1,seed:i+1});
+    }
+    return {bells,drums};
+  }
+  function pulse(t,sequence,decay) {
+    let value=0;
+    for(const event of sequence) if(t>=event.t&&t-event.t<.5) value=Math.max(value,(event.level??1)*Math.exp(-(t-event.t)/decay));
+    return value;
+  }
+  function render(model,sampleRate=22050,{includeDrums=true}={}) {
+    const length=Math.ceil(model.DURATION*sampleRate), left=new Float32Array(length), right=new Float32Array(length);
+    const schedule=events(model);
+    function add(event,duration,wave,amplitude) {
+      const pan=event.pan??.67, l=Math.cos((pan+1)*Math.PI/4), r=Math.sin((pan+1)*Math.PI/4);
+      const start=Math.round(event.t*sampleRate), count=Math.min(Math.ceil(duration*sampleRate),length-start);
+      for(let j=0;j<count;j++) {
+        const x=wave(j/sampleRate)*amplitude;
+        left[start+j]+=x*l; right[start+j]+=x*r;
+      }
+    }
+    for(const bell of schedule.bells) add(bell,.48,t=>{
+      const envelope=(1-Math.exp(-t/.0018))*Math.exp(-t/.105), phase=2*Math.PI*bell.pitch*t;
+      return bellGain(model.observations(bell.t+t).audio.q)*envelope*(Math.sin(phase)+.35*Math.sin(phase*2.76)*Math.exp(-t/.06)+.13*Math.sin(phase*4.07)*Math.exp(-t/.035));
+    },.18);
+    for(const drum of includeDrums?schedule.drums:[]) {
+      let state=drum.seed, low=0;
+      add(drum,.27,t=>{
+        state=(Math.imul(1664525,state)+1013904223)>>>0;
+        const noise=state/2147483648-1; low=.72*low+.28*noise;
+        if(drum.snare) return (1-Math.exp(-t/.001))*(.8*(noise-low)*Math.exp(-t/.065)+.3*Math.sin(2*Math.PI*185*t)*Math.exp(-t/.045));
+        const phase=2*Math.PI*(58*t+52*.027*(1-Math.exp(-t/.027)));
+        return (1-Math.exp(-t/.0015))*(Math.sin(phase)*Math.exp(-t/.075)+.18*noise*Math.exp(-t/.015));
+      },drum.level*(drum.snare?.36:.32));
+    }
+    let peak=0;
+    for(let i=0;i<length;i++) peak=Math.max(peak,Math.abs(left[i]),Math.abs(right[i]));
+    if(peak>.8) {const scale=.8/peak;for(let i=0;i<length;i++){left[i]*=scale;right[i]*=scale;}peak=.8;}
+    return {channels:[left,right],sampleRate,duration:model.DURATION,peak};
+  }
+  function createPlayer(model,{AudioContext=root.AudioContext||root.webkitAudioContext,onState=()=>{}}={}) {
+    let context,master,buffer,active,failed=false,enabled=true,volume=.35;
+    const supported=typeof AudioContext==='function';
+    function state() {return {available:supported&&!failed,enabled,volume,playing:!!active&&!active.ended};}
+    function gain() {
+      if(!master)return;
+      master.gain.cancelScheduledValues(context.currentTime);
+      master.gain.setTargetAtTime(enabled?volume:0,context.currentTime,.008);
+    }
+    function stop() {
+      if(active) {
+        const source=active.source; active=null;
+        try {source.stop();source.disconnect();}catch(_){}
+      }
+      onState(state());
+    }
+    function fail() {failed=true;stop();onState(state());}
+    function prepare() {
+      if(context)return;
+      context=new AudioContext(); master=context.createGain();
+      master.gain.setValueAtTime(enabled?volume:0,context.currentTime);
+      master.connect(context.destination);
+      const rendered=render(model);
+      buffer=context.createBuffer(2,rendered.channels[0].length,rendered.sampleRate);
+      for(let channel=0;channel<2;channel++) buffer.getChannelData(channel).set(rendered.channels[channel]);
+    }
+    function play(from=0) {
+      if(!supported||failed||!enabled||from>=model.DURATION)return false;
+      try {
+        prepare();stop();
+        if(context.state==='suspended') {
+          const resumed=context.resume(); if(resumed&&resumed.catch)resumed.catch(fail);
+        }
+        const source=context.createBufferSource(); source.buffer=buffer; source.connect(master);
+        const item={source,from:clamp(from,0,model.DURATION),at:context.currentTime+.025,ended:false};
+        active=item;
+        source.onended=()=>{if(active===item)item.ended=true;source.disconnect();onState(state());};
+        source.start(item.at,item.from);onState(state());return true;
+      } catch(_) {fail();return false;}
+    }
+    function position() {
+      if(!active||failed)return null;
+      if(active.ended)return model.DURATION;
+      return clamp(active.from+Math.max(0,context.currentTime-active.at),0,model.DURATION);
+    }
+    return {play,stop,position,state,
+      setEnabled(value){enabled=!!value;gain();onState(state());},
+      setVolume(value){volume=clamp(Number(value)||0);gain();onState(state());}
+    };
+  }
+  const api={events,pulse,render,bellGain,createPlayer};
+  if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  root.CrossfadeAudio=api;
+})(typeof globalThis!=='undefined'?globalThis:this);
+</script><script>(function() {
+  'use strict';
+  const params=new URLSearchParams(location.search);
+  const course=document.documentElement.dataset.mode==='course'||params.get('mode')==='course';
+  if(course)document.documentElement.dataset.mode='course';
+  document.body.classList.toggle('embedded',course||params.get('embed')==='1');
+  const explanation=document.querySelector('.explainer');
+  if(course){explanation.hidden=true;explanation.open=true;}
+  window.ArcadeMode={course};
+  // Same-origin previews can resize their frame. The published course host is
+  // cross-origin, so its course page also supplies a measured fallback height.
+  function fit() {
+    try {
+      const frame=window.frameElement,main=document.querySelector('main');
+      if(frame&&main) {
+        const height=Math.ceil(main.getBoundingClientRect().bottom+window.scrollY+8);
+        if(Math.abs(frame.offsetHeight-height)>4)frame.style.height=height+'px';
+      }
+    }catch(e){}
+  }
+  if(course&&typeof ResizeObserver!=='undefined')new ResizeObserver(fit).observe(document.body);
+})();
+</script>
+<script>(function() {
+  'use strict';
+  const M=Crossfade, $=id=>document.getElementById(id), reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COURSE=window.ArcadeMode.course;
+  let run=M.run(), frame=0, busy=false, completed=false, rehearsals=0, token=0, resumeFrame=null;
+  const sound=CrossfadeAudio.createPlayer(M,{onState:updateSound}), soundEvents=CrossfadeAudio.events(M), ribbons=M.ribbonFrames();
+  function updateSound(state) {
+    $('sound-toggle').textContent=state.available?(state.enabled?'Sound on':'Sound off'):'Sound unavailable';
+    $('sound-toggle').setAttribute('aria-pressed',String(state.enabled&&state.available));
+    $('sound-toggle').disabled=!state.available; $('volume').disabled=!state.available;
+    $('listen').disabled=!state.available; $('listen').textContent=state.playing?'Stop listening':'Hear the act';
+    $('volume-value').textContent=Math.round(state.volume*100)+'%';
+  }
+  const pct=x=>Math.round(100*x)+'%', scorePct=x=>Number((100*x).toFixed(1))+'%', n=x=>Math.round(x);
+  // Integer cutoffs compare exactly with floored clarity. Rounding could show
+  // an 80% reading blocked by an 80% cutoff when its actual clarity was 79.8%.
+  const clarity=q=>Math.floor(100*q)+'%';
+  const attr=(id,key,value)=>$(id).setAttribute(key,String(value));
+  function sourceFeedback(f) {
+    const camera=`Camera ${f.cameraOn?'accepted':'blocked'} (${clarity(f.camera.q)} clarity, ${n(Math.hypot(f.camera.x-f.p.x,f.camera.y-f.p.y))} px from Pip).`;
+    const audio=`Microphones ${f.audioOn?'accepted':'blocked'} (${clarity(f.audio.q)} clarity, ${n(Math.hypot(f.audio.x-f.p.x,f.audio.y-f.p.y))} px from Pip).`;
+    const aim=f.cameraOn&&f.audioOn?'Their guesses share the aim equally.':f.cameraOn?'The camera alone sets the aim.':f.audioOn?'The microphones alone set the aim.':'Both are blocked, so the light holds its last position.';
+    return `${camera} ${audio} ${aim}`;
+  }
+  function draw(i) {
+    frame=Math.max(0,Math.min(run.frames.length-1,Math.round(i)));
+    const f=run.frames[frame], p=f.p;
+    const rig=M.rig(p);
+    attr('pip-position','transform',`translate(${p.x} ${p.y}) rotate(${p.rotation})`);
+    attr('pip-torso','transform',`rotate(${rig.bow} 0 24) translate(0 24) scale(${rig.width*rig.sx} ${rig.sy}) translate(0 -24)`);
+    attr('pip-face','visibility',rig.front?'visible':'hidden');
+    attr('pip-shadow','cx',p.x);attr('pip-shadow','rx',Math.max(14,36*(p.y/290)));
+    let legs='';
+    for(let side=0;side<2;side++) {
+      const {hip,knee,foot}=rig.legs[side];
+      legs+=`M${hip.x} ${hip.y}Q${knee.x} ${knee.y} ${foot.x} ${foot.y}l${side?6:-6} 0`;
+    }
+    attr('pip-legs','d',legs);attr('pip-leg-outline','d',legs);
+    let back='',front='';
+    for(const [shoulder,hand,side] of [[rig.leftShoulder,rig.leftHand,-1],[rig.rightShoulder,rig.rightHand,1]]) {
+      const path=`M${shoulder.x} ${shoulder.y}Q${(shoulder.x+hand.x)/2+side*12*(1-p.tuck)} ${(shoulder.y+hand.y)/2+10} ${hand.x} ${hand.y}`;
+      if(hand.z<0)back+=path;else front+=path;
+    }
+    attr('pip-arm-back','d',back);attr('pip-arm-back-colour','d',back);
+    attr('pip-arm-front','d',front);attr('pip-arm-front-colour','d',front);
+    const wand=p.equipped?`M${rig.rightHand.x} ${rig.rightHand.y}L${rig.wandTip.x} ${rig.wandTip.y}`:'';
+    attr('wand-back','d',rig.wandTip.z<0?wand:'');attr('wand-front','d',rig.wandTip.z>=0?wand:'');
+    attr('waiting-wand','visibility',p.equipped?'hidden':'visible');
+    let ribbonBack='',ribbonFront='',backShine='',frontShine='';
+    const chain=ribbons[frame].map((q,j,points)=>{
+      const before=points[Math.max(0,j-1)],after=points[Math.min(points.length-1,j+1)];
+      const dx=after.x-before.x,dy=after.y-before.y,length=Math.hypot(dx,dy)||1;
+      const nx=-dy/length*q.width/2,ny=dx/length*q.width/2;
+      return {...q,lx:q.x+nx,ly:q.y+ny,rx:q.x-nx,ry:q.y-ny};
+    });
+    function segment(a,b,frontSide) {
+      const band=`M${a.lx} ${a.ly}L${b.lx} ${b.ly}L${b.rx} ${b.ry}L${a.rx} ${a.ry}Z`;
+      const shine=`M${a.x+(a.lx-a.x)*.45} ${a.y+(a.ly-a.y)*.45}L${b.x+(b.lx-b.x)*.45} ${b.y+(b.ly-b.y)*.45}`;
+      if(frontSide){ribbonFront+=band;frontShine+=shine;}else{ribbonBack+=band;backShine+=shine;}
+    }
+    for(let j=1;j<chain.length;j++) {
+      const a=chain[j-1],b=chain[j];
+      if((a.z>=0)===(b.z>=0))segment(a,b,a.z>=0);
+      else {
+        const u=-a.z/(b.z-a.z),mid={};
+        for(const key of ['x','y','lx','ly','rx','ry'])mid[key]=a[key]+u*(b[key]-a[key]);
+        segment(a,mid,a.z>=0);segment(mid,b,b.z>=0);
+      }
+    }
+    attr('ribbon-back','d',ribbonBack);attr('ribbon-front','d',ribbonFront);
+    attr('ribbon-back-shine','d',backShine);attr('ribbon-front-shine','d',frontShine);
+    attr('beam','d',`M392 36 408 36 ${f.aim.x+54} ${f.aim.y+24} Q${f.aim.x} ${f.aim.y+70} ${f.aim.x-54} ${f.aim.y+24}Z`);
+    for(const id of ['spotlight','aim-ring']) { attr(id,'cx',f.aim.x); attr(id,'cy',f.aim.y); }
+    attr('pip-position','opacity',1);attr('pip-position','style',f.lit?'filter:brightness(1)':'filter:brightness(.65)');
+    attr('fog','opacity',(.04+.42*f.fog).toFixed(3));
+    attr('drum-sound','opacity',f.drums>.3?1:.12);
+    const drumPulse=CrossfadeAudio.pulse(f.t,soundEvents.drums,.065);
+    attr('drum-sticks','transform',`rotate(${drumPulse*18} 680 318)`);
+    attr('pip-bell','r',5+1.4*CrossfadeAudio.pulse(f.t,soundEvents.bells,.065));
+    attr('trampoline-deck','cy',f.t>=1.35&&f.t<=1.95?p.surface:326);
+    attr('camera-marker','transform',`translate(${f.camera.x} ${f.camera.y})`);
+    attr('audio-marker','transform',`translate(${f.audio.x} ${f.audio.y})`);
+    attr('camera-marker','opacity',f.cameraOn?1:.55); attr('audio-marker','opacity',f.audioOn?1:.55);
+    for(const source of ['camera','audio']) {
+      const input=f[source], on=f[source+'On'], gate=run[source+'Gate'];
+      $(source+'-reading').textContent='Clarity now: '+clarity(input.q);
+      $(source+'-status').textContent=on?'Accepted':'Blocked'; attr(source+'-status','data-blocked',on?'no':'yes');
+      attr(source+'-band','x',10+2.4*gate); attr(source+'-band','width',240-2.4*gate);
+      attr(source+'-rejected','width',2.4*gate);
+      attr(source+'-cut','d',`M${10+2.4*gate} 7v39`);
+      if(source==='camera') attr('camera-dot','cx',10+240*input.q);
+      else attr('audio-dot','transform',`translate(${10+240*input.q} 26)`);
+      $(source+'-value').textContent=gate+'% clarity';
+      $(source+'-share').textContent=on?(f[source+'Weight']===1?'Sets the whole aim.':'Shares the aim equally.'):'Ignored by the spotlight.';
+      attr(source+'-marker-blocked','visibility',on?'hidden':'visible');
+      attr(source+'-link','d',on&&!busy?`M${input.x} ${input.y}L${f.aim.x} ${f.aim.y}`:'');
+      attr(source+'-gate','aria-valuetext','Ignore '+(source==='camera'?'camera':'microphone')+' readings below '+gate+' percent clarity');
+    }
+    $('stage-trick').textContent=p.trick;
+    $('conditions').textContent=(f.fog>.25?'Smoke on stage':'Clear view')+' · '+(f.drums>.25?'bell and drums':f.faintBell>.25?'faint bell':'bell only');
+    $('beam-state').textContent=f.lit?'Pip is in the light':'Pip is outside the light';
+    $('scrub').value=String(frame); $('clock').textContent=f.t.toFixed(1)+' / '+M.DURATION.toFixed(1)+' s';
+    const description=`${f.t.toFixed(1)} seconds, ${p.trick}. Pip at (${n(p.x)}, ${n(p.y)}). Spotlight at (${n(f.aim.x)}, ${n(f.aim.y)}), ${n(f.error)} pixels from Pip. ${f.lit?'Inside':'Outside'} the ${M.RADIUS}-pixel target. Camera clarity ${clarity(f.camera.q)}, ${f.cameraOn?'accepted':'blocked'}. Microphone clarity ${clarity(f.audio.q)}, ${f.audioOn?'accepted':'blocked'}.`;
+    $('stage-desc').textContent=description; $('moment-text').textContent=description;
+    $('source-feedback').textContent=`At ${f.t.toFixed(1)} s: ${sourceFeedback(f)}`;
+    $('reading-rows').innerHTML=[['Pip',p.x,p.y,'',''],['Camera',f.camera.x,f.camera.y,clarity(f.camera.q),pct(f.cameraWeight)],['Microphones',f.audio.x,f.audio.y,clarity(f.audio.q),pct(f.audioWeight)],['Spotlight',f.aim.x,f.aim.y,'','']].map(row=>'<tr>'+row.map((x,i)=>i===0?'<th scope="row">'+x+'</th>':'<td>'+(typeof x==='number'?n(x):x)+'</td>').join('')+'</tr>').join('');
+    document.querySelectorAll('[data-moment]').forEach(button=>button.classList.toggle('active',Number(button.getAttribute('data-moment'))===Math.min(Math.ceil(M.DURATION/2)-1,Math.floor(frame/(M.FPS*2)))));
+  }
+  function moments() {
+    $('moments').innerHTML='';
+    for(let j=0;j<Math.ceil(M.DURATION/2);j++) {
+      const chunk=run.frames.slice(j*M.FPS*2,(j+1)*M.FPS*2), good=chunk.filter(f=>f.lit).length/chunk.length;
+      const worst=chunk.reduce((a,f,i)=>f.error>chunk[a].error?i:a,0)+j*M.FPS*2;
+      const button=document.createElement('button'); button.type='button'; button.className='moment'+(completed?(good>=M.TARGET?' pass':' fail'):'');
+      button.setAttribute('data-moment',String(j)); button.setAttribute('aria-label',`Inspect ${j*2} to ${j*2+2} seconds${completed?', '+scorePct(good)+' lit':''}`);
+      button.innerHTML='<span>'+j*2+' to '+(j*2+2)+' s</span>'+(completed?scorePct(good)+' lit':'Inspect');
+      button.addEventListener('click',()=>{pause();draw(worst);}); $('moments').appendChild(button);
+    }
+  }
+  function pause(canResume=false) {
+    resumeFrame=canResume?frame:null;
+    token++; busy=false; sound.stop(); $('play').innerHTML=(completed?'Replay the act':canResume?'Resume rehearsal':'Rehearse the act')+' <span>▶</span>';
+    $('camera-gate').disabled=false; $('audio-gate').disabled=false;
+    $('phase').textContent=completed?(run.success?'Ready for the audience':'Reviewing the rehearsal'):'Rehearsal paused';
+  }
+  function finish() {
+    pause(); completed=true; rehearsals++;
+    $('play').innerHTML='Replay the act <span>▶</span>';
+    $('result').setAttribute('data-outcome',run.success?'pass':'miss');
+    $('result-icon').textContent=run.success?'✓':'○'; $('coverage').textContent=scorePct(run.coverage);
+    $('show').classList.toggle('success',run.success);
+    $('phase').textContent=run.success?'Ready for the audience':'Reviewing the rehearsal';
+    $('result-title').textContent=run.success?'The light kept up. Take a bow!':'The spotlight lost Pip.';
+    const worst=run.frames[run.worst];
+    $('result-detail').textContent=scorePct(run.coverage)+' of the act lit; the target is '+scorePct(M.TARGET)+'. '+(run.success?'The full somersault and ribbon routine are ready.':`At ${worst.t.toFixed(1)} s, during ${worst.p.trick.toLowerCase()}, the beam was ${n(worst.error)} pixels from Pip.`);
+    attr('payoff','visibility',run.success?'visible':'hidden');
+    if(COURSE&&(run.success||rehearsals>=4)) document.querySelector('.explainer').hidden=false;
+    moments(); draw(run.success?run.frames.length-1:run.worst);
+    $('live').textContent=$('result-title').textContent+' '+$('result-detail').textContent+' '+sourceFeedback(run.frames[frame]);
+  }
+  function play() {
+    if(busy) {pause(true);return;}
+    frame=resumeFrame===null?0:resumeFrame;resumeFrame=null;
+    completed=false; busy=true; const stamp=++token, startFrame=frame; let started;
+    $('camera-gate').disabled=true; $('audio-gate').disabled=true;
+    $('play').innerHTML='Pause rehearsal <span>Ⅱ</span>'; $('phase').textContent='Rehearsing';
+    attr('payoff','visibility','hidden'); $('show').classList.remove('success');
+    if(reduced) {finish();return;}
+    sound.play(startFrame/M.FPS);
+    function step(now) {
+      if(stamp!==token) return;
+      if(started===undefined) started=now;
+      // Use the audio clock while it is running; otherwise anchor the fallback
+      // to the current frame so muting or a device error cannot jump the act.
+      const audioTime=sound.position();
+      const i=Math.min(run.frames.length-1,audioTime===null?startFrame+Math.floor(Math.max(0,now-started)*M.FPS/1000):Math.floor(audioTime*M.FPS));
+      if(audioTime!==null) started=now-(i-startFrame)*1000/M.FPS;
+      draw(i);
+      if(i===run.frames.length-1) finish(); else requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  function change() {
+    pause(); completed=false; run=M.run(Number($('camera-gate').value),Number($('audio-gate').value));
+    $('phase').textContent='New settings, ready to rehearse'; $('coverage').textContent='?';
+    $('result').removeAttribute('data-outcome'); $('result-icon').textContent='○';
+    $('result-title').textContent='A new mix for the same act.';
+    $('result-detail').textContent='Ignore camera readings below '+run.cameraGate+'% clarity and microphone readings below '+run.audioGate+'%. Rehearse to see the result.';
+    $('show').classList.remove('success'); attr('payoff','visibility','hidden');
+    moments(); draw(frame);
+  }
+  $('play').addEventListener('click',play);
+  for(const source of ['camera','audio']) $(source+'-gate').addEventListener('input',change);
+  $('scrub').addEventListener('input',()=>{pause();draw(Number($('scrub').value));});
+  $('markers').addEventListener('change',()=>attr('feed-markers','visibility',$('markers').checked?'visible':'hidden'));
+  $('sound-toggle').addEventListener('click',()=>{sound.setEnabled(!sound.state().enabled);if(busy&&sound.state().enabled&&sound.position()===null)sound.play(frame/M.FPS);});
+  $('volume').addEventListener('input',()=>sound.setVolume(Number($('volume').value)/100));
+  $('listen').addEventListener('click',()=>{
+    if(sound.state().playing) sound.stop();
+    else {sound.setEnabled(true);sound.play(0);}
+  });
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){pause(busy);$('listen').textContent='Hear the act';}});
+  window.addEventListener('pagehide',()=>sound.stop());
+  $('reset').addEventListener('click',()=>{pause();$('camera-gate').value='0';$('audio-gate').value='0';frame=0;change();});
+  if(COURSE) document.querySelector('.explainer').hidden=true;
+  $('listen').hidden=!reduced; updateSound(sound.state());
+  if(reduced) $('sound-help').textContent='Still views: use Hear the act to listen to the bell and drums.';
+  $('goal-target').textContent=scorePct(M.TARGET); $('rule-target').textContent=scorePct(M.TARGET); $('rule-radius').textContent=M.RADIUS;
+  attr('aim-ring','r',M.RADIUS);
+  $('scrub').max=String(M.DURATION*M.FPS);moments(); draw(0);
+  window.crossfadeState=()=>({busy,completed,rehearsals,frame,cameraGate:run.cameraGate,audioGate:run.audioGate,coverage:run.coverage,success:run.success,sound:sound.state()});
+})();
+</script></body></html>
