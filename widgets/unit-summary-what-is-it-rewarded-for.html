@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What is it actually rewarded for?</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{--ink:#1d292b;--muted:#5a676a;--line:#cfd7d5;--paper:#f7f8f5;--a:#a31f34;--b:#245a7a;--grey:#7b8785;--bad:#7d2a33;
+        --act:#1b6d74;--act-w:#e3f2f3;--reward:#3b7a3a;--reward-w:#ebf4e8;--base:#654c91;--base-w:#f1ecf8;--hack:#9a5b00;--hack-w:#fff2dc;--plan:#245a7a;--plan-w:#e6eff5;--ask:#8b3a6d;--ask-w:#f6e9f1;--remember:#7b5232;--remember-w:#f3ece5}
+  body{margin:0;padding:18px 16px 26px;background:var(--paper);color:var(--ink);font:16px/1.45 Arial,Helvetica,sans-serif}
+  main{max-width:840px;margin:auto}
+  button{font:inherit;cursor:pointer}button:disabled{cursor:default;opacity:.45}
+  button:focus-visible,h2:focus-visible{outline:3px solid #176ca5;outline-offset:3px}
+  [hidden]{display:none!important}
+  [data-tone="act"]{--tone:var(--act);--wash:var(--act-w)}[data-tone="reward"]{--tone:var(--reward);--wash:var(--reward-w)}
+  [data-tone="base"]{--tone:var(--base);--wash:var(--base-w)}[data-tone="hack"]{--tone:var(--hack);--wash:var(--hack-w)}
+  [data-tone="plan"]{--tone:var(--plan);--wash:var(--plan-w)}[data-tone="ask"]{--tone:var(--ask);--wash:var(--ask-w)}[data-tone="remember"]{--tone:var(--remember);--wash:var(--remember-w)}
+  .eyebrow{margin:0 0 3px;color:var(--a);font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase}
+  h1{margin:0 0 14px;font:500 clamp(28px,5vw,38px)/1.1 Georgia,"Times New Roman",serif}
+
+  .steps{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:12px}
+  .step{display:grid;justify-items:center;gap:1px;padding:7px 4px;border:1px solid var(--line);border-top:4px solid var(--tone);border-radius:4px;background:#fff;color:#4a5659;font-size:14px}
+  .step b{font:700 12px "Courier New",monospace;color:var(--tone)}
+  .step[aria-selected="true"]{background:var(--wash);border-color:var(--tone);color:var(--ink);font-weight:700}
+
+  .stage{padding:20px 20px 18px;border:1px solid var(--line);border-top:5px solid var(--tone);border-radius:8px;background:#fff}
+  .kicker{margin:0 0 2px;color:var(--tone);font:700 13px "Courier New",monospace;text-transform:uppercase}
+  h2{margin:0 0 16px;font:500 clamp(24px,4.4vw,31px)/1.2 Georgia,"Times New Roman",serif}
+  .head{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin:0 0 6px}
+  .note{margin:6px 0 0;color:var(--muted);font-size:12px}
+
+  /* the mock shop */
+  .shop{border:1px solid var(--line);border-radius:7px;background:#fbfcfb;padding:10px;transition:opacity .3s}
+  .shop .bar{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+  .shop .el{position:relative;border:1px solid #b9c3c1;border-radius:5px;background:#fff;font-size:13px;transition:box-shadow .25s,background .25s}
+  .shop .search{flex:1;padding:6px 8px;color:#4a5659}
+  .shop .sort{padding:6px 8px;white-space:nowrap}
+  .shop .cart{padding:6px 8px;white-space:nowrap}
+  .shop .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .shop .prod{display:grid;gap:4px;padding:8px;min-height:86px;align-content:start}
+  .shop .pic{height:28px;border-radius:4px;background:#e9edeb}
+  .shop .price{font-weight:700;font-size:15px}
+  .shop .name{font-size:12px;line-height:1.25;color:#4a5659}
+  .shop .mark{position:absolute;top:-8px;left:-6px;min-width:20px;padding:0 4px;border-radius:4px;background:var(--act);color:#fff;font:700 12px/16px Arial,sans-serif;text-align:center;animation:pop .25s ease both}
+  .shop .el.pick{box-shadow:0 0 0 3px var(--tone);background:var(--wash)}
+  .shop .el.bought{box-shadow:0 0 0 3px var(--tone);background:var(--wash)}
+  .shop .el.bought::after{content:"bought";position:absolute;right:6px;bottom:5px;padding:0 5px;border-radius:3px;background:var(--tone);color:#fff;font:700 12px/15px Arial,sans-serif}
+  @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+
+  .html{margin:0;padding:10px;max-height:150px;overflow:hidden;border-radius:6px;background:#eef1f0;color:#4a5659;font:12px/1.45 "Courier New",monospace;white-space:pre-wrap;word-break:break-all;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
+  .log{margin:8px 0 0;font:14px "Courier New",monospace;color:var(--tone)}
+
+  .bars{display:grid;gap:7px;margin-top:12px}
+  .brow{display:grid;grid-template-columns:150px minmax(0,1fr) 56px;gap:10px;align-items:center;font-size:14px}
+  .track{height:20px;border-radius:4px;background:#eef1f0;overflow:hidden}
+  .fill{height:100%;border-radius:4px;background:var(--grey);transition:width .5s ease}
+  .fill.tone{background:var(--tone)}.fill.badf{background:var(--bad)}
+  .brow .v{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+
+  .strip{display:grid;grid-template-columns:1fr 1fr;margin-top:12px;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .strip div{padding:9px 12px;font:18px/1.3 Georgia,serif}
+  .strip div+div{border-left:1px solid var(--line)}
+  .strip small{display:block;color:var(--muted);font:700 12px Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase}
+  .strip .ok{background:var(--reward-w);color:var(--reward)}.strip .no{background:#f8e9ea;color:var(--bad)}
+
+  .clicks{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;align-items:end}
+  .chip{display:grid;justify-items:center;gap:2px;padding:6px 2px;border-radius:4px;background:#e9edeb;font:12px "Courier New",monospace;transition:background .3s}
+  .chip b{font:700 14px Georgia,serif;color:var(--muted)}
+  .chip.up{background:var(--wash);box-shadow:inset 0 0 0 1px var(--tone)}.chip.up b{color:var(--tone)}
+  .endrew{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 12px;border-radius:6px;background:var(--wash);color:var(--tone);font:18px Georgia,serif}
+  .endrew .back{flex:1;height:3px;border-radius:2px;background:var(--tone);position:relative}
+  .endrew .back::before{content:"";position:absolute;left:-2px;top:-5px;border:6.5px solid transparent;border-right:9px solid var(--tone);border-left:0}
+
+  .attempts{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:end;height:190px;padding:0 6px;border-bottom:1px solid var(--line)}
+  .att{display:grid;justify-items:center;align-self:end;gap:4px}
+  .att .col{width:100%;max-width:70px;border-radius:4px 4px 0 0;background:var(--grey);transition:background .3s}
+  .att .lab{font:700 15px Georgia,serif}
+  .att .tag{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+  .att.up .col{background:var(--tone)}.att.up .tag{color:var(--tone)}
+  .att.down .col{background:var(--bad)}.att.down .tag{color:var(--bad)}
+  .att.all .tag{color:var(--grey)}
+  .baseline{position:absolute;left:0;right:0;border-top:2px dashed var(--tone);pointer-events:none}
+  .baseline span{position:absolute;right:0;top:-20px;padding:0 5px;background:#fff;color:var(--tone);font:700 12px Arial,sans-serif}
+  .attx{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:4px 6px 0;color:var(--muted);font-size:12px;text-align:center}
+
+  .check{display:grid;gap:5px;margin:12px 0 0;padding:10px 12px;border-radius:6px;background:var(--wash)}
+  .check div{font-size:15px}.check b{color:var(--reward)}
+
+  .check b.x{color:var(--bad)}
+  .attx small{display:block;margin-top:2px;color:var(--ink);font-size:12px;line-height:1.25}
+
+  /* plan */
+  .prow{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid #edf0ef;font:16px/1.3 Georgia,serif}
+  .prow .pn{display:inline-block;min-width:24px;color:var(--tone);font:700 13px "Courier New",monospace}
+  .xchips{display:flex;flex-wrap:wrap;gap:4px}
+  .xchip{padding:2px 7px;border-radius:4px;background:var(--wash);box-shadow:inset 0 0 0 1px var(--tone);font:12px "Courier New",monospace}
+  .phead{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px}
+
+  /* ask */
+  .photo{display:grid;grid-template-columns:104px minmax(0,1fr);gap:14px;align-items:center}
+  .photo svg{display:block;width:104px;height:78px}
+  .readings{margin:0;padding-left:20px;font:17px/1.45 Georgia,serif}
+  .readings span{color:var(--muted);font:14px Arial,sans-serif}
+  .srow{display:grid;grid-template-columns:120px minmax(0,1fr) 150px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #edf0ef;font-size:14px}
+  .srow .what{font-weight:700}
+  .samples{display:flex;flex-wrap:wrap;gap:4px}
+  .samp{padding:2px 7px;border-radius:4px;background:#e9edeb;font:12px "Courier New",monospace}
+  .samp.alt{background:var(--wash);box-shadow:inset 0 0 0 1px var(--tone)}
+  .unc{display:grid;gap:3px}.unc .track{height:10px}.unc .fill{background:var(--tone)}
+  .unc .num{font-weight:700;font-variant-numeric:tabular-nums}.unc .go-on{color:var(--reward);font-weight:700}.unc .asks{color:var(--tone);font-weight:700}
+  .qa{display:grid;gap:5px;margin-top:12px;padding:10px 12px;border-radius:6px;background:var(--wash);font:17px/1.35 Georgia,serif}
+  .qa .who{margin-right:6px;color:var(--muted);font:700 12px Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase}
+
+  /* remember */
+  .ctx{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;align-items:end;height:130px;padding:0 4px;border-bottom:1px solid var(--line)}
+  .ctx .col{position:relative;height:100%}
+  .ctx .tot,.ctx .now{position:absolute;left:0;right:0;bottom:0;border-radius:3px 3px 0 0}
+  .ctx .tot{background:var(--grey)}.ctx .tot.ghost{background:transparent;box-shadow:inset 0 0 0 1px #9aa6a4}
+  .ctx .now{background:var(--tone)}
+  .ctxx{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;padding:3px 4px 0;color:var(--muted);font-size:12px;text-align:center}
+  .state{margin-top:12px;padding:10px 12px;border-left:5px solid var(--tone);background:var(--wash);font:16px/1.45 Georgia,"Times New Roman",serif}
+  .state b{display:block;color:var(--tone);font:700 12px Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase}
+
+  .verdict{margin:18px 0 6px;font:22px/1.32 Georgia,"Times New Roman",serif}
+  .verdict.problem{color:var(--bad)}.verdict.fixed{color:var(--tone)}
+  .aside{margin:0 0 14px;color:var(--muted);font-size:14px}
+  .changed{margin:4px 0 14px;padding:12px 14px;border-left:5px solid var(--tone);background:var(--wash);font:18px/1.42 Georgia,"Times New Roman",serif}
+  .changed b{display:block;margin-bottom:2px;color:var(--tone);font:700 12px Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase}
+  .act{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+  .go{display:inline-grid;justify-items:start;gap:1px;min-height:52px;padding:8px 18px;border:2px solid var(--tone);border-radius:7px;background:var(--tone);color:#fff;font-size:17px;font-weight:700;text-align:left}
+  .go small{font-size:12px;font-weight:400;opacity:.85}
+  .again{min-height:44px;padding:8px 12px;border:1px solid #8a9694;border-radius:6px;background:#fff;color:var(--ink);font-size:14px}
+
+  .recap{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:4px 0 14px}
+  .recap div{padding:8px 6px;border-top:4px solid var(--tone);background:var(--wash);font-size:13px;text-align:center}
+  .recap b{display:block;color:var(--tone);font-size:13px}
+
+  .pager{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+  .pager button{min-height:46px;padding:8px 14px;border:1px solid #8a9694;border-radius:6px;background:#fff;color:var(--ink);font-size:15px}
+  .pcount{color:#5b686b;font:13px "Courier New",monospace}
+
+  @media(max-width:640px){
+    body{padding:12px 8px 22px}.stage{padding:15px 11px}
+    .verdict{font-size:19px}.changed{font-size:16px}
+    .step{font-size:12px}.wide{display:none}.recap{grid-template-columns:1fr 1fr}
+    .shop .grid{grid-template-columns:1fr 1fr}
+    .brow{grid-template-columns:104px minmax(0,1fr) 46px;font-size:13px}
+    .clicks{grid-template-columns:repeat(6,minmax(0,1fr))}
+    .strip div{font-size:16px}
+    .attempts{gap:8px;height:160px}.attx{gap:8px}.att .tag{font-size:12px}.baseline span{top:3px}
+    .prow,.phead{grid-template-columns:1fr;gap:4px}.phead span+span{display:none}.srow{grid-template-columns:1fr;gap:5px}.photo{grid-template-columns:80px minmax(0,1fr)}.photo svg{width:80px;height:60px}
+  }
+  @media(max-width:430px){
+    .steps{gap:4px}.step{font-size:12px;padding:6px 2px}
+    .strip{grid-template-columns:1fr}.strip div+div{border-left:0;border-top:1px solid var(--line)}
+    .shop .bar{flex-wrap:wrap}
+  }
+  @media(max-width:470px){.step .nm{display:none}.step b{font-size:15px}}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+  sup{font-size:12px}
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Unit 2 synthesis</p>
+  <h1>What is it actually rewarded for?</h1>
+  <nav class="steps" role="tablist" aria-label="Seven steps">
+    <button class="step" role="tab" id="tab-1" aria-controls="stage-1" data-tone="act" aria-label="1 Act"><b>1</b><span class="nm">Act</span></button>
+    <button class="step" role="tab" id="tab-2" aria-controls="stage-2" data-tone="plan" aria-label="2 Plan"><b>2</b><span class="nm">Plan</span></button>
+    <button class="step" role="tab" id="tab-3" aria-controls="stage-3" data-tone="ask" aria-label="3 Ask"><b>3</b><span class="nm">Ask</span></button>
+    <button class="step" role="tab" id="tab-4" aria-controls="stage-4" data-tone="remember" aria-label="4 Remember"><b>4</b><span class="nm">Remember</span></button>
+    <button class="step" role="tab" id="tab-5" aria-controls="stage-5" data-tone="reward" aria-label="5 Reward"><b>5</b><span class="nm">Reward</span></button>
+    <button class="step" role="tab" id="tab-6" aria-controls="stage-6" data-tone="base" aria-label="6 Baseline"><b>6</b><span class="nm">Baseline</span></button>
+    <button class="step" role="tab" id="tab-7" aria-controls="stage-7" data-tone="hack" aria-label="7 Hack"><b>7</b><span class="nm">Hack</span></button>
+  </nav>
+
+  <!-- 1 · Act -->
+  <section class="stage" id="stage-1" role="tabpanel" aria-labelledby="tab-1" data-tone="act">
+    <p class="kicker">1 · Act</p>
+    <h2 tabindex="-1"><em>Buy the cheapest color photo printer and ship it to Emily.</em></h2>
+    <div id="a-board"></div>
+    <p class="verdict" id="a-verdict" aria-live="polite"></p>
+    <p class="aside" id="a-aside">A shopping page’s raw HTML can run past 100,000 tokens, and it hides the layout.</p>
+    <p class="changed" id="a-changed" hidden><b>What changed</b>The agent sees the page as people do and points by number. Swap clicks for motor commands and the same recipe drives a robot: a vision-language-action model.</p>
+    <div class="act"><button type="button" class="go" id="a-go">Show it the screen<small>screenshot agent with numbered elements</small></button><button type="button" class="again" id="a-again" hidden>Read the HTML again</button></div>
+  </section>
+
+  <!-- 2 · Plan -->
+  <section class="stage" id="stage-2" role="tabpanel" aria-labelledby="tab-2" data-tone="plan" hidden>
+    <p class="kicker">2 · Plan</p>
+    <h2 tabindex="-1">It opens the $89 printer, then stalls. Nothing says what comes next.</h2>
+    <div id="p-board"></div>
+    <p class="verdict" id="p-verdict" aria-live="polite"></p>
+    <p class="aside" id="p-aside">Each click is chosen from the current screen alone, so nothing carries the order past the product page.</p>
+    <p class="changed" id="p-changed" hidden><b>What changed</b>Planning and acting are split. A planner breaks the request into steps, and an executor turns each step into clicks on the screen.</p>
+    <div class="act"><button type="button" class="go" id="p-go">Write the plan first<small>planner and executor</small></button><button type="button" class="again" id="p-again" hidden>Pick one click at a time again</button></div>
+  </section>
+
+  <!-- 3 · Ask -->
+  <section class="stage" id="stage-3" role="tabpanel" aria-labelledby="tab-3" data-tone="ask" hidden>
+    <p class="kicker">3 · Ask</p>
+    <h2 tabindex="-1">Emily’s photo shows two addresses. Which one gets the printer?</h2>
+    <div id="k-board"></div>
+    <p class="verdict" id="k-verdict" aria-live="polite"></p>
+    <p class="aside" id="k-aside">One reading of the photo gives one answer, with no sign that another reading would differ.</p>
+    <p class="changed" id="k-changed" hidden><b>What changed</b>Agreement across samples measures how sure the agent is. When the samples split, it asks a person instead of guessing.</p>
+    <div class="act"><button type="button" class="go" id="k-go">Ask when samples disagree<small>sample the plan, measure the spread</small></button><button type="button" class="again" id="k-again" hidden>Read the photo once again</button></div>
+  </section>
+
+  <!-- 4 · Remember -->
+  <section class="stage" id="stage-4" role="tabpanel" aria-labelledby="tab-4" data-tone="remember" hidden>
+    <p class="kicker">4 · Remember</p>
+    <h2 tabindex="-1">Twelve screens later, at checkout, Emily’s answer is buried.</h2>
+    <div id="m-board"></div>
+    <p class="verdict" id="m-verdict" aria-live="polite"></p>
+    <p class="aside" id="m-aside">A longer context costs more at every step and still buries the one line that matters.</p>
+    <p class="changed" id="m-changed" hidden><b>What changed</b>The agent keeps one internal state and rewrites it at every step, so memory stays the same size. What to keep is learned from the reward for the finished task.</p>
+    <div class="act"><button type="button" class="go" id="m-go">Keep a running state<small>learned memory, as in MEM1</small></button><button type="button" class="again" id="m-again" hidden>Keep every screen again</button></div>
+  </section>
+
+  <!-- 5 · Reward -->
+  <section class="stage" id="stage-5" role="tabpanel" aria-labelledby="tab-5" data-tone="reward" hidden>
+    <p class="kicker">5 · Reward</p>
+    <h2 tabindex="-1">The agent takes 12 clicks to finish. To improve it, we need to know which clicks were good.</h2>
+    <div id="r-board"></div>
+    <p class="verdict" id="r-verdict" aria-live="polite"></p>
+    <p class="aside" id="r-aside">Copying recorded clicks breaks as soon as the agent strays from the person’s path.</p>
+    <p class="changed" id="r-changed" hidden><b>What changed</b>Reinforcement learning needs no step labels, only a reward for the whole attempt.</p>
+    <div class="act"><button type="button" class="go" id="r-go">Reward the whole attempt<small>reinforcement learning</small></button><button type="button" class="again" id="r-again" hidden>Copy recorded clicks again</button></div>
+  </section>
+
+  <!-- 6 · Baseline -->
+  <section class="stage" id="stage-6" role="tabpanel" aria-labelledby="tab-6" data-tone="base" hidden>
+    <p class="kicker">6 · Baseline</p>
+    <h2 tabindex="-1">The agent tries the task four times and earns 0.6, 0.7, 0.5 and 0.6.</h2>
+    <div id="b-board"></div>
+    <p class="verdict" id="b-verdict" aria-live="polite"></p>
+    <p class="aside" id="b-aside">More attempts average out the noise only slowly.</p>
+    <p class="changed" id="b-changed" hidden><b>What changed</b>Only attempts that beat expectation are reinforced. GRPO takes the average over a group of attempts at the same task.</p>
+    <div class="act"><button type="button" class="go" id="b-go">Compare with what you expected<small>baseline (as in GRPO)</small></button><button type="button" class="again" id="b-again" hidden>Use raw rewards again</button></div>
+  </section>
+
+  <!-- 7 · Hack -->
+  <section class="stage" id="stage-7" role="tabpanel" aria-labelledby="tab-7" data-tone="hack" hidden>
+    <p class="kicker">7 · Hack</p>
+    <h2 tabindex="-1">To give reward faster, it now checks only that an order confirmation appears.</h2>
+    <div id="h-board"></div>
+    <p class="verdict" id="h-verdict" aria-live="polite"></p>
+    <p class="aside" id="h-aside">A reward that checks less is easier to earn the wrong way.</p>
+    <p class="changed" id="h-changed" hidden><b>What changed</b>Models maximize the reward, not the goal. A rule that checks the whole order leaves fewer loopholes, and simple rule-based checks like this often match a learned reward model.</p>
+    <div class="recap" id="h-recap" hidden aria-label="Unit 2 in seven steps">
+      <div data-tone="act"><b>Act</b>see the screen</div>
+      <div data-tone="plan"><b>Plan</b>steps before clicks</div>
+      <div data-tone="ask"><b>Ask</b>ask when samples split</div>
+      <div data-tone="remember"><b>Remember</b>one running state</div>
+      <div data-tone="reward"><b>Reward</b>reward the whole attempt</div>
+      <div data-tone="base"><b>Baseline</b>beat expectation</div>
+      <div data-tone="hack"><b>Hack</b>it learns the reward</div>
+    </div>
+    <div class="act"><button type="button" class="go" id="h-go">Reward only what you can check<small>rule-based verifier</small></button><button type="button" class="again" id="h-again" hidden>Reward any confirmation again</button></div>
+  </section>
+
+  <div class="pager"><button type="button" id="prev">←<span class="wide"> Previous</span></button><span class="pcount" id="pcount">1 of 7</span><button type="button" id="next"><span class="wide" id="next-label">Next: Plan </span>→</button></div>
+</main>
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id)};
+  var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var timers=[];
+  function clearTimers(){timers.forEach(function(t){clearTimeout(t)});timers=[]}
+
+  function verdict(id,kind,html){var v=$(id);v.className="verdict "+kind;v.innerHTML=html}
+  function done(p){$(p+"-go").hidden=true;$(p+"-again").hidden=false;$(p+"-changed").hidden=false;var a=$(p+"-aside");if(a)a.hidden=true}
+  function undone(p){$(p+"-go").hidden=false;$(p+"-again").hidden=true;$(p+"-changed").hidden=true;var a=$(p+"-aside");if(a)a.hidden=false}
+
+  /* the one shop page every step uses */
+  var EL=[
+    {id:"search",n:1,kind:"search",html:"color photo printer"},
+    {id:"sort",n:2,kind:"sort",html:"Sort by price ↑"},
+    {id:"p89",n:3,kind:"prod",price:"$89",name:"Color photo printer"},
+    {id:"p129",n:4,kind:"prod",price:"$129",name:"Color photo printer"},
+    {id:"ink",n:5,kind:"prod",price:"$4",name:"Ink cartridge"},
+    {id:"mono",n:6,kind:"prod",price:"$60",name:"Mono laser printer"}
+  ];
+  function shop(o){
+    o=o||{};
+    var order=o.inkFirst?["ink","mono","p89","p129"]:["p89","p129","ink","mono"];
+    var cls=function(e){return"el "+e.kind+(o.bought===e.id?" bought":"")+((o.picks||[]).indexOf(e.id)>=0?" pick":"")};
+    var mk=function(e){return o.marks?'<span class="mark">['+e.n+']</span>':""};
+    var byId={};EL.forEach(function(e){byId[e.id]=e});
+    var h='<div class="shop'+(o.blank?" blank":"")+'" role="img" aria-label="'+(o.blank?"Shop page, screen blanked":"Shop page with search, sort, cart and four products")+'">';
+    h+='<div class="bar"><div class="'+cls(byId.search)+'" data-id="search">'+mk(byId.search)+'⌕ '+byId.search.html+'</div><div class="'+cls(byId.sort)+'" data-id="sort">'+mk(byId.sort)+byId.sort.html+'</div><div class="el cart">Cart ('+(o.bought?1:0)+')</div></div>';
+    h+='<div class="grid">';
+    order.forEach(function(id){var e=byId[id];h+='<div class="'+cls(e)+'" data-id="'+id+'">'+mk(e)+'<div class="pic"></div><div class="price">'+e.price+'</div><div class="name">'+e.name+'</div></div>'});
+    h+='</div></div>';return h;
+  }
+  function bars(rows){
+    var h='<div class="bars">';
+    rows.forEach(function(r){h+='<div class="brow"><span>'+r[0]+'</span><div class="track"><div class="fill '+(r[2]||"")+'" style="width:'+r[1]+'%"></div></div><span class="v">'+r[1]+'%'+(r[3]?"<sup>†</sup>":"")+'</span></div>'});
+    return h+'</div>';
+  }
+  function strip(says,gets,ok){
+    return'<div class="strip"><div><small>The reward says</small>'+says+'</div><div class="'+(ok?"ok":"no")+'"><small>Emily gets</small>'+gets+'</div></div>';
+  }
+
+  /* 1 · Act */
+  var HTML='<div class="shp-hdr"><div class="nv" data-v="a91f"><a href="/c/el">…</a><span class="x9 _q2">⌕</span><input id="q" aria-label="Search" value="color photo printer" data-track="srch_top_v3"><select class="srt-dd"><option>Relevance</option><option>Price: low to high</option></select></div><div id="res" class="grid-4 r-lst"><div class="itm" data-sku="88213-c"><img src="/i/88213.webp" alt=""><span class="pr">$89.00</span><a class="tt" href="/p/88213">Color Photo Printer, Wi-Fi…</a><button class="atc" data-ga="atc_88213">Add</button></div><div class="itm" data-sku="40112-k"><img src="/i/40112.webp" alt=""><span class="pr">$4.00</span><a class="tt" href="/p/40112">Ink Cartridge, Black…</a><button class="atc" data-ga="atc_40112">Add</button></div><div class="itm" data-sku="9921-c"><img src="/i/9921.webp" alt=""><span class="pr">$129.00</span>…';
+  function actBefore(){
+    clearTimers();
+    $("a-board").innerHTML='<p class="head">What the agent reads</p><pre class="html">'+HTML.replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</pre>'+bars([["People",78,""],["Agent reading HTML",14,"badf"]]);
+    verdict("a-verdict","problem","An agent that reads the page’s HTML gets tasks like this right 14% of the time. People get 78%. It loops, undoes its own steps, and clicks the wrong item.");
+    undone("a");
+  }
+  function actAfter(){
+    clearTimers();
+    var draw=function(picks,log){$("a-board").innerHTML='<p class="head">What the agent sees</p>'+shop({marks:true,picks:picks})+'<p class="log">'+log+'</p><p class="note">† illustrative example</p>'};
+    $("a-go").hidden=true;$("a-aside").hidden=true;
+    var finish=function(){draw(["sort","p89"],"click [2] → click [3]");
+      verdict("a-verdict","fixed","It sees numbered boxes on a screenshot and picks by number: [2] Sort by price, then [3] the $89 color photo printer.<sup>†</sup>");done("a")};
+    if(reduce){finish();return}
+    draw([],"");verdict("a-verdict","","Looking at the screen…");
+    timers.push(setTimeout(function(){draw(["sort"],"click [2]")},600));
+    timers.push(setTimeout(finish,1300));
+  }
+  $("a-go").addEventListener("click",actAfter);$("a-again").addEventListener("click",function(){actBefore();$("a-go").focus()});
+
+  /* 2 · Plan: the executor's clicks are the 12 clicks the Reward step counts */
+  var PLAN=[["Search for “color photo printer”",["search","type","enter"]],["Sort by price, low to high",["sort"]],["Open the cheapest color photo printer",["scroll","open","back","open"]],["Add it to the cart",["color","qty"]],["Check out to Emily",["address","buy"]]];
+  function orderCheck(rows){var h='<div class="check">';rows.forEach(function(r){h+='<div>'+r[0]+' <b'+(r[1]?'':' class="x"')+'>'+(r[1]?"✓":"✗")+'</b></div>'});return h+'</div>'}
+  function planBefore(){
+    $("p-board").innerHTML='<p class="head">One click at a time</p>'+shop({picks:["sort","p89"]})+'<p class="log">click [2] → click [3] → ?</p>'+orderCheck([["Cheapest color photo printer open",true],["In the cart",false],["Shipped to Emily",false]])+'<p class="note">† illustrative example</p>';
+    verdict("p-verdict","problem","Choosing one click at a time, it has the right printer open and no reason to add it to the cart or check out.");
+    undone("p");
+  }
+  function planAfter(){
+    var n=0,h='<div class="phead head"><span>The planner writes</span><span>The executor clicks</span></div>';
+    PLAN.forEach(function(r,i){n+=r[1].length;h+='<div class="prow"><span><span class="pn">'+(i+1)+'</span>'+r[0]+'</span><span class="xchips">'+r[1].map(function(c){return'<span class="xchip">'+c+'</span>'}).join("")+'</span></div>'});
+    $("p-board").innerHTML=h+orderCheck([["Cheapest color photo printer open",true],["In the cart",true],["Shipped to Emily",true]])+'<p class="note">'+n+' clicks in all. † illustrative example</p>';
+    verdict("p-verdict","fixed","The planner writes five steps. The executor turns each one into clicks, "+n+" in all, and the order goes through.");
+    done("p");
+  }
+  $("p-go").addEventListener("click",planAfter);$("p-again").addEventListener("click",function(){planBefore();$("p-go").focus()});
+
+  /* 3 · Ask: uncertainty is the entropy of five sampled plans, in bits */
+  var ADDR={home:"12 Elm St",office:"40 Park Ave"},LIMIT=0.5;
+  var SAMPLED=[["Sort",["by price","by price","by price","by price","by price"]],["Ship to",["Elm St","Park Ave","Elm St","Park Ave","Elm St"]]];
+  function entropy(xs){var c={},h=0;xs.forEach(function(x){c[x]=(c[x]||0)+1});Object.keys(c).forEach(function(k){var p=c[k]/xs.length;h-=p*Math.log(p)/Math.LN2});return h}
+  var PHOTO='<svg viewBox="0 0 104 78" role="img" aria-label="Emily’s photo: a parcel label, upside down, with two address blocks"><rect x="1" y="1" width="102" height="76" rx="5" fill="#e9e2d6"/><g transform="rotate(180 52 39)"><rect x="12" y="10" width="80" height="58" rx="3" fill="#fffdf7" stroke="#9a8f7c"/><rect x="18" y="16" width="34" height="4" fill="#5b5346"/><rect x="18" y="24" width="44" height="3" fill="#8d8473"/><rect x="18" y="30" width="38" height="3" fill="#8d8473"/><rect x="18" y="44" width="34" height="4" fill="#5b5346"/><rect x="18" y="52" width="48" height="3" fill="#8d8473"/><rect x="18" y="58" width="40" height="3" fill="#8d8473"/><rect x="70" y="14" width="16" height="12" fill="#c9bfae"/></g></svg>';
+  function photoRow(){return'<div class="photo">'+PHOTO+'<ol class="readings"><li>'+ADDR.office+' <span>first block</span></li><li>'+ADDR.home+' <span>second block</span></li></ol></div>'}
+  function askBefore(){
+    $("k-board").innerHTML='<p class="head">Emily’s photo</p>'+photoRow()+'<p class="log">plan step 5 · check out to '+ADDR.office+'</p>'+orderCheck([["Shipped to "+ADDR.office+", her office",false]])+'<p class="note">† illustrative example</p>';
+    verdict("k-verdict","problem","Reading the photo once, it plans to ship to "+ADDR.office+", the first block on the label. Emily wanted it at home.");
+    undone("k");
+  }
+  function askAfter(){
+    var h='<p class="head">Five sampled plans</p>';
+    SAMPLED.forEach(function(r){var e=entropy(r[1]),first=r[1][0],same=r[1].filter(function(x){return x===first}).length,ask=e>LIMIT;
+      h+='<div class="srow"><span class="what">'+r[0]+'</span><span class="samples">'+r[1].map(function(x){return'<span class="samp'+(x===first?'':' alt')+'">'+x+'</span>'}).join("")+'</span><span class="unc"><span><span class="num">'+e.toFixed(2)+' bits</span> · '+(ask?'<span class="asks">ask</span>':'<span class="go-on">go ahead</span>')+'</span><span class="track"><span class="fill" style="display:block;width:'+Math.round(e*100)+'%"></span></span></span></div>'});
+    h+='<div class="qa"><div><span class="who">Agent</span>Ship to '+ADDR.home+' or '+ADDR.office+'?</div><div><span class="who">Emily</span>Home, '+ADDR.home+'.</div></div>';
+    h+='<p class="note">Uncertainty is the entropy of the five samples. Above '+LIMIT+' bits, the agent asks. † illustrative example</p>';
+    $("k-board").innerHTML=h;
+    var split=SAMPLED[1][1],a=split.filter(function(x){return x===split[0]}).length;
+    verdict("k-verdict","fixed","Sorting comes out the same in all five plans, so it goes ahead. The address splits "+a+" to "+(split.length-a)+", so it asks, and Emily answers: home.");
+    done("k");
+  }
+  $("k-go").addEventListener("click",askAfter);$("k-again").addEventListener("click",function(){askBefore();$("k-go").focus()});
+
+  /* 4 · Remember: tokens in context at each of the 12 clicks */
+  var SCREEN=2000,STATE=300,STEPS=12;
+  function fmt(n){return n.toLocaleString("en-US")}
+  function ctxChart(withState){
+    var top=SCREEN*STEPS,h='<div class="ctx" aria-hidden="true">';
+    for(var k=1;k<=STEPS;k++){var all=SCREEN*k,kept=STATE+SCREEN;
+      h+='<div class="col"><div class="tot'+(withState?' ghost':'')+'" style="height:'+(100*all/top).toFixed(1)+'%"></div>'+(withState?'<div class="now" style="height:'+(100*kept/top).toFixed(1)+'%"></div>':'')+'</div>'}
+    h+='</div><div class="ctxx" aria-hidden="true">';for(var j=1;j<=STEPS;j++)h+='<span>'+j+'</span>';
+    return h+'</div>'}
+  function rememberBefore(){
+    $("m-board").innerHTML='<p class="head">Tokens in context at each click</p>'+ctxChart(false)+'<p class="log">click 11 · address: '+ADDR.office+'</p><p class="note">Every screen stays in context, about '+fmt(SCREEN)+' tokens each: '+fmt(SCREEN*STEPS)+' by click '+STEPS+'. † illustrative numbers</p>';
+    verdict("m-verdict","problem","At checkout it types "+ADDR.office+". Emily’s answer is one line under "+fmt(SCREEN*STEPS)+" tokens of screens.");
+    undone("m");
+  }
+  function rememberAfter(){
+    $("m-board").innerHTML='<p class="head">Tokens in context at each click</p>'+ctxChart(true)+'<div class="state"><b>Running state, rewritten at each click</b>Order: the cheapest color photo printer, for Emily<br>Ship to: '+ADDR.home+' (Emily said home)<br>Done: the $89 printer is in the cart</div><p class="log">click 11 · address: '+ADDR.home+'</p><p class="note">The state is about '+fmt(STATE)+' tokens plus the current screen: '+fmt(STATE+SCREEN)+' at every click. Outlines show the old total. † illustrative numbers</p>';
+    verdict("m-verdict","fixed","At every click it rewrites one short state and drops the old screens. Context stays at "+fmt(STATE+SCREEN)+" tokens, and checkout uses "+ADDR.home+".");
+    done("m");
+  }
+  $("m-go").addEventListener("click",rememberAfter);$("m-again").addEventListener("click",function(){rememberBefore();$("m-go").focus()});
+
+  /* 5 · Reward */
+  var CLICKS=PLAN.reduce(function(a,r){return a.concat(r[1])},[]);
+  function clickRow(up){var h='<div class="clicks">';CLICKS.forEach(function(c,i){h+='<div class="chip'+(up?" up":"")+'"><b>'+(up?"↑":"?")+'</b>'+(i+1)+'</div>'});return h+'</div>'}
+  function rewardBefore(){
+    $("r-board").innerHTML='<p class="head">Clicks in one attempt · which were good?</p>'+clickRow(false)+'<p class="note">12 clicks, no labels</p>';
+    verdict("r-verdict","problem","No one has labeled the right click at each step, and recording a person for every task does not scale.");
+    undone("r");
+  }
+  function rewardAfter(){
+    $("r-board").innerHTML='<p class="head">Clicks in one attempt · one reward at the end</p>'+clickRow(true)+'<div class="endrew"><span class="back" aria-hidden="true"></span>reward 1 for this attempt</div>'+strip("1","the printer",true);
+    verdict("r-verdict","fixed","Each attempt gets one reward at the end, for how much of the order is right. Clicks in better attempts become more likely.");
+    done("r");
+  }
+  $("r-go").addEventListener("click",rewardAfter);$("r-again").addEventListener("click",function(){rewardBefore();$("r-go").focus()});
+
+  /* 6 · Baseline */
+  var REW=[0.6,0.7,0.5,0.6],AVG=REW.reduce(function(a,b){return a+b},0)/REW.length,H=170;
+  var MISS=["the $129 printer","two in the cart","her office address","the mono printer"];
+  function attempts(withBase){
+    var h='<p class="head">Reward per attempt</p><div class="attempts">';
+    REW.forEach(function(r){
+      var st=withBase?(r>AVG+1e-9?"up":r<AVG-1e-9?"down":"stay"):"all";
+      var tag=withBase?(st==="up"?"↑ up":st==="down"?"↓ down":"· stays"):"↑ reinforced";
+      h+='<div class="att '+st+'"><span class="tag">'+tag+'</span><span class="lab">'+r.toFixed(1)+'</span><div class="col" style="height:'+Math.round(r*H*0.8)+'px"></div></div>';
+    });
+    if(withBase)h+='<div class="baseline" style="bottom:'+Math.round(AVG*H*0.8)+'px"><span>average 0.6</span></div>';
+    h+='</div><div class="attx">'+MISS.map(function(m,i){return'<span>attempt '+(i+1)+'<small>'+m+'</small></span>'}).join("")+'</div><p class="note">Each reward is the share of the order done right. † illustrative numbers</p>';
+    return h;
+  }
+  function baseBefore(){$("b-board").innerHTML=attempts(false);
+    verdict("b-verdict","problem","Every attempt earned something, so every attempt is reinforced, the weakest included.");undone("b")}
+  function baseAfter(){$("b-board").innerHTML=attempts(true);
+    verdict("b-verdict","fixed","Against the average of 0.6, attempt 2 goes up, attempt 3 goes down, and the other two stay put.");done("b")}
+  $("b-go").addEventListener("click",baseAfter);$("b-again").addEventListener("click",function(){baseBefore();$("b-go").focus()});
+
+  /* 7 · Hack */
+  function hackBefore(){
+    $("h-board").innerHTML='<p class="head">What the agent learned to do</p>'+shop({inkFirst:true,bought:"ink"})+'<div class="check"><div>Order confirmation appears <b>✓</b></div></div>'+strip("1","ink",false)+'<p class="note">† illustrative example</p>';
+    verdict("h-verdict","problem","The agent learns to buy the first item it sees, a $4 ink cartridge. The reward says 1. Emily gets ink.<sup>†</sup>");
+    undone("h");$("h-recap").hidden=true;
+  }
+  function hackAfter(){
+    $("h-board").innerHTML='<p class="head">What the agent learned to do</p>'+shop({inkFirst:true,bought:"p89"})+'<div class="check"><div>Color photo printer <b>✓</b></div><div>Cheapest one <b>✓</b></div><div>Shipped to Emily <b>✓</b></div></div>'+strip("1","the printer",true);
+    verdict("h-verdict","fixed","Reward is 1 only if the order is a color photo printer, the cheapest one, shipped to Emily. The reward says 1, and Emily gets the printer.");
+    done("h");$("h-recap").hidden=false;
+  }
+  $("h-go").addEventListener("click",hackAfter);$("h-again").addEventListener("click",function(){hackBefore();$("h-go").focus()});
+
+  /* navigation */
+  var tabs=Array.prototype.slice.call(document.querySelectorAll(".step")),panels=Array.prototype.slice.call(document.querySelectorAll(".stage")),cur=0;
+  var nextNames=["Plan","Ask","Remember","Reward","Baseline","Hack",""];
+  function show(i,focus){cur=i;tabs.forEach(function(t,n){t.setAttribute("aria-selected",String(n===i));t.tabIndex=n===i?0:-1});panels.forEach(function(p,n){p.hidden=n!==i});
+    $("prev").disabled=i===0;$("next").disabled=i===panels.length-1;$("next-label").textContent=nextNames[i]?"Next: "+nextNames[i]+" ":"";$("pcount").textContent=(i+1)+" of "+panels.length;
+    if(focus)panels[i].querySelector("h2").focus()}
+  tabs.forEach(function(t,i){t.addEventListener("click",function(){show(i,false)});t.addEventListener("keydown",function(e){var j=null;if(e.key==="ArrowRight")j=(i+1)%tabs.length;if(e.key==="ArrowLeft")j=(i+tabs.length-1)%tabs.length;if(e.key==="Home")j=0;if(e.key==="End")j=tabs.length-1;if(j!==null){e.preventDefault();show(j,false);tabs[j].focus()}})});
+  $("prev").addEventListener("click",function(){show(cur-1,true)});$("next").addEventListener("click",function(){show(cur+1,true)});
+
+  actBefore();planBefore();askBefore();rememberBefore();rewardBefore();baseBefore();hackBefore();show(0,false);
+})();
+</script>
+</body>
+</html>

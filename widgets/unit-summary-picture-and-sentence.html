@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How do a picture and a sentence meet?</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{--ink:#1d292b;--muted:#5a676a;--line:#cfd7d5;--paper:#f7f8f5;--a:#a31f34;--b:#245a7a;--grey:#7b8785;--bad:#7d2a33;
+        --fuse:#3b7a3a;--fuse-w:#ebf4e8;--coord:#245a7a;--coord-w:#e4eef5;--contrast:#654c91;--contrast-w:#f1ecf8;--shape:#9a5b00;--shape-w:#fff2dc;--talk:#1b6d74;--talk-w:#e3f2f3}
+  body{margin:0;padding:18px 16px 26px;background:var(--paper);color:var(--ink);font:16px/1.45 Arial,Helvetica,sans-serif}
+  main{max-width:840px;margin:auto}
+  button{font:inherit;cursor:pointer}button:disabled{cursor:default;opacity:.45}
+  button:focus-visible,h2:focus-visible{outline:3px solid #176ca5;outline-offset:3px}
+  [hidden]{display:none!important}
+  [data-tone="fuse"]{--tone:var(--fuse);--wash:var(--fuse-w)}[data-tone="coord"]{--tone:var(--coord);--wash:var(--coord-w)}
+  [data-tone="contrast"]{--tone:var(--contrast);--wash:var(--contrast-w)}[data-tone="shape"]{--tone:var(--shape);--wash:var(--shape-w)}
+  [data-tone="talk"]{--tone:var(--talk);--wash:var(--talk-w)}
+  .eyebrow{margin:0 0 3px;color:var(--a);font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase}
+  h1{margin:0 0 14px;font:500 clamp(28px,5vw,38px)/1.1 Georgia,"Times New Roman",serif}
+
+  .steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-bottom:12px}
+  .step{display:grid;justify-items:center;gap:1px;padding:7px 4px;border:1px solid var(--line);border-top:4px solid var(--tone);border-radius:4px;background:#fff;color:#4a5659;font-size:14px}
+  .step b{font:700 12px "Courier New",monospace;color:var(--tone)}
+  .step[aria-selected="true"]{background:var(--wash);border-color:var(--tone);color:var(--ink);font-weight:700}
+
+  .stage{padding:20px 20px 18px;border:1px solid var(--line);border-top:5px solid var(--tone);border-radius:8px;background:#fff}
+  .kicker{margin:0 0 2px;color:var(--tone);font:700 13px "Courier New",monospace;text-transform:uppercase}
+  h2{margin:0 0 16px;font:500 clamp(24px,4.4vw,31px)/1.2 Georgia,"Times New Roman",serif}
+  .head{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+
+  /* photo tiles */
+  .ph{display:inline-grid;justify-items:center;gap:2px}
+  .ph svg{display:block;width:54px;height:54px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--line)}
+  .ph small{color:var(--muted);font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+  .ph.sm svg{width:30px;height:30px;border-radius:4px}
+  .ph.blur svg{filter:blur(2.6px)}
+  .cap{display:inline-block;padding:4px 7px;border-radius:4px;background:#e9edeb;font:14px "Courier New",monospace;white-space:nowrap}
+  .cap.hl{background:var(--wash);box-shadow:inset 0 0 0 2px var(--tone)}
+
+  /* bars (fuse) */
+  .bars{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr) 56px 64px;column-gap:10px;row-gap:9px;align-items:center}
+  .bars .lab{font-size:14px;line-height:1.2}
+  .bars .lab small{display:block;color:var(--muted);font-size:12px}
+  .track{position:relative;height:22px;border-radius:4px;background:#eef1f0}
+  .fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--c,var(--grey));transition:width .5s ease}
+  .track .mid{position:absolute;left:50%;top:-4px;bottom:-4px;border-left:2px dashed var(--grey)}
+  .pct{font:700 15px "Courier New",monospace;text-align:right}
+  .wt{justify-self:start;padding:2px 6px;border-radius:99px;background:#eef1f0;font:12px "Courier New",monospace;color:var(--muted);transition:background .3s,color .3s}
+  .wt.on{background:var(--tone);color:#fff}
+  .fusehead{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+  .ans{display:grid;place-items:center;align-content:center;min-width:92px;min-height:52px;padding:6px;border:2px solid var(--grey);border-radius:7px;background:#fff;text-align:center}
+  .ans .big{font:700 24px Georgia,serif;line-height:1.1}
+  .ans small{display:block;color:var(--muted);font-size:12px;line-height:1.2}
+  .ans.no{border-color:var(--bad)}.ans.no .big{color:var(--bad)}
+  .ans.yes{border-style:dashed;border-color:var(--tone);background:var(--wash)}.ans.yes .big{color:var(--tone)}
+  .dag{color:var(--muted);font-size:12px}
+
+  /* grids */
+  .gridwrap{display:inline-grid;gap:4px;vertical-align:top}
+  .gridwrap .gt{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+  .mx{display:grid;grid-template-columns:auto repeat(5,34px);gap:3px;align-items:center}
+  .mx .rl{font:12px "Courier New",monospace;white-space:nowrap;padding-right:6px;text-align:right;color:var(--ink)}
+  .mx .rl.hl{font-weight:700;color:var(--tone)}
+  .mx .cl{display:grid;place-items:center}
+  .mx .vh{writing-mode:vertical-rl;transform:rotate(180deg);padding:0;font-size:12px;align-self:end}
+  .cell{height:30px;border-radius:3px;background:var(--tone);transition:opacity .12s linear}
+  .cell.pick{box-shadow:0 0 0 3px var(--ink)}
+  .mx .row-hl{outline:2px solid var(--tone)}
+  .pair{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+  .alone{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:14px;border-radius:6px;background:#f1f3f2}
+  .empty{display:grid;place-items:center;min-width:180px;min-height:60px;padding:8px 12px;border:2px dashed var(--grey);border-radius:7px;color:var(--muted);font-size:14px;text-align:center}
+  .arrow{font:22px Georgia,serif;color:var(--grey)}
+  .photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+  /* talk */
+  .rank{display:grid;grid-template-columns:minmax(0,1fr) 48px;gap:4px 10px;max-width:330px;font:14px "Courier New",monospace}
+  .rank .top{font-weight:700}
+  .qa{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .q{padding:6px 10px;border-radius:6px;background:#f1f3f2;font:16px Georgia,serif}
+  .pipe{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+  .box{padding:8px 10px;border:2px solid var(--tone);border-radius:6px;background:var(--wash);font-size:13px;font-weight:700;color:var(--tone);text-align:center;line-height:1.2}
+  .toks{display:flex;gap:3px}
+  .toks i{display:block;width:14px;height:26px;border-radius:2px;background:var(--tone)}
+  .pipe>*{animation:pop .3s ease both}
+  @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+
+  .verdict{margin:18px 0 6px;font:22px/1.32 Georgia,"Times New Roman",serif}
+  .verdict.problem{color:var(--bad)}.verdict.fixed{color:var(--tone)}
+  .aside{margin:0 0 14px;color:var(--muted);font-size:14px}
+  .changed{margin:4px 0 14px;padding:12px 14px;border-left:5px solid var(--tone);background:var(--wash);font:18px/1.42 Georgia,"Times New Roman",serif}
+  .changed b{display:block;margin-bottom:2px;color:var(--tone);font:700 12px Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase}
+  .act{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+  .go{display:inline-grid;justify-items:start;gap:1px;min-height:52px;padding:8px 18px;border:2px solid var(--tone);border-radius:7px;background:var(--tone);color:#fff;font-size:17px;font-weight:700}
+  .go small{font-size:12px;font-weight:400;opacity:.85}
+  .again{min-height:44px;padding:8px 12px;border:1px solid #8a9694;border-radius:6px;background:#fff;color:var(--ink);font-size:14px}
+
+  .recap{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:4px 0 14px}
+  .recap div{padding:8px 6px;border-top:4px solid var(--tone);background:var(--wash);font-size:13px;text-align:center}
+  .recap b{display:block;color:var(--tone);font-size:13px}
+
+  .pager{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+  .pager button{min-height:46px;padding:8px 14px;border:1px solid #8a9694;border-radius:6px;background:#fff;color:var(--ink);font-size:15px}
+  .pcount{color:#5b686b;font:13px "Courier New",monospace}
+
+  @media(max-width:640px){
+    body{padding:12px 8px 22px}.stage{padding:15px 11px}
+    .bars{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 48px 52px;column-gap:6px}
+    .mx{grid-template-columns:auto repeat(5,26px)}.cell{height:24px}.mx .rl{font-size:12px;padding-right:3px}
+    .ans .big{font-size:20px}.verdict{font-size:19px}.changed{font-size:16px}
+    .step{font-size:12px}.wide{display:none}.recap{grid-template-columns:1fr 1fr}
+  }
+  @media(max-width:430px){
+    .bars{grid-template-columns:minmax(0,1fr) 70px 44px 46px}.bars .lab{font-size:12px}
+    .mx{grid-template-columns:auto repeat(5,20px)}.cell{height:20px}.ph.sm svg{width:20px;height:20px}
+    .head{font-size:12px}.step{font-size:12px;padding:6px 2px}
+  }
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+  sup{font-size:12px}
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Unit 1 synthesis</p>
+  <h1>How do a picture and a sentence meet?</h1>
+  <nav class="steps" role="tablist" aria-label="Five steps">
+    <button class="step" role="tab" id="tab-1" aria-controls="stage-1" data-tone="fuse"><b>1</b>Fuse</button>
+    <button class="step" role="tab" id="tab-2" aria-controls="stage-2" data-tone="coord"><b>2</b>Coordinate</button>
+    <button class="step" role="tab" id="tab-3" aria-controls="stage-3" data-tone="contrast"><b>3</b>Contrast</button>
+    <button class="step" role="tab" id="tab-4" aria-controls="stage-4" data-tone="shape"><b>4</b>Shape</button>
+    <button class="step" role="tab" id="tab-5" aria-controls="stage-5" data-tone="talk"><b>5</b>Talk</button>
+  </nav>
+
+  <!-- 1 · Fuse -->
+  <section class="stage" id="stage-1" role="tabpanel" aria-labelledby="tab-1" data-tone="fuse">
+    <p class="kicker">1 · Fuse</p>
+    <h2 tabindex="-1">Photo 1 is blurry. Its caption reads <em>a dog on a beach</em>. Is it a dog?</h2>
+    <div class="fusehead"><span class="ph blur" id="f-photo"></span><span class="cap">a dog on a beach</span><span class="arrow">→</span><div class="ans" id="f-ans"></div></div>
+    <div class="bars">
+      <span class="head">Input</span><span class="head">Says dog</span><span></span><span class="head">Weight</span>
+      <span class="lab">Image model<small>blurry photo</small></span><div class="track"><div class="fill" id="f-img" style="--c:var(--grey)"></div></div><span class="pct">10%</span><span class="wt" id="f-wi"></span>
+      <span class="lab">Caption<small>a dog on a beach</small></span><div class="track"><div class="fill" id="f-txt" style="--c:var(--grey)"></div></div><span class="pct">80%</span><span class="wt" id="f-wt"></span>
+      <span class="lab"><b>Combined</b><small>yes above the line</small></span><div class="track"><div class="fill" id="f-sum"></div><span class="mid"></span></div><span class="pct" id="f-pct"></span><span></span>
+    </div>
+    <p class="dag">† illustrative numbers</p>
+    <p class="verdict" id="f-verdict" aria-live="polite"></p>
+    <p class="aside" id="f-aside">Trusting only the caption fails whenever the caption is wrong.</p>
+    <p class="changed" id="f-changed" hidden><b>What changed</b>Additive fusion sums the two inputs. A gate scales each one by how clear it is.</p>
+    <div class="act"><button type="button" class="go" id="f-go">Add them, and gate the blurry one<small>gated additive fusion</small></button><button type="button" class="again" id="f-again" hidden>Average them again</button></div>
+  </section>
+
+  <!-- 2 · Coordinate -->
+  <section class="stage" id="stage-2" role="tabpanel" aria-labelledby="tab-2" data-tone="coord" hidden>
+    <p class="kicker">2 · Coordinate</p>
+    <h2 tabindex="-1">Now the caption <em>a dog on a beach</em> arrives alone. Find its photo among the five.</h2>
+    <div id="c-board"></div>
+    <p class="verdict" id="c-verdict" aria-live="polite"></p>
+    <p class="aside" id="c-aside">Fusing it with each photo in turn means one run per pair, and a photo library has millions.</p>
+    <p class="changed" id="c-changed" hidden><b>What changed</b>Each modality keeps its own encoder, joined only by a similarity score. That works only if the two spaces agree.</p>
+    <div class="act"><button type="button" class="go" id="c-go">Compare by cosine<small>coordinated representations</small></button><button type="button" class="again" id="c-again" hidden>Fuse them again</button></div>
+  </section>
+
+  <!-- 3 · Contrast -->
+  <section class="stage" id="stage-3" role="tabpanel" aria-labelledby="tab-3" data-tone="contrast" hidden>
+    <p class="kicker">3 · Contrast</p>
+    <h2 tabindex="-1">In the grid, photo 1 scores as high against <em>an orange</em> as against its own caption.</h2>
+    <div id="x-board"></div>
+    <p class="verdict" id="x-verdict" aria-live="polite"></p>
+    <p class="aside" id="x-aside">Bigger encoders trained separately still do not agree.</p>
+    <p class="changed" id="x-changed" hidden><b>What changed</b>Each batch pulls true pairs together and pushes the rest apart, so cosine now means “these match”. Write class names as captions, and the same grid is a classifier.</p>
+    <div class="act"><button type="button" class="go" id="x-go">Train on matched pairs<small>contrastive learning (CLIP)</small></button><button type="button" class="again" id="x-again" hidden>Use the separate models again</button></div>
+  </section>
+
+  <!-- 4 · Shape -->
+  <section class="stage" id="stage-4" role="tabpanel" aria-labelledby="tab-4" data-tone="shape" hidden>
+    <p class="kicker">4 · Shape</p>
+    <h2 tabindex="-1">Now swap in DINOv2 for the photos and MPNet for the captions, with no matched pairs.</h2>
+    <div id="s-board"></div>
+    <p class="verdict" id="s-verdict" aria-live="polite"></p>
+    <p class="aside" id="s-aside">CLIP needed hundreds of millions of pairs, and pairs are the expensive part.</p>
+    <p class="changed" id="s-changed" hidden><b>What changed</b>Relations agree across modalities even when coordinates do not, so the shapes can be lined up without pairs. Lab 5 tests how far that goes.</p>
+    <div class="act"><button type="button" class="go" id="s-go">Compare each space with itself<small>implicit alignment</small></button><button type="button" class="again" id="s-again" hidden>Compare across spaces again</button></div>
+  </section>
+
+  <!-- 5 · Talk -->
+  <section class="stage" id="stage-5" role="tabpanel" aria-labelledby="tab-5" data-tone="talk" hidden>
+    <p class="kicker">5 · Talk</p>
+    <h2 tabindex="-1">Ask about photo 5: <em>What color is the car?</em></h2>
+    <div id="t-board"></div>
+    <p class="verdict" id="t-verdict" aria-live="polite"></p>
+    <p class="aside" id="t-aside">Writing every possible answer as a caption does not scale.</p>
+    <p class="changed" id="t-changed" hidden><b>What changed</b>A small adapter turns the image into tokens the language model reads, so it writes text conditioned on the image.</p>
+    <div class="recap" id="t-recap" hidden aria-label="Unit 1 in five steps">
+      <div data-tone="fuse"><b>Fuse</b>one answer from both</div>
+      <div data-tone="coord"><b>Coordinate</b>two spaces, one score</div>
+      <div data-tone="contrast"><b>Contrast</b>pairs make similarity mean match</div>
+      <div data-tone="shape"><b>Shape</b>relations agree first</div>
+      <div data-tone="talk"><b>Talk</b>a language model reads the image</div>
+    </div>
+    <div class="act"><button type="button" class="go" id="t-go">Feed the image to a language model<small>adapter into a pretrained LLM</small></button><button type="button" class="again" id="t-again" hidden>Rank captions again</button></div>
+  </section>
+
+  <div class="pager"><button type="button" id="prev">←<span class="wide"> Previous</span></button><span class="pcount" id="pcount">1 of 5</span><button type="button" id="next"><span class="wide" id="next-label">Next: Coordinate </span>→</button></div>
+</main>
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id)};
+  var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var NAMES=["dog","cat","apple","orange","car"];
+  var CAPS=["a dog on a beach","a cat on a sofa","an apple","an orange","a car on a street"];
+  /* rows are captions, columns are photos */
+  var NOISE=[[.42,.55,.31,.48,.37],[.40,.33,.46,.29,.58],[.36,.49,.39,.41,.30],[.44,.38,.27,.33,.47],[.31,.52,.45,.36,.40]];
+  var DIAG=[[.92,.30,.08,.06,.12],[.28,.90,.07,.09,.10],[.06,.08,.91,.42,.07],[.07,.06,.40,.93,.08],[.12,.09,.06,.07,.90]];
+  var CROSS=[[.38,.51,.44,.29,.47],[.46,.35,.30,.53,.41],[.52,.40,.37,.45,.33],[.33,.48,.50,.39,.36],[.45,.30,.42,.47,.39]];
+  var IMG=[[1,.62,.10,.12,.22],[.62,1,.12,.10,.18],[.10,.12,1,.78,.08],[.12,.10,.78,1,.10],[.22,.18,.08,.10,1]];
+  var TXT=[[1,.58,.14,.10,.25],[.58,1,.10,.13,.20],[.14,.10,1,.72,.12],[.10,.13,.72,1,.09],[.25,.20,.12,.09,1]];
+
+  var ART={
+    dog:'<rect width="60" height="60" fill="#bfe0f2"/><rect y="38" width="60" height="22" fill="#ecd9a8"/><ellipse cx="28" cy="38" rx="13" ry="7" fill="#8a5a33"/><circle cx="41" cy="30" r="7" fill="#8a5a33"/><ellipse cx="45" cy="26" rx="2.5" ry="5" fill="#5e3a1f"/><rect x="19" y="42" width="3" height="8" fill="#8a5a33"/><rect x="33" y="42" width="3" height="8" fill="#8a5a33"/><circle cx="43" cy="29" r="1.3" fill="#1d292b"/>',
+    cat:'<rect width="60" height="60" fill="#e8e1ef"/><rect y="40" width="60" height="20" fill="#9c7fb8"/><polygon points="18,22 22,10 28,20" fill="#6f747a"/><polygon points="32,20 38,10 42,22" fill="#6f747a"/><circle cx="30" cy="30" r="13" fill="#6f747a"/><circle cx="25" cy="28" r="1.8" fill="#e8f080"/><circle cx="35" cy="28" r="1.8" fill="#e8f080"/><polygon points="28,33 32,33 30,35" fill="#f2a5a5"/>',
+    apple:'<rect width="60" height="60" fill="#f4efe6"/><circle cx="30" cy="34" r="15" fill="#c8312f"/><rect x="29" y="14" width="2.5" height="8" fill="#5e3a1f"/><ellipse cx="36" cy="17" rx="6" ry="3" fill="#4f8a35"/><ellipse cx="24" cy="29" rx="3" ry="5" fill="#e6716f"/>',
+    orange:'<rect width="60" height="60" fill="#f4efe6"/><circle cx="30" cy="33" r="15" fill="#ee8a1c"/><circle cx="30" cy="19" r="2" fill="#4f8a35"/><circle cx="24" cy="30" r="1" fill="#c96d0b"/><circle cx="34" cy="36" r="1" fill="#c96d0b"/><circle cx="29" cy="40" r="1" fill="#c96d0b"/><circle cx="37" cy="27" r="1" fill="#c96d0b"/>',
+    car:'<rect width="60" height="60" fill="#dfe4e2"/><rect y="44" width="60" height="16" fill="#7b8785"/><rect x="8" y="30" width="44" height="12" rx="3" fill="#2f6fd0"/><path d="M16 30 L22 21 L38 21 L44 30 Z" fill="#2f6fd0"/><path d="M23 23 L37 23 L41 29 L19 29 Z" fill="#cfe3f5"/><circle cx="18" cy="43" r="5" fill="#1d292b"/><circle cx="42" cy="43" r="5" fill="#1d292b"/>'
+  };
+  function photo(i,cls,label){
+    var s=document.createElement("span");s.className="ph"+(cls?" "+cls:"");
+    s.innerHTML='<svg viewBox="0 0 60 60" role="img" aria-label="photo '+(i+1)+': '+CAPS[i].replace(/^an? /,"")+'">'+ART[NAMES[i]]+'</svg>'+(label===false?'':'<small>photo '+(i+1)+'</small>');
+    return s}
+  function capEl(t,hl){var c=document.createElement("span");c.className="cap"+(hl?" hl":"");c.textContent=t;return c}
+
+  /* grid: rows and columns are each "cap" (caption labels) or "photo" (tiles) */
+  function label(kind,i){return kind==="photo"?"photo "+(i+1):kind==="name"?NAMES[i]:CAPS[i]}
+  function describe(M,rows,cols){var out=[];for(var r=0;r<5;r++){var best=0;for(var c=1;c<5;c++)if(M[r][c]>M[r][best])best=c;out.push(label(rows,r)+": "+label(cols,best)+" ("+M[r][best].toFixed(2)+")")}return "Highest score in each row: "+out.join("; ")+". Illustrative scores."}
+  function grid(title,M,rows,cols,opt){
+    opt=opt||{};var w=document.createElement("div");w.className="gridwrap";
+    var t=document.createElement("span");t.className="gt";t.textContent=title;w.appendChild(t);
+    var g=document.createElement("div");g.className="mx";g.setAttribute("role","img");g.setAttribute("aria-label",title+". "+describe(M,rows,cols));
+    g.appendChild(document.createElement("span"));
+    for(var c=0;c<5;c++){var h=document.createElement("span");h.className="cl";if(cols==="photo")h.appendChild(photo(c,"sm",false));else{h.className="cl rl vh";h.textContent=NAMES[c]}g.appendChild(h)}
+    var cells=[];
+    for(var r=0;r<5;r++){
+      var rl=document.createElement("span");rl.className="rl"+(opt.hlRow===r?" hl":"");
+      if(rows==="photo"){rl.appendChild(photo(r,"sm",false))}else{rl.textContent=rows==="name"?NAMES[r]:CAPS[r]}
+      g.appendChild(rl);cells.push([]);
+      for(var c2=0;c2<5;c2++){var d=document.createElement("div");d.className="cell";d.style.opacity=(0.06+0.94*M[r][c2]).toFixed(2);d.title=M[r][c2].toFixed(2);if(opt.pick&&opt.pick[0]===r&&opt.pick[1]===c2)d.className+=" pick";g.appendChild(d);cells[r].push(d)}
+    }
+    w.appendChild(g);var n=document.createElement("p");n.className="dag";n.textContent="† illustrative scores";w.appendChild(n);w.cells=cells;return w}
+  function setGrid(w,M){for(var r=0;r<5;r++)for(var c=0;c<5;c++)w.cells[r][c].style.opacity=(0.06+0.94*M[r][c]).toFixed(2)}
+
+  function verdict(id,kind,html){var v=$(id);v.className="verdict "+kind;v.innerHTML=html}
+  function done(p){$(p+"-go").hidden=true;$(p+"-again").hidden=false;$(p+"-changed").hidden=false;var a=$(p+"-aside");if(a)a.hidden=true}
+  function undone(p){$(p+"-go").hidden=false;$(p+"-again").hidden=true;$(p+"-changed").hidden=true;var a=$(p+"-aside");if(a)a.hidden=false}
+
+  /* 1 · Fuse */
+  $("f-photo").appendChild(photo(0,"",false).firstChild);$("f-photo").insertAdjacentHTML("beforeend","<small>photo 1</small>");
+  function fuseDraw(gated){
+    $("f-img").style.width="10%";$("f-txt").style.width="80%";
+    var wi=gated?0.2:0.5,wt=gated?0.8:0.5,sum=Math.round(100*(wi*0.10+wt*0.80));
+    $("f-img").style.setProperty("--c",gated?"#b9c2c0":"var(--grey)");$("f-txt").style.setProperty("--c",gated?"var(--fuse)":"var(--grey)");
+    $("f-wi").textContent="× "+wi.toFixed(1);$("f-wt").textContent="× "+wt.toFixed(1);
+    $("f-wi").classList.toggle("on",gated);$("f-wt").classList.toggle("on",gated);
+    var s=$("f-sum");s.style.width=sum+"%";s.style.setProperty("--c",gated?"var(--fuse)":"var(--bad)");$("f-pct").textContent=sum+"%";
+    var a=$("f-ans");a.className="ans "+(gated?"yes":"no");a.innerHTML='<span class="big">'+(gated?"Yes":"No")+'</span><small>is it a dog?</small>';
+    if(gated){verdict("f-verdict","fixed","The gate turns the blurry photo down to 0.2 and the caption up to 0.8. Dog 66%, so the answer is yes.<sup>†</sup>");done("f")}
+    else{verdict("f-verdict","problem","Fooled by the blur, the image model says dog 10%. The caption says dog 80%. Averaged, that is 45%, so the answer is no.<sup>†</sup>");undone("f")}
+  }
+  $("f-go").addEventListener("click",function(){fuseDraw(true)});$("f-again").addEventListener("click",function(){fuseDraw(false);$("f-go").focus()});
+
+  /* 2 · Coordinate */
+  function coordDraw(on){
+    var b=$("c-board");b.replaceChildren();
+    if(!on){
+      var al=document.createElement("div");al.className="alone";
+      al.appendChild(capEl("a dog on a beach",true));al.insertAdjacentHTML("beforeend",'<span class="arrow">→</span><span class="empty">Fusion takes a photo and a caption together.<br>Nothing to compare with.</span>');
+      b.appendChild(al);
+      var ps=document.createElement("div");ps.className="photos";for(var i=0;i<5;i++)ps.appendChild(photo(i));b.appendChild(ps);
+      verdict("c-verdict","problem","Fusion needs a photo and a caption together and returns one answer. A caption alone has nothing to be compared with.");undone("c");
+    }else{
+      b.appendChild(grid("Captions × photos, cosine score",NOISE,"cap","photo",{hlRow:0}));
+      verdict("c-verdict","fixed","Every photo and every caption gets its own vector, so the caption can be scored against all five photos. But with an image model and a text model trained separately, the 5×5 grid is noise.");done("c");
+    }
+  }
+  $("c-go").addEventListener("click",function(){coordDraw(true)});$("c-again").addEventListener("click",function(){coordDraw(false);$("c-go").focus()});
+
+  /* 3 · Contrast */
+  var xGrid=null,xTimer=null;
+  function mix(A,B,t){var M=[];for(var r=0;r<5;r++){M.push([]);for(var c=0;c<5;c++)M[r].push(A[r][c]+(B[r][c]-A[r][c])*t)}return M}
+  function contrastBoard(M,pick){var b=$("x-board");b.replaceChildren();xGrid=grid("Captions × photos, cosine score",M,"cap","photo",{hlRow:0,pick:pick?[0,0]:(M===NOISE?[3,0]:null)});b.appendChild(xGrid)}
+  function contrastReset(){clearInterval(xTimer);xTimer=null;contrastBoard(NOISE,false);
+    verdict("x-verdict","problem","The grid is noise. Every photo is as close to the wrong captions as to its own.");undone("x")}
+  function contrastFinish(){clearInterval(xTimer);xTimer=null;contrastBoard(DIAG,true);
+    verdict("x-verdict","fixed","The diagonal lights up. Each photo is closest to its own caption, and <em>a dog on a beach</em> finds photo 1.");done("x")}
+  function contrastRun(){$("x-go").hidden=true;$("x-aside").hidden=true;verdict("x-verdict","","Training on matched pairs…");
+    if(reduce){contrastFinish();return}
+    contrastBoard(NOISE,false);var k=0,N=24;xTimer=setInterval(function(){k++;setGrid(xGrid,mix(NOISE,DIAG,k/N));if(k>=N)contrastFinish()},60)}
+  $("x-go").addEventListener("click",contrastRun);$("x-again").addEventListener("click",function(){contrastReset();$("x-go").focus()});
+
+  /* 4 · Shape */
+  function shapeDraw(on){
+    var b=$("s-board");b.replaceChildren();var p=document.createElement("div");p.className="pair";
+    if(!on){p.appendChild(grid("MPNet captions × DINOv2 photos, no pairs",CROSS,"cap","photo"));
+      verdict("s-verdict","problem","Without pairs, the grid is noise again.");undone("s")}
+    else{p.appendChild(grid("Photo vs photo (DINOv2)",IMG,"photo","photo"));p.appendChild(grid("Caption vs caption (MPNet)",TXT,"name","name"));
+      verdict("s-verdict","fixed","In both spaces, the apple is near the orange and far from the car. The two shapes match.");done("s")}
+    b.appendChild(p);
+  }
+  $("s-go").addEventListener("click",function(){shapeDraw(true)});$("s-again").addEventListener("click",function(){shapeDraw(false);$("s-go").focus()});
+
+  /* 5 · Talk */
+  function talkDraw(on){
+    var b=$("t-board");b.replaceChildren();
+    var row=document.createElement("div");row.className="qa";row.appendChild(photo(4));
+    if(!on){
+      var order=[0,1,2,3,4].map(function(r){return{r:r,s:DIAG[r][4]}}).sort(function(x,y){return y.s-x.s});
+      var rk=document.createElement("div");rk.className="rank";rk.innerHTML='<span class="head">Caption</span><span class="head">Score</span>';
+      order.forEach(function(o,i){rk.insertAdjacentHTML("beforeend",'<span class="'+(i===0?"top":"")+'">'+CAPS[o.r]+'</span><span class="'+(i===0?"top":"")+'">'+o.s.toFixed(2)+'</span>')});
+      row.appendChild(rk);b.appendChild(row);
+      b.insertAdjacentHTML("beforeend",'<div class="qa"><span class="q">What color is the car?</span><span class="arrow">→</span><div class="ans no"><span class="big">?</span><small>no caption says</small></div></div>');
+      verdict("t-verdict","problem","The grid can only say which of the five captions fits photo 5 best: <em>a car on a street</em>. It cannot say what color.");undone("t");$("t-recap").hidden=true;
+    }else{
+      var pp=document.createElement("div");pp.className="pipe";pp.appendChild(photo(4));
+      var parts=['<span class="arrow">→</span>','<span class="box">image<br>encoder</span>','<span class="arrow">→</span>','<span class="box">adapter</span>','<span class="arrow">→</span>','<span class="toks" aria-label="image tokens"><i></i><i></i><i></i><i></i></span>','<span class="q">What color is the car?</span>','<span class="arrow">→</span>','<span class="box">language<br>model</span>','<span class="arrow">→</span>','<div class="ans yes"><span class="big">Blue</span><small>answer</small></div>'];
+      parts.forEach(function(h,i){pp.insertAdjacentHTML("beforeend",h);pp.lastChild.style.animationDelay=(reduce?0:(i+1)*110)+"ms"});
+      b.appendChild(pp);
+      verdict("t-verdict","fixed","The language model reads photo 5 as extra tokens and answers <em>Blue</em>.");done("t");$("t-recap").hidden=false;
+    }
+  }
+  $("t-go").addEventListener("click",function(){talkDraw(true)});$("t-again").addEventListener("click",function(){talkDraw(false);$("t-go").focus()});
+
+  /* navigation */
+  var tabs=Array.from(document.querySelectorAll(".step")),panels=Array.from(document.querySelectorAll(".stage")),cur=0;
+  var nextNames=["Coordinate","Contrast","Shape","Talk",""];
+  function show(i,focus){cur=i;tabs.forEach(function(t,n){t.setAttribute("aria-selected",String(n===i));t.tabIndex=n===i?0:-1});panels.forEach(function(p,n){p.hidden=n!==i});
+    $("prev").disabled=i===0;$("next").disabled=i===panels.length-1;$("next-label").textContent=nextNames[i]?"Next: "+nextNames[i]+" ":"";$("pcount").textContent=(i+1)+" of "+panels.length;
+    if(focus)panels[i].querySelector("h2").focus()}
+  tabs.forEach(function(t,i){t.addEventListener("click",function(){show(i,false)});t.addEventListener("keydown",function(e){var j=null;if(e.key==="ArrowRight")j=(i+1)%tabs.length;if(e.key==="ArrowLeft")j=(i+tabs.length-1)%tabs.length;if(e.key==="Home")j=0;if(e.key==="End")j=tabs.length-1;if(j!==null){e.preventDefault();show(j,false);tabs[j].focus()}})});
+  $("prev").addEventListener("click",function(){show(cur-1,true)});$("next").addEventListener("click",function(){show(cur+1,true)});
+
+  fuseDraw(false);coordDraw(false);contrastReset();shapeDraw(false);talkDraw(false);show(0,false);
+})();
+</script>
+</body>
+</html>

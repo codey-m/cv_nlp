@@ -19,7 +19,9 @@ the lesson.
 | Widget | Where | What it shows |
 | --- | --- | --- |
 | [Crossfade](https://codey-m.github.io/cv_nlp/widgets/widget-crossfade.html) | Unit 1 overview | Crossfade: combining picture and sound |
+| [How do a picture and a sentence meet?](https://codey-m.github.io/cv_nlp/widgets/unit-summary-picture-and-sentence.html) | Unit 1, Lec. 4: Multimodal reasoning | Unit 1 synthesis: how do a picture and a sentence meet? |
 | [Stunt School](https://codey-m.github.io/cv_nlp/widgets/widget-stunt-school.html) | Unit 2 overview | Stunt School: learning a trick from rewards |
+| [What is it actually rewarded for?](https://codey-m.github.io/cv_nlp/widgets/unit-summary-what-is-it-rewarded-for.html) | Unit 2, Lec. 6: Deployment, evaluation, and frontiers | Unit 2 synthesis: what is it actually rewarded for? |
 
 ## For course developers
 
