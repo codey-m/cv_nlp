@@ -23,7 +23,7 @@ links live in `CV_NLP/6.4600.*x/html/*_prac_text.html` and `*_lab_ov_text.html`.
 | [`practice/m2_beam_search.ipynb`](practice/m2_beam_search.ipynb) | Extend and prune a beam, trace two examples, and distinguish model likelihood from answer correctness | Module 2 beam-search coding practice; course placement follows lecture 2.1 segmentation |
 | [`labs/lab2_language_model_systems.ipynb`](labs/lab2_language_model_systems.ipynb) | Evaluate prompting, LoRA, and quantization on an issued problem panel while auditing extraction, uncertainty, cost, and provenance | Lab 2: Language Model Systems |
 | [`practice/m5_zero_shot_clip.ipynb`](practice/m5_zero_shot_clip.ipynb) | Label CIFAR-10 photos with CLIP by their nearest class description, then run the same code on two models trained apart | Module 5 coding practice for lecture 5.2; placement follows the final 5.2 cut |
-| [`labs/lab5_unpaired_alignment.ipynb`](labs/lab5_unpaired_alignment.ipynb) | Build a bridge between an image model and a text model without a single captioned photo, follow photos you choose as it improves, and find out what kinds of meaning it carries across | Lab 5: Aligning Two Models That Never Met |
+| [`labs/lab5_unpaired_alignment.ipynb`](labs/lab5_unpaired_alignment.ipynb) | Build a bridge between an image model and a text model without a single captioned photo, follow photos you choose as it improves, and find out what kinds of meaning it carries across | Lab 5: Unpaired Multimodal Alignment |
 
 The labs use a common assessment pattern: changed readiness cases test whether the learner's
 functions transfer beyond notebook examples; an experiment record checkpoint asks what another analyst
