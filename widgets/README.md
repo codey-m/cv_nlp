@@ -25,9 +25,13 @@ the lesson.
 
 ## For course developers
 
-[Visual methods catalog](https://codey-m.github.io/cv_nlp/widgets/visual-methods.html): fourteen methods with sample visuals,
-reader actions, evidence requirements and source examples. Use it to design explainers,
+[Visual methods catalog](https://codey-m.github.io/cv_nlp/widgets/visual-methods.html): seventeen methods with sample visuals,
+worked examples, evidence requirements and source examples. Use it to design explainers,
 unit summaries and views of lab evidence.
+
+[Interaction methods catalog](https://codey-m.github.io/cv_nlp/widgets/interaction-methods.html): thirty-eight actions, each with an
+opener form and a summary form, plus recipes that pair a visual method with an action. The two
+catalogs link to each other through example pairings.
 
 ## Review tips
 
@@ -41,5 +45,6 @@ repository's `docs/publish_widgets.py` copies it here and rewrites this README. 
 updates the live widget a minute or two later, with no course import. The repository name is part
 of every widget address, so it must never change.
 
-The developer catalog has its own source at `CV_NLP/docs/visual-methods.html`; the same
-publisher copies it here. It is a standalone adaptation of the Visual Stories methods catalog.
+The developer catalogs have their sources in `CV_NLP/docs/` (`visual-methods.html` and
+`interaction-methods.html`); the same publisher copies them here. The visual catalog began as an
+adaptation of the Visual Stories methods catalog.
