@@ -1,10 +1,10 @@
-# Multimodal AI widgets
+# Natural Language Processing widgets
 
-The interactive widgets in the Multimodal AI courses on MIT Learn. The courses load each widget from
+The interactive widgets in the Natural Language Processing courses on MIT Learn. The courses load each widget from
 this folder through GitHub Pages, so every link below opens the exact page learners see inside
 the lesson.
 
-## 6.4600.1x Multimodal AI: Language Model Foundations
+## 6.4600.1x Natural Language Processing: Foundations
 
 | Widget | Where | What it shows |
 | --- | --- | --- |
@@ -15,7 +15,7 @@ the lesson.
 | [Order and visibility](https://codey-m.github.io/cv_nlp/widgets/widget-order-and-visibility.html) | Unit 2, Lec. 4: Attention and transformers |  |
 | [How context reaches a prediction](https://codey-m.github.io/cv_nlp/widgets/unit-summary-how-context-reaches-prediction.html) | Unit 2, Lec. 4: Attention and transformers | Unit 2 synthesis: how context reaches a prediction |
 
-## 6.4600.5x Multimodal AI: Systems and Engineering
+## 6.4600.5x Multimodal Machine Learning
 
 | Widget | Where | What it shows |
 | --- | --- | --- |

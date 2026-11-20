@@ -30,6 +30,7 @@
 
   .stage{position:relative;padding:20px 20px 18px;border:1px solid var(--line);border-top:5px solid var(--tone);border-radius:8px;background:#fff}
   .kicker{margin:0 0 2px;color:var(--tone);font:700 13px "Courier New",monospace;text-transform:uppercase}
+  .beat{margin:4px 0 6px;color:var(--ink);font:italic 17px/1.4 Georgia,"Times New Roman",serif}
   h2{margin:0 0 16px;font:500 clamp(24px,4.4vw,31px)/1.2 Georgia,"Times New Roman",serif}
   .head{color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
   .head.c{text-align:center}
@@ -202,7 +203,8 @@
   <!-- 1 · Pieces -->
   <section class="stage" id="stage-1" role="tabpanel" aria-labelledby="tab-1" data-tone="pieces">
     <p class="kicker">1 · Pieces</p>
-    <h2 tabindex="-1">The passage never uses the word <em>theorises</em>.</h2>
+    <p class="beat" id="p-beat">A model sees only what its representation keeps.</p>
+    <h2 tabindex="-1" aria-describedby="p-beat">The passage never uses the word <em>theorises</em>.</h2>
     <div class="board1">
       <span class="head">Word</span><span class="head">What the model sees</span>
       <div class="word">theories<small>in the passage</small></div><div class="sees" id="p-sees-0"></div>
@@ -210,7 +212,7 @@
       <div class="word new">theorises<small>new</small></div><div class="sees" id="p-sees-2"></div>
     </div>
     <p class="verdict" id="p-verdict" aria-live="polite"></p>
-    <p class="aside" id="p-aside">Keeping more whole words only moves the problem. New words, misspellings and longer forms keep appearing.</p>
+    <p class="aside" id="p-aside">A bigger vocabulary only moves the problem: new words keep appearing.</p>
     <p class="changed" id="p-changed" hidden><b>What changed</b>Byte pair encoding learns pieces between letters and whole words. A new word is spelled from pieces the model already has, in far fewer pieces than letters.</p>
     <div class="act"><button type="button" class="go" id="p-go">Split into pieces<small>byte pair encoding</small></button><button type="button" class="again" id="p-again" hidden>Show whole words again</button></div>
   </section>
@@ -218,7 +220,8 @@
   <!-- 2 · Order -->
   <section class="stage" id="stage-2" role="tabpanel" aria-labelledby="tab-2" data-tone="order" hidden>
     <p class="kicker">2 · Order</p>
-    <h2 tabindex="-1">Holmes calls A the mistake and B the advice.</h2>
+    <p class="beat" id="o-beat">Pieces fix spelling. Order is still lost.</p>
+    <h2 tabindex="-1" aria-describedby="o-beat">Holmes calls A the mistake and B the advice.</h2>
     <div class="board2">
       <span></span><span class="head">Phrase</span><span class="head sees-h">What the model sees</span><span class="head c lab-h">Label</span>
       <span class="case a" id="o-case-a">A</span><div class="phrase" id="o-row-a"></div><div class="sees2" id="o-sees-a"></div><div class="ans" id="o-ans-a"></div>
@@ -234,7 +237,8 @@
   <!-- 3 · Predict -->
   <section class="stage" id="stage-3" role="tabpanel" aria-labelledby="tab-3" data-tone="predict" hidden>
     <p class="kicker">3 · Count</p>
-    <h2 tabindex="-1">The passage never uses this phrase.</h2>
+    <p class="beat" id="pr-beat">Now the model scores a phrase instead of labeling it.</p>
+    <h2 tabindex="-1" aria-describedby="pr-beat">The passage never uses this phrase.</h2>
     <div class="board34">
       <div><span class="head">Phrase</span><div class="chain" id="pr-chain"></div><div class="prob" id="pr-prob" aria-live="polite"></div></div>
       <div>
@@ -244,7 +248,7 @@
       </div>
     </div>
     <p class="verdict" id="pr-verdict" aria-live="polite"></p>
-    <p class="aside" id="pr-aside">More text would not fix this. Most phrases you could write never appear in any text.</p>
+    <p class="aside" id="pr-aside">More text would not help: most possible phrases never appear anywhere.</p>
     <p class="changed" id="pr-changed" hidden><b>What changed</b>The chain rule turns a phrase into one next-word prediction per word. Assuming each word depends only on the one before turns each prediction into a lookup in a table of pair counts.</p>
     <div class="act"><button type="button" class="go" id="pr-go">Score one word at a time<small>chain rule + bigram assumption</small></button><button type="button" class="again" id="pr-again" hidden>Count whole phrases again</button></div>
   </section>
@@ -262,7 +266,7 @@
       </div>
     </div>
     <p class="verdict" id="un-verdict" aria-live="polite"></p>
-    <p class="aside" id="un-aside">Smoothing adds one pretend count to every cell of the table before anything is scored.</p>
+    <p class="aside" id="un-aside"></p>
     <p class="changed" id="un-changed" hidden><b>What changed</b>Smoothing changes the table, not the scoring. Every count goes up by one, so no step can be zero, and every row total goes up by 21, which is why the steps the passage does show get smaller.</p>
     <div class="act"><button type="button" class="go" id="un-go">Add one to every pair count<small>add-one smoothing</small></button><button type="button" class="again" id="un-again" hidden>Use raw counts again</button></div>
   </section>
@@ -270,7 +274,8 @@
 <!-- 5 · Context -->
   <section class="stage" id="stage-5" role="tabpanel" aria-labelledby="tab-5" data-tone="context" hidden>
     <p class="kicker">5 · Context</p>
-    <h2 tabindex="-1">After <em>suit</em>, A needs <em class="need-a">theories</em>. B needs <em class="need-b">facts</em>.</h2>
+    <p class="beat" id="c-beat">A pair table sees one word back.</p>
+    <h2 tabindex="-1" aria-describedby="c-beat">After <em>suit</em>, A needs <em class="need-a">theories</em>. B needs <em class="need-b">facts</em>.</h2>
     <div class="board5">
       <span></span><span class="head">Phrase</span><span class="head c sees-h">What the model reads</span><span class="head c lab-h">Next word</span>
       <span class="case a" id="c-case-a">A</span><div class="phrase5" id="c-row-a"></div><div class="sees5" id="c-sees-a"></div><div class="ans" id="c-ans-a"></div>
@@ -329,7 +334,7 @@
     clearTimeout(pTimer);
     $("p-sees-0").replaceChildren(chip("theories"));$("p-sees-1").replaceChildren(chip("theorise"));$("p-sees-2").replaceChildren(chip("<unk>","unk"));
     $("p-sees-0").setAttribute("aria-label","theories: one whole-word token");$("p-sees-1").setAttribute("aria-label","theorise: one whole-word token");$("p-sees-2").setAttribute("aria-label","theorises: unknown token");
-    verdict("p-verdict","problem","The word vocabulary has no entry for <em>theorises</em>, so the model sees <code>&lt;unk&gt;</code>, the same token as every other unseen word.");
+    verdict("p-verdict","problem","No entry for <em>theorises</em>, so the model sees <code>&lt;unk&gt;</code>, like every other unseen word.");
     $("p-aside").hidden=false;$("p-go").hidden=false;$("p-again").hidden=true;$("p-changed").hidden=true;
   }
   function piecesDone(){
@@ -378,7 +383,7 @@
     else{b.hidden=false;a.className="ans own a";b.className="ans own b";a.innerHTML='<span class="big">mistake</span><small>can differ</small>';b.innerHTML='<span class="big">advice</span><small>can differ</small>'}}
   function orderCounts(){
     oRun++;phraseRow("o-row-a",OA);phraseRow("o-row-b",OB);seesRow("o-sees-a",OA);seesRow("o-sees-b",OB);rel("o-rel",true);labels(true);
-    verdict("o-verdict","problem","Same four words, same counts, so one label for both. Whichever it picks, one phrase gets it wrong.");
+    verdict("o-verdict","problem","Same words, same counts, one label. One phrase gets it wrong.");
     $("o-aside").hidden=false;$("o-go").hidden=false;$("o-again").hidden=true;$("o-changed").hidden=true;
   }
   function orderDone(){
@@ -573,7 +578,7 @@
   function nextAfter(ctx){var n=[];for(var i=0;i+ctx.length<TOKENS.length;i++)if(TOKENS.slice(i,i+ctx.length).join(" ")===ctx.join(" "))n.push(TOKENS[i+ctx.length]);return n.join(",")}
   if(nextAfter(CA)!=="theories"||nextAfter(CB)!=="facts"||nextAfter(["suit"]).split(",").sort().join(",")!=="facts,theories"||V*V*V!==9261)
     throw new Error("the passage no longer gives what slide 5 shows");
-  $("c-aside").textContent="Counting three-word contexts would need "+(V*V*V).toLocaleString("en-US")+" rows for these "+V+" tokens, one for every possible three words.";
+  $("c-aside").textContent="Counting three-word contexts would need "+(V*V*V).toLocaleString("en-US")+" rows for these "+V+" tokens.";
   function ctxRow(id,words){var h=$(id);h.replaceChildren();words.forEach(function(w){var t=document.createElement("span");t.className="tk";t.textContent=w;h.appendChild(t)});
     var fr=document.createElement("span");fr.className="winframe";fr.setAttribute("aria-hidden","true");h.appendChild(fr);h.setAttribute("aria-label",words.join(" "))}
   function ctxWindow(win,instant){
@@ -593,7 +598,7 @@
     else{b.hidden=false;a.className="ans own a";b.className="ans own b";a.innerHTML='<span class="big">theories</span><small>can differ</small>';b.innerHTML='<span class="big">facts</span><small>can differ</small>'}}
   function contextOne(){
     cRun++;ctxRow("c-row-a",CA);ctxRow("c-row-b",CB);requestAnimationFrame(function(){ctxWindow(1,true)});ctxAnswers(true);
-    verdict("c-verdict","problem","Both end in <em>suit</em>, so the model reads the same row for both and gives one answer.");
+    verdict("c-verdict","problem","Both end in <em>suit</em>: same row, one answer.");
     $("c-aside").hidden=false;$("c-go").hidden=false;$("c-again").hidden=true;$("c-changed").hidden=true;$("c-recap").hidden=true;
   }
   function contextFinish(){

@@ -26,6 +26,7 @@
 
   .stage{padding:20px 20px 18px;border:1px solid var(--line);border-top:5px solid var(--tone);border-radius:8px;background:#fff}
   .kicker{margin:0 0 2px;color:var(--tone);font:700 13px "Courier New",monospace;text-transform:uppercase}
+  .beat{margin:4px 0 6px;color:var(--ink);font:italic 17px/1.4 Georgia,"Times New Roman",serif}
   h2{margin:0 0 16px;font:500 clamp(24px,4.4vw,31px)/1.2 Georgia,"Times New Roman",serif}
   .head{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin:0 0 6px}
   .note{margin:6px 0 0;color:var(--muted);font-size:12px}
@@ -179,7 +180,8 @@
   <!-- 1 · Act -->
   <section class="stage" id="stage-1" role="tabpanel" aria-labelledby="tab-1" data-tone="act">
     <p class="kicker">1 · Act</p>
-    <h2 tabindex="-1"><em>Buy the cheapest color photo printer and ship it to Emily.</em></h2>
+    <p class="beat" id="a-beat">An agent turns a request into clicks.</p>
+    <h2 tabindex="-1" aria-describedby="a-beat"><em>Buy the cheapest color photo printer and ship it to Emily.</em></h2>
     <div id="a-board"></div>
     <p class="verdict" id="a-verdict" aria-live="polite"></p>
     <p class="aside" id="a-aside">A shopping page’s raw HTML can run past 100,000 tokens, and it hides the layout.</p>
@@ -193,7 +195,7 @@
     <h2 tabindex="-1">It opens the $89 printer, then stalls. Nothing says what comes next.</h2>
     <div id="p-board"></div>
     <p class="verdict" id="p-verdict" aria-live="polite"></p>
-    <p class="aside" id="p-aside">Each click is chosen from the current screen alone, so nothing carries the order past the product page.</p>
+    <p class="aside" id="p-aside">Each click sees only the current screen, so nothing carries the order forward.</p>
     <p class="changed" id="p-changed" hidden><b>What changed</b>Planning and acting are split. A planner breaks the request into steps, and an executor turns each step into clicks on the screen.</p>
     <div class="act"><button type="button" class="go" id="p-go">Write the plan first<small>planner and executor</small></button><button type="button" class="again" id="p-again" hidden>Pick one click at a time again</button></div>
   </section>
@@ -204,7 +206,7 @@
     <h2 tabindex="-1">Emily’s photo shows two addresses. Which one gets the printer?</h2>
     <div id="k-board"></div>
     <p class="verdict" id="k-verdict" aria-live="polite"></p>
-    <p class="aside" id="k-aside">One reading of the photo gives one answer, with no sign that another reading would differ.</p>
+    <p class="aside" id="k-aside">One reading gives one answer and no sign of doubt.</p>
     <p class="changed" id="k-changed" hidden><b>What changed</b>Agreement across samples measures how sure the agent is. When the samples split, it asks a person instead of guessing.</p>
     <div class="act"><button type="button" class="go" id="k-go">Ask when samples disagree<small>sample the plan, measure the spread</small></button><button type="button" class="again" id="k-again" hidden>Read the photo once again</button></div>
   </section>
@@ -223,7 +225,8 @@
   <!-- 5 · Reward -->
   <section class="stage" id="stage-5" role="tabpanel" aria-labelledby="tab-5" data-tone="reward" hidden>
     <p class="kicker">5 · Reward</p>
-    <h2 tabindex="-1">The agent takes 12 clicks to finish. To improve it, we need to know which clicks were good.</h2>
+    <p class="beat" id="r-beat">The agent now finishes the task. Improving it takes a training signal.</p>
+    <h2 tabindex="-1" aria-describedby="r-beat">It takes 12 clicks to finish.</h2>
     <div id="r-board"></div>
     <p class="verdict" id="r-verdict" aria-live="polite"></p>
     <p class="aside" id="r-aside">Copying recorded clicks breaks as soon as the agent strays from the person’s path.</p>
@@ -245,7 +248,8 @@
   <!-- 7 · Hack -->
   <section class="stage" id="stage-7" role="tabpanel" aria-labelledby="tab-7" data-tone="hack" hidden>
     <p class="kicker">7 · Hack</p>
-    <h2 tabindex="-1">To give reward faster, it now checks only that an order confirmation appears.</h2>
+    <p class="beat" id="h-beat">At the start of this unit, you chose what earned encouragement.</p>
+    <h2 tabindex="-1" aria-describedby="h-beat">To reward faster, the check now looks only for an order confirmation.</h2>
     <div id="h-board"></div>
     <p class="verdict" id="h-verdict" aria-live="polite"></p>
     <p class="aside" id="h-aside">A reward that checks less is easier to earn the wrong way.</p>
@@ -311,7 +315,7 @@
   function actBefore(){
     clearTimers();
     $("a-board").innerHTML='<p class="head">What the agent reads</p><pre class="html">'+HTML.replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</pre>'+bars([["People",78,""],["Agent reading HTML",14,"badf"]]);
-    verdict("a-verdict","problem","An agent that reads the page’s HTML gets tasks like this right 14% of the time. People get 78%. It loops, undoes its own steps, and clicks the wrong item.");
+    verdict("a-verdict","problem","Reading raw HTML, an agent finishes tasks like this 14% of the time. People manage 78%.");
     undone("a");
   }
   function actAfter(){
@@ -319,7 +323,7 @@
     var draw=function(picks,log){$("a-board").innerHTML='<p class="head">What the agent sees</p>'+shop({marks:true,picks:picks})+'<p class="log">'+log+'</p><p class="note">† illustrative example</p>'};
     $("a-go").hidden=true;$("a-aside").hidden=true;
     var finish=function(){draw(["sort","p89"],"click [2] → click [3]");
-      verdict("a-verdict","fixed","It sees numbered boxes on a screenshot and picks by number: [2] Sort by price, then [3] the $89 color photo printer.<sup>†</sup>");done("a")};
+      verdict("a-verdict","fixed","It picks numbered boxes on a screenshot: [2] Sort by price, then [3] the $89 color photo printer.<sup>†</sup>");done("a")};
     if(reduce){finish();return}
     draw([],"");verdict("a-verdict","","Looking at the screen…");
     timers.push(setTimeout(function(){draw(["sort"],"click [2]")},600));
@@ -332,7 +336,7 @@
   function orderCheck(rows){var h='<div class="check">';rows.forEach(function(r){h+='<div>'+r[0]+' <b'+(r[1]?'':' class="x"')+'>'+(r[1]?"✓":"✗")+'</b></div>'});return h+'</div>'}
   function planBefore(){
     $("p-board").innerHTML='<p class="head">One click at a time</p>'+shop({picks:["sort","p89"]})+'<p class="log">click [2] → click [3] → ?</p>'+orderCheck([["Cheapest color photo printer open",true],["In the cart",false],["Shipped to Emily",false]])+'<p class="note">† illustrative example</p>';
-    verdict("p-verdict","problem","Choosing one click at a time, it has the right printer open and no reason to add it to the cart or check out.");
+    verdict("p-verdict","problem","It has the right printer open and no reason to add it to the cart.");
     undone("p");
   }
   function planAfter(){

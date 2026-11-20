@@ -25,6 +25,7 @@
 
   .stage{padding:20px 20px 18px;border:1px solid var(--line);border-top:5px solid var(--tone);border-radius:8px;background:#fff}
   .kicker{margin:0 0 2px;color:var(--tone);font:700 13px "Courier New",monospace;text-transform:uppercase}
+  .beat{margin:4px 0 6px;color:var(--ink);font:italic 17px/1.4 Georgia,"Times New Roman",serif}
   h2{margin:0 0 16px;font:500 clamp(24px,4.4vw,31px)/1.2 Georgia,"Times New Roman",serif}
   .need-a{color:var(--a)}.need-b{color:var(--b)}
 
@@ -152,7 +153,8 @@
   <!-- 1 · Reach -->
   <section class="stage" id="stage-1" role="tabpanel" aria-labelledby="tab-1" data-tone="reach">
     <p class="kicker">1 · Reach</p>
-    <h2 tabindex="-1">Sentence A needs <em class="need-a">are</em>. Sentence B needs <em class="need-b">is</em>.</h2>
+    <p class="beat" id="r-beat">Unit 1 ended with three words in view.</p>
+    <h2 tabindex="-1" aria-describedby="r-beat">Sentence A needs <em class="need-a">are</em>. Sentence B needs <em class="need-b">is</em>.</h2>
     <div class="board">
       <span></span><span class="head">Sentence</span><span class="head c">Reaches the prediction</span><span class="head c">Next word</span>
       <span class="case a ra c1">A</span><div class="sentence ra c2" id="r-row-a"></div><div class="reach ra c3" id="r-reach-a"></div><div class="ans ra c4" id="r-ans-a"></div>
@@ -160,7 +162,7 @@
       <span class="case b rb c1">B</span><div class="sentence rb c2" id="r-row-b"></div><div class="reach rb c3" id="r-reach-b"></div><div class="ans rb c4" id="r-ans-b"></div>
     </div>
     <p class="verdict" id="r-verdict" aria-live="polite"></p>
-    <p class="aside" id="r-aside">A wider window moves the edge back, and a longer sentence can still put the subject past it.</p>
+    <p class="aside" id="r-aside">A wider window only moves the edge back. Longer sentences still cross it.</p>
     <p class="changed" id="r-changed" hidden><b>What changed</b>The state is updated at every word, so the subject can reach the prediction from anywhere earlier in the sentence.</p>
     <div class="act"><button type="button" class="go" id="r-go">Read the whole sentence<small>recurrent state</small></button><button type="button" class="again" id="r-again" hidden>Show the window again</button></div>
   </section>
@@ -168,7 +170,8 @@
   <!-- 2 · Keep -->
   <section class="stage" id="stage-2" role="tabpanel" aria-labelledby="tab-2" data-tone="keep" hidden>
     <p class="kicker">2 · Keep</p>
-    <h2 tabindex="-1">In sentence A, <em>keys</em> sits eight words before the prediction.</h2>
+    <p class="beat" id="k-beat">The state stays this size, even for a 100,000-word novel.</p>
+    <h2 tabindex="-1" aria-describedby="k-beat">In sentence A, <em>keys</em> sits eight words before the prediction.</h2>
     <div class="board2">
       <span></span><span class="head">Sentence A</span><span class="head c">Reaches the prediction</span>
       <span class="case a">A</span>
@@ -177,7 +180,6 @@
       <p class="route" id="k-route"></p>
     </div>
     <p class="verdict" id="k-verdict" aria-live="polite"></p>
-    <p class="aside" id="k-aside">A 100,000-word novel would still get a state of this same size.</p>
     <p class="changed" id="k-changed" hidden><b>What changed</b>Attention keeps every word and looks back at any of them directly, computing all positions at once. The price is a score for every pair of words.</p>
     <div class="act"><button type="button" class="go" id="k-go">Look back directly<small>attention</small></button><button type="button" class="again" id="k-again" hidden>Show the recurrent state again</button></div>
   </section>
@@ -193,7 +195,7 @@
       <span class="case b rb c1">B</span><div class="sentence rb c2" id="o-row-b"></div><div class="reach rb c3" id="o-reach-b"></div><div class="ans rb c4" id="o-ans-b"></div>
     </div>
     <p class="verdict" id="o-verdict" aria-live="polite"></p>
-    <p class="aside" id="o-aside">The recurrent state picked up order by reading one word after another. Attention reads every word at once, so it has no order to use.</p>
+    <p class="aside" id="o-aside">Recurrence got order from reading word by word. Attention reads every word at once.</p>
     <p class="changed" id="o-changed" hidden><b>What changed</b>Each word’s embedding now includes its position, so the same word in a different place looks different to attention.</p>
     <div class="act"><button type="button" class="go" id="o-go">Add positions<small>position embeddings</small></button><button type="button" class="again" id="o-again" hidden>Remove positions</button></div>
   </section>
@@ -201,7 +203,8 @@
   <!-- 4 · Hide -->
   <section class="stage" id="stage-4" role="tabpanel" aria-labelledby="tab-4" data-tone="hide" hidden>
     <p class="kicker">4 · Hide</p>
-    <h2 tabindex="-1">Generation adds one word at a time.</h2>
+    <p class="beat" id="h-beat">So far, every sentence was complete before the model read it.</p>
+    <h2 tabindex="-1" aria-describedby="h-beat">Generation adds one word at a time.</h2>
     <div class="board4">
       <span></span><span class="head">Sequence</span><span class="head c">Computed</span>
       <span class="lane">No mask</span><div class="sentence" id="h-row-n"></div><span class="count" id="h-count-n"></span>
@@ -251,7 +254,7 @@
     tokens("r-row-a",A,function(i){return(i<start?"out":"win")+subj(i)});tokens("r-row-b",B,function(i){return(i<start?"out":"win")+subj(i)});
     [["r-reach-a",A],["r-reach-b",B]].forEach(function(p){var r=$(p[0]);r.className="reach same "+(p[0].slice(-1)==="a"?"ra":"rb")+" c3";var box=document.createElement("span");box.className="chips";p[1].slice(-WINDOW).forEach(function(w){var c=document.createElement("span");c.className="chip";c.textContent=w;box.appendChild(c)});r.replaceChildren(box)});
     rel("r-rel",true);answers("r","merged");
-    verdict("r-verdict","problem","Same input, so one answer for both. Whichever word it picks, one sentence gets it wrong.");undone("r");
+    verdict("r-verdict","problem","Same input, one answer: one sentence gets it wrong.");undone("r");
   }
   function reachRead(n){
     tokens("r-row-a",A,function(i){return(i<n?"":i===n?"now":"unread")+subj(i)});tokens("r-row-b",B,function(i){return(i<n?"":i===n?"now":"unread")+subj(i)});
@@ -284,7 +287,7 @@
     tokens("k-row",A,function(i){return(st?(i>=1?"hop":""):"kept"+(animate?" flash":""))+subj(i)});
     $("k-reach").replaceChildren(st?vec(A.join(" "),"var(--reach)","1 state, any length"):vec("kept",  "var(--keep)","10 kept, grows with length",10,"strip"));
     var r=$("k-route");r.className="route"+(st?"":" keep");r.textContent=st?"keys → 8 rewrites → prediction":"keys → 1 step → prediction";
-    if(st){verdict("k-verdict","problem","<em>Keys</em> reaches the prediction only through eight rewrites of one fixed-size state, one word at a time.");undone("k")}
+    if(st){verdict("k-verdict","problem","<em>Keys</em> reaches the prediction only through eight rewrites of the state.");undone("k")}
     else{verdict("k-verdict","fixed","One step from <em>keys</em> to the prediction, and every word keeps its own representation.");done("k")}
     requestAnimationFrame(function(){keepArcs(animate)});
   }
@@ -298,7 +301,7 @@
     $("o-reach-a").replaceChildren(vec(key(A),"var(--keep)","attention mix"));$("o-reach-b").replaceChildren(vec(key(B),"var(--keep)","attention mix"));
     rel("o-rel",!on);answers("o",on?"own":"merged");
     if(on){verdict("o-verdict","fixed","Same words in different places, so A and B can get different answers again.");done("o")}
-    else{verdict("o-verdict","problem","Attention mixes the same ten words the same way for A and B. One answer for both, again.");undone("o")}
+    else{verdict("o-verdict","problem","Attention mixes the same ten words the same way: one answer for both, again.");undone("o")}
   }
   $("o-go").addEventListener("click",function(){orderDraw(true)});$("o-again").addEventListener("click",function(){orderDraw(false);$("o-go").focus()});
 
@@ -342,7 +345,7 @@
     cn.innerHTML=countHtml(nn,true);cm.innerHTML=countHtml(nm,true);hideFinish();
   }
   function hideFinish(){
-    verdict("h-verdict","fixed","Without the mask, every new word forces the earlier ones to be recomputed. With it, earlier words stay fixed.");
+    verdict("h-verdict","fixed","Without the mask, each new word forces every earlier one to be recomputed.");
     done("h");$("h-recap").hidden=false;
   }
   function hideEnd(){

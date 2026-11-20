@@ -26,6 +26,7 @@
 
   .stage{padding:20px 20px 18px;border:1px solid var(--line);border-top:5px solid var(--tone);border-radius:8px;background:#fff}
   .kicker{margin:0 0 2px;color:var(--tone);font:700 13px "Courier New",monospace;text-transform:uppercase}
+  .beat{margin:4px 0 6px;color:var(--ink);font:italic 17px/1.4 Georgia,"Times New Roman",serif}.beat span{display:block}
   h2{margin:0 0 16px;font:500 clamp(24px,4.4vw,31px)/1.2 Georgia,"Times New Roman",serif}
   .head{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
 
@@ -135,7 +136,8 @@
   <!-- 1 · Fuse -->
   <section class="stage" id="stage-1" role="tabpanel" aria-labelledby="tab-1" data-tone="fuse">
     <p class="kicker">1 · Fuse</p>
-    <h2 tabindex="-1">Photo 1 is blurry. Its caption reads <em>a dog on a beach</em>. Is it a dog?</h2>
+    <p class="beat" id="f-beat">At the start of this unit, you chose which readings to trust.</p>
+    <h2 tabindex="-1" aria-describedby="f-beat">A blurry photo, captioned <em>a dog on a beach</em>. Is it a dog?</h2>
     <div class="fusehead"><span class="ph blur" id="f-photo"></span><span class="cap">a dog on a beach</span><span class="arrow">→</span><div class="ans" id="f-ans"></div></div>
     <div class="bars">
       <span class="head">Input</span><span class="head">Says dog</span><span></span><span class="head">Weight</span>
@@ -145,19 +147,19 @@
     </div>
     <p class="dag">† illustrative numbers</p>
     <p class="verdict" id="f-verdict" aria-live="polite"></p>
-    <p class="aside" id="f-aside">Trusting only the caption fails whenever the caption is wrong.</p>
-    <p class="changed" id="f-changed" hidden><b>What changed</b>Additive fusion sums the two inputs. A gate scales each one by how clear it is.</p>
+    <p class="aside" id="f-aside">Ignoring the photo fails whenever the caption is wrong.</p>
+    <p class="changed" id="f-changed" hidden><b>What changed</b>Additive fusion sums the inputs. A gate scales each by how clear it is.</p>
     <div class="act"><button type="button" class="go" id="f-go">Add them, and gate the blurry one<small>gated additive fusion</small></button><button type="button" class="again" id="f-again" hidden>Average them again</button></div>
   </section>
 
   <!-- 2 · Coordinate -->
   <section class="stage" id="stage-2" role="tabpanel" aria-labelledby="tab-2" data-tone="coord" hidden>
     <p class="kicker">2 · Coordinate</p>
-    <h2 tabindex="-1">Now the caption <em>a dog on a beach</em> arrives alone. Find its photo among the five.</h2>
+    <p class="beat" id="c-beat">Fusion runs once per pair, and a photo library holds millions.</p>
+    <h2 tabindex="-1" aria-describedby="c-beat">The caption <em>a dog on a beach</em> arrives alone. Find its photo.</h2>
     <div id="c-board"></div>
     <p class="verdict" id="c-verdict" aria-live="polite"></p>
-    <p class="aside" id="c-aside">Fusing it with each photo in turn means one run per pair, and a photo library has millions.</p>
-    <p class="changed" id="c-changed" hidden><b>What changed</b>Each modality keeps its own encoder, joined only by a similarity score. That works only if the two spaces agree.</p>
+    <p class="changed" id="c-changed" hidden><b>What changed</b>Each modality keeps its own encoder, joined by a similarity score. That works only if the two spaces agree.</p>
     <div class="act"><button type="button" class="go" id="c-go">Compare by cosine<small>coordinated representations</small></button><button type="button" class="again" id="c-again" hidden>Fuse them again</button></div>
   </section>
 
@@ -167,19 +169,19 @@
     <h2 tabindex="-1">In the grid, photo 1 scores as high against <em>an orange</em> as against its own caption.</h2>
     <div id="x-board"></div>
     <p class="verdict" id="x-verdict" aria-live="polite"></p>
-    <p class="aside" id="x-aside">Bigger encoders trained separately still do not agree.</p>
-    <p class="changed" id="x-changed" hidden><b>What changed</b>Each batch pulls true pairs together and pushes the rest apart, so cosine now means “these match”. Write class names as captions, and the same grid is a classifier.</p>
+    <p class="aside" id="x-aside">Bigger encoders trained separately still disagree.</p>
+    <p class="changed" id="x-changed" hidden><b>What changed</b>Each batch pulls true pairs together and pushes the rest apart, so cosine now means “these match”. With class names as captions, the grid is a classifier.</p>
     <div class="act"><button type="button" class="go" id="x-go">Train on matched pairs<small>contrastive learning (CLIP)</small></button><button type="button" class="again" id="x-again" hidden>Use the separate models again</button></div>
   </section>
 
   <!-- 4 · Shape -->
   <section class="stage" id="stage-4" role="tabpanel" aria-labelledby="tab-4" data-tone="shape" hidden>
     <p class="kicker">4 · Shape</p>
-    <h2 tabindex="-1">Now swap in DINOv2 for the photos and MPNet for the captions, with no matched pairs.</h2>
+    <p class="beat" id="s-beat">Pairs are expensive: CLIP needed hundreds of millions.</p>
+    <h2 tabindex="-1" aria-describedby="s-beat">Swap in DINOv2 for photos and MPNet for captions, with no pairs.</h2>
     <div id="s-board"></div>
     <p class="verdict" id="s-verdict" aria-live="polite"></p>
-    <p class="aside" id="s-aside">CLIP needed hundreds of millions of pairs, and pairs are the expensive part.</p>
-    <p class="changed" id="s-changed" hidden><b>What changed</b>Relations agree across modalities even when coordinates do not, so the shapes can be lined up without pairs. Lab 5 tests how far that goes.</p>
+    <p class="changed" id="s-changed" hidden><b>What changed</b>Relations agree across modalities even when coordinates do not, so the shapes line up without pairs. Lab 5 tests how far that goes.</p>
     <div class="act"><button type="button" class="go" id="s-go">Compare each space with itself<small>implicit alignment</small></button><button type="button" class="again" id="s-again" hidden>Compare across spaces again</button></div>
   </section>
 
@@ -264,8 +266,8 @@
     $("f-wi").classList.toggle("on",gated);$("f-wt").classList.toggle("on",gated);
     var s=$("f-sum");s.style.width=sum+"%";s.style.setProperty("--c",gated?"var(--fuse)":"var(--bad)");$("f-pct").textContent=sum+"%";
     var a=$("f-ans");a.className="ans "+(gated?"yes":"no");a.innerHTML='<span class="big">'+(gated?"Yes":"No")+'</span><small>is it a dog?</small>';
-    if(gated){verdict("f-verdict","fixed","The gate turns the blurry photo down to 0.2 and the caption up to 0.8. Dog 66%, so the answer is yes.<sup>†</sup>");done("f")}
-    else{verdict("f-verdict","problem","Fooled by the blur, the image model says dog 10%. The caption says dog 80%. Averaged, that is 45%, so the answer is no.<sup>†</sup>");undone("f")}
+    if(gated){verdict("f-verdict","fixed","Gated at 0.2 for the photo and 0.8 for the caption, dog reaches 66%: yes.<sup>†</sup>");done("f")}
+    else{verdict("f-verdict","problem","Averaged, the blurry photo drags dog down to 45%: no.<sup>†</sup>");undone("f")}
   }
   $("f-go").addEventListener("click",function(){fuseDraw(true)});$("f-again").addEventListener("click",function(){fuseDraw(false);$("f-go").focus()});
 
@@ -277,10 +279,10 @@
       al.appendChild(capEl("a dog on a beach",true));al.insertAdjacentHTML("beforeend",'<span class="arrow">→</span><span class="empty">Fusion takes a photo and a caption together.<br>Nothing to compare with.</span>');
       b.appendChild(al);
       var ps=document.createElement("div");ps.className="photos";for(var i=0;i<5;i++)ps.appendChild(photo(i));b.appendChild(ps);
-      verdict("c-verdict","problem","Fusion needs a photo and a caption together and returns one answer. A caption alone has nothing to be compared with.");undone("c");
+      verdict("c-verdict","problem","Fusion needs both inputs at once. A lone caption has nothing to compare.");undone("c");
     }else{
       b.appendChild(grid("Captions × photos, cosine score",NOISE,"cap","photo",{hlRow:0}));
-      verdict("c-verdict","fixed","Every photo and every caption gets its own vector, so the caption can be scored against all five photos. But with an image model and a text model trained separately, the 5×5 grid is noise.");done("c");
+      verdict("c-verdict","fixed","Each input now has its own vector, so the caption is scored against every photo. With separately trained models, the grid is noise.");done("c");
     }
   }
   $("c-go").addEventListener("click",function(){coordDraw(true)});$("c-again").addEventListener("click",function(){coordDraw(false);$("c-go").focus()});
@@ -290,9 +292,9 @@
   function mix(A,B,t){var M=[];for(var r=0;r<5;r++){M.push([]);for(var c=0;c<5;c++)M[r].push(A[r][c]+(B[r][c]-A[r][c])*t)}return M}
   function contrastBoard(M,pick){var b=$("x-board");b.replaceChildren();xGrid=grid("Captions × photos, cosine score",M,"cap","photo",{hlRow:0,pick:pick?[0,0]:(M===NOISE?[3,0]:null)});b.appendChild(xGrid)}
   function contrastReset(){clearInterval(xTimer);xTimer=null;contrastBoard(NOISE,false);
-    verdict("x-verdict","problem","The grid is noise. Every photo is as close to the wrong captions as to its own.");undone("x")}
+    verdict("x-verdict","problem","The grid is noise.");undone("x")}
   function contrastFinish(){clearInterval(xTimer);xTimer=null;contrastBoard(DIAG,true);
-    verdict("x-verdict","fixed","The diagonal lights up. Each photo is closest to its own caption, and <em>a dog on a beach</em> finds photo 1.");done("x")}
+    verdict("x-verdict","fixed","The diagonal lights up: <em>a dog on a beach</em> finds photo 1.");done("x")}
   function contrastRun(){$("x-go").hidden=true;$("x-aside").hidden=true;verdict("x-verdict","","Training on matched pairs…");
     if(reduce){contrastFinish();return}
     contrastBoard(NOISE,false);var k=0,N=24;xTimer=setInterval(function(){k++;setGrid(xGrid,mix(NOISE,DIAG,k/N));if(k>=N)contrastFinish()},60)}
@@ -302,9 +304,9 @@
   function shapeDraw(on){
     var b=$("s-board");b.replaceChildren();var p=document.createElement("div");p.className="pair";
     if(!on){p.appendChild(grid("MPNet captions × DINOv2 photos, no pairs",CROSS,"cap","photo"));
-      verdict("s-verdict","problem","Without pairs, the grid is noise again.");undone("s")}
+      verdict("s-verdict","problem","The grid is noise again.");undone("s")}
     else{p.appendChild(grid("Photo vs photo (DINOv2)",IMG,"photo","photo"));p.appendChild(grid("Caption vs caption (MPNet)",TXT,"name","name"));
-      verdict("s-verdict","fixed","In both spaces, the apple is near the orange and far from the car. The two shapes match.");done("s")}
+      verdict("s-verdict","fixed","In both spaces the apple sits near the orange, far from the car. The shapes match.");done("s")}
     b.appendChild(p);
   }
   $("s-go").addEventListener("click",function(){shapeDraw(true)});$("s-again").addEventListener("click",function(){shapeDraw(false);$("s-go").focus()});
@@ -319,7 +321,7 @@
       order.forEach(function(o,i){rk.insertAdjacentHTML("beforeend",'<span class="'+(i===0?"top":"")+'">'+CAPS[o.r]+'</span><span class="'+(i===0?"top":"")+'">'+o.s.toFixed(2)+'</span>')});
       row.appendChild(rk);b.appendChild(row);
       b.insertAdjacentHTML("beforeend",'<div class="qa"><span class="q">What color is the car?</span><span class="arrow">→</span><div class="ans no"><span class="big">?</span><small>no caption says</small></div></div>');
-      verdict("t-verdict","problem","The grid can only say which of the five captions fits photo 5 best: <em>a car on a street</em>. It cannot say what color.");undone("t");$("t-recap").hidden=true;
+      verdict("t-verdict","problem","The grid can only pick the best caption, <em>a car on a street</em>. It cannot say what color.");undone("t");$("t-recap").hidden=true;
     }else{
       var pp=document.createElement("div");pp.className="pipe";pp.appendChild(photo(4));
       var parts=['<span class="arrow">→</span>','<span class="box">image<br>encoder</span>','<span class="arrow">→</span>','<span class="box">adapter</span>','<span class="arrow">→</span>','<span class="toks" aria-label="image tokens"><i></i><i></i><i></i><i></i></span>','<span class="q">What color is the car?</span>','<span class="arrow">→</span>','<span class="box">language<br>model</span>','<span class="arrow">→</span>','<div class="ans yes"><span class="big">Blue</span><small>answer</small></div>'];
