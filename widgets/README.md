@@ -8,6 +8,7 @@ the lesson.
 
 | Widget | Where | What it shows |
 | --- | --- | --- |
+| [Letter Merge](https://codey-m.github.io/cv_nlp/widgets/widget-letter-merge.html) | Unit 1 overview | Choosing a piece to reuse in a new word |
 | [Robot Theatre](https://codey-m.github.io/cv_nlp/widgets/widget-separate-by-hand.html) | Unit 1, Lec. 1: Tokenization & BoW Classifiers | A director that reads words but not their order |
 | [Where the probability goes](https://codey-m.github.io/cv_nlp/widgets/widget-where-the-probability-goes.html) | Unit 1, Lec. 2: Count based language models |  |
 | [What text survives?](https://codey-m.github.io/cv_nlp/widgets/unit-summary-what-text-survives.html) | Unit 1, Lec. 2: Count based language models | Unit 1 synthesis: what text survives? |
