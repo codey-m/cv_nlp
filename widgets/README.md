@@ -1,10 +1,10 @@
-# Natural Language Processing widgets
+# Multimodal AI widgets
 
-The interactive widgets in the Natural Language Processing courses on MIT Learn. The courses load each widget from
+The interactive widgets in the Multimodal AI courses on MIT Learn. The courses load each widget from
 this folder through GitHub Pages, so every link below opens the exact page learners see inside
 the lesson.
 
-## 6.4600.1x Natural Language Processing: Foundations
+## 6.4600.1x Multimodal AI: Language Model Foundations
 
 | Widget | Where | What it shows |
 | --- | --- | --- |
@@ -15,7 +15,14 @@ the lesson.
 | [Order and visibility](https://codey-m.github.io/cv_nlp/widgets/widget-order-and-visibility.html) | Unit 2, Lec. 4: Attention and transformers |  |
 | [How context reaches a prediction](https://codey-m.github.io/cv_nlp/widgets/unit-summary-how-context-reaches-prediction.html) | Unit 2, Lec. 4: Attention and transformers | Unit 2 synthesis: how context reaches a prediction |
 
-## 6.4600.5x Multimodal Machine Learning
+## 6.4600.2x Multimodal AI: Language Model Systems
+
+| Widget | Where | What it shows |
+| --- | --- | --- |
+| [What decides the next word?](https://codey-m.github.io/cv_nlp/widgets/unit-summary-what-decides-the-next-word.html) | Unit 1, Lec. 2: Steering language models | Unit 1 synthesis: what decides the next word? |
+| [What does it take to ship the bot?](https://codey-m.github.io/cv_nlp/widgets/unit-summary-ship-the-bot.html) | Unit 2, Lec. 5: Efficient training and deployment | Unit 2 synthesis: what does it take to ship the bot? |
+
+## 6.4600.5x Multimodal AI: Systems and Engineering
 
 | Widget | Where | What it shows |
 | --- | --- | --- |

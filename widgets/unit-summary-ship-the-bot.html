@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What does it take to ship the bot?</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{--ink:#1d292b;--muted:#5a676a;--line:#cfd7d5;--paper:#f7f8f5;--a:#a31f34;--b:#245a7a;--grey:#7b8785;--bad:#7d2a33;
+        --pretrain:#654c91;--pretrain-w:#f1ecf8;--adapt:#9a5b00;--adapt-w:#fff2dc;--rephrase:#8e3b74;--rephrase-w:#f6eaf2;--measure:#3b7a3a;--measure-w:#ebf4e8;--score:#1b6d74;--score-w:#e3f2f3;--serve:#245a7a;--serve-w:#e4eef5}
+  body{margin:0;padding:18px 16px 26px;background:var(--paper);color:var(--ink);font:16px/1.45 Arial,Helvetica,sans-serif}
+  main{max-width:840px;margin:auto}
+  button{font:inherit;cursor:pointer}button:disabled{cursor:default;opacity:.45}
+  button:focus-visible,h2:focus-visible{outline:3px solid #176ca5;outline-offset:3px}
+  [hidden]{display:none!important}
+  [data-tone="pretrain"]{--tone:var(--pretrain);--wash:var(--pretrain-w)}
+  [data-tone="adapt"]{--tone:var(--adapt);--wash:var(--adapt-w)}
+  [data-tone="rephrase"]{--tone:var(--rephrase);--wash:var(--rephrase-w)}
+  [data-tone="measure"]{--tone:var(--measure);--wash:var(--measure-w)}
+  [data-tone="score"]{--tone:var(--score);--wash:var(--score-w)}
+  [data-tone="serve"]{--tone:var(--serve);--wash:var(--serve-w)}
+  .eyebrow{margin:0 0 3px;color:var(--a);font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase}
+  h1{margin:0 0 14px;font:500 clamp(28px,5vw,38px)/1.1 Georgia,"Times New Roman",serif}
+
+  .steps{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:12px}
+  .step{display:grid;justify-items:center;gap:1px;padding:7px 4px;border:1px solid var(--line);border-top:4px solid var(--tone);border-radius:4px;background:#fff;color:#4a5659;font-size:14px}
+  .step b{font:700 12px "Courier New",monospace;color:var(--tone)}
+  .step[aria-selected="true"]{background:var(--wash);border-color:var(--tone);color:var(--ink);font-weight:700}
+
+  .stage{padding:20px 20px 18px;border:1px solid var(--line);border-top:5px solid var(--tone);border-radius:8px;background:#fff}
+  .kicker{margin:0 0 2px;color:var(--tone);font:700 13px "Courier New",monospace;text-transform:uppercase}
+  .beat{margin:4px 0 6px;color:var(--ink);font:italic 17px/1.4 Georgia,"Times New Roman",serif}.beat span{display:block}
+  h2{margin:0 0 16px;font:500 clamp(24px,4.4vw,31px)/1.2 Georgia,"Times New Roman",serif}
+  .head{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+
+
+  /* next-token table (pick, sharpen) */
+  .dist{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 52px 78px;column-gap:10px;row-gap:8px;align-items:center;margin-bottom:6px}
+  .dist .lab{font:15px Georgia,serif;line-height:1.2}
+  .dist .lab small{display:block;color:var(--muted);font:12px Arial,sans-serif}
+  .track{position:relative;height:22px;border-radius:4px;background:#eef1f0}
+  .fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--c,var(--grey));transition:width .5s ease}
+  .pct{font:700 15px "Courier New",monospace;text-align:right}
+  .picked{font:15px "Courier New",monospace;color:var(--muted);text-align:right}
+  .picked.on{color:var(--ink);font-weight:700}
+  .try{min-height:44px;padding:8px 14px;border:2px solid var(--tone);border-radius:6px;background:#fff;color:var(--tone);font-size:15px;font-weight:700}
+  .todo{color:var(--muted);font-style:italic}
+  .dag{margin:6px 0 10px;color:var(--muted);font-size:12px}
+  /* code cell (pilot) */
+  /* code cells: GitHub-light-style syntax theme */
+  .cell{--code-bg:#f6f8fa;--code-line:#d0d7de;--code-ink:#1f2328;--c-kw:#cf222e;--c-fn:#8250df;--c-st:#0a3069;--c-nu:#0550ae;--c-pa:#953800;--c-cm:#59636e;--c-in:#0969da;--c-out:#bc4c00;
+        --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+        margin:0 0 6px;border:1px solid var(--code-line);border-radius:8px;background:#fff;overflow:hidden}
+  .cell-in{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;padding:12px 14px 12px;background:var(--code-bg)}
+  .cell-out{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;padding:12px 14px;border-top:1px solid var(--code-line)}
+  .prompt-mark{font:12px/1.75 var(--mono);text-align:right;white-space:nowrap;padding-top:1px}
+  .prompt-mark.in{color:var(--c-in)}.prompt-mark.out{color:var(--c-out)}.prompt-mark b{font-weight:400}
+  .code{margin:0;font:13.5px/1.75 var(--mono);color:var(--code-ink);white-space:pre-wrap;overflow-wrap:anywhere;tab-size:4}
+  .printed{margin:0 0 6px;font:13px/1.6 var(--mono);color:var(--code-ink);white-space:pre-wrap}
+  .code .kw{color:var(--c-kw)}.code .fn{color:var(--c-fn)}.code .st{color:var(--c-st)}.code .nu{color:var(--c-nu)}.code .pa{color:var(--c-pa)}
+  .code .va{color:var(--code-ink);font-weight:600}.code .op{color:var(--c-kw)}.code .pu{color:var(--code-ink)}.code .cm{color:var(--c-cm);font-style:italic}
+  select.arg{appearance:none;-webkit-appearance:none;margin:0 1px;padding:0 18px 0 5px;min-height:26px;border:1px solid var(--code-line);border-radius:4px;
+    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2359636e' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 5px center;
+    font:600 13.5px var(--mono);cursor:pointer;vertical-align:baseline;box-shadow:0 1px 0 rgba(31,35,40,.04)}
+  .setline{margin:0 0 8px;font-size:15px}
+  select.pick{appearance:none;-webkit-appearance:none;padding:4px 26px 4px 10px;border:2px solid var(--tone);border-radius:6px;font:700 15px Arial,sans-serif;color:var(--tone);cursor:pointer;
+    background:var(--wash) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23555' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 9px center}
+  select.pick:focus-visible{outline:3px solid #176ca5;outline-offset:2px}
+  #t-print{margin:0 0 8px;color:var(--muted)}
+  .qa-box{padding:10px 12px;border-left:4px solid var(--grey);border-radius:4px;background:#f1f3f2;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace}
+  .qa-box div{margin:2px 0}.qa-box .a{color:var(--tone);margin-bottom:8px}.qa-box .ex2{color:var(--tone);font-style:italic;margin-bottom:6px}
+  .toks-out{display:flex;flex-wrap:wrap;gap:4px}
+  .tk{padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:#fff;font:14px ui-monospace,Menlo,Consolas,monospace}
+  .tk.ans{border:2px solid var(--tone);background:var(--wash);font-weight:700;cursor:pointer}
+  .tk.hl{border-color:var(--tone);background:var(--tone);color:#fff}
+  .look{margin:8px 0 0;font-size:15px}
+  .parts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
+  .part{min-height:40px;padding:6px 12px;border:2px solid var(--tone);border-radius:6px;background:#fff;color:var(--tone);font-size:14px;font-weight:700}
+  .part[aria-pressed="true"]{background:var(--tone);color:#fff}.part[aria-pressed="true"]::before{content:"✓ "}
+  .reply-box{margin:0;padding:10px 12px;border-radius:6px;background:#fff;border:1px solid var(--line);font:italic 16px/1.45 Georgia,serif}
+  select.arg:hover{border-color:#8c959f}select.arg:focus-visible{outline:2px solid var(--c-in);outline-offset:1px}
+  select.arg.nu{color:var(--c-nu)}select.arg.va{color:var(--code-ink)}select.arg.pa{color:var(--c-pa)}
+  .cell-act{display:flex;align-items:center;gap:10px;padding:0 14px 12px 84px;background:var(--code-bg)}
+  .run{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:4px 14px;border:1px solid var(--tone);border-radius:6px;background:var(--tone);color:#fff;font:600 14px Arial,sans-serif}
+  .tiles-head{margin:12px 0 6px;font-size:14px}.tiles-head b{font:700 15px var(--mono,monospace)}
+  .tiles{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:4px;max-width:560px}
+  .tile{display:grid;place-items:center;height:26px;border-radius:4px;background:#e7efe9;color:#2f6b3a;font-size:13px;font-weight:700}
+  .tile.bad{background:var(--bad);color:#fff}
+  @media(max-width:640px){.tiles{grid-template-columns:repeat(10,minmax(0,1fr))}}
+  .run:hover{filter:brightness(1.08)}.run:focus-visible{outline:3px solid #176ca5;outline-offset:2px}
+  @media(max-width:640px){.cell-in,.cell-out{grid-template-columns:minmax(0,1fr);gap:2px}.prompt-mark{text-align:left}.cell-act{padding-left:14px}.code,.printed,select.arg{font-size:12px}}
+  .cut{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr) 92px 92px;column-gap:10px;row-gap:6px;align-items:center}
+  .cut .r{text-align:right}
+  .cut .lab{font:15px Georgia,serif;line-height:1.2}.cut .lab small{display:block;color:var(--muted);font:12px Arial,sans-serif}
+  .cut .num{font:15px "Courier New",monospace;text-align:right;color:var(--muted)}
+  .cut .num.on{color:var(--ink);font-weight:700}
+  .cut .row-out{opacity:.38;transition:opacity .3s}
+  .cut .track{height:18px}
+  .out-body .ex{margin:0 0 10px;padding:8px 10px;border-left:4px solid var(--tone);background:var(--wash);font:13px/1.45 "Courier New",monospace}.out-body .ex b{display:block;color:var(--tone)}.out-body .ex div{margin-top:4px}
+  .replies{margin:4px 0 0;padding-left:22px;font:italic 15px/1.4 Georgia,serif}.replies li{margin:2px 0;color:var(--muted)}.replies li.ans{color:var(--ink)}
+  .cut.show{grid-template-columns:minmax(0,150px) minmax(0,1fr) 56px 104px}.cut.show .tag{font-size:13px;color:var(--muted);text-align:right}.cut.show .tag.ans{color:var(--tone);font-weight:700}
+  .fill.many{background:repeating-linear-gradient(90deg,var(--c,var(--grey)) 0 2px,transparent 2px 5px)!important}
+  @media(max-width:640px){.cut{grid-template-columns:minmax(0,1fr) minmax(0,.8fr) 64px 64px;column-gap:6px}.cut .head{font-size:12px}}
+  .bad .fill{background:var(--bad)!important}.dist .lab.bad{color:var(--bad)}
+  .verdict{margin:18px 0 6px;font:22px/1.32 Georgia,"Times New Roman",serif}
+  .verdict.problem{color:var(--bad)}.verdict.fixed{color:var(--tone)}
+  .aside{margin:0 0 14px;color:var(--muted);font-size:14px}
+  .changed{margin:4px 0 14px;padding:12px 14px;border-left:5px solid var(--tone);background:var(--wash);font:18px/1.42 Georgia,"Times New Roman",serif}
+  .changed b{display:block;margin-bottom:2px;color:var(--tone);font:700 12px Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase}
+  .act{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+  .go{display:inline-grid;justify-items:start;gap:1px;min-height:52px;padding:8px 18px;border:2px solid var(--tone);border-radius:7px;background:var(--tone);color:#fff;font-size:17px;font-weight:700}
+  .go small{font-size:12px;font-weight:400;opacity:.85}
+  .again{min-height:44px;padding:8px 12px;border:1px solid #8a9694;border-radius:6px;background:#fff;color:var(--ink);font-size:14px}
+
+  .recap{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:4px 0 14px}
+  .recap div{padding:8px 6px;border-top:4px solid var(--tone);background:var(--wash);font-size:13px;text-align:center}
+  .recap b{display:block;color:var(--tone);font-size:13px}
+
+  .pager{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+  .pager button{min-height:46px;padding:8px 14px;border:1px solid #8a9694;border-radius:6px;background:#fff;color:var(--ink);font-size:15px}
+  .pcount{color:#5b686b;font:13px "Courier New",monospace}
+
+  @media(max-width:640px){
+    body{padding:12px 8px 22px}.stage{padding:15px 11px}
+    .verdict{font-size:19px}.changed{font-size:16px}
+    .step{font-size:12px}.wide{display:none}.recap{grid-template-columns:1fr 1fr}
+  }
+  @media(max-width:430px){
+    .head{font-size:12px}.step{font-size:12px;padding:6px 2px}
+  }
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+  sup{font-size:12px}
+
+  /* M2 U2 */
+  .qs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 30px;gap:6px 12px;align-items:center;margin:0 0 6px}
+  .qs .q{font:15px Georgia,serif}.qs .q small{display:block;color:var(--muted);font:12px Arial,sans-serif}
+  .qs .r{font:italic 15px/1.35 Georgia,serif;color:var(--ink)}.qs .mk{font-weight:700;text-align:center}.qs .mk.ok{color:#2f6b3a}.qs .mk.no{color:var(--bad)}
+  .train{margin:0 0 12px;padding:10px 12px;border-left:4px solid var(--grey);border-radius:4px;background:#f1f3f2;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace}
+  .train div{margin:2px 0}.train .gen{color:var(--tone)}
+  .mat{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin:6px 0 8px}
+  .mat .w{width:150px;height:150px;border-radius:4px;background:repeating-linear-gradient(45deg,#d9dfdd 0 6px,#e9edeb 6px 12px);display:grid;place-items:center;color:var(--muted);font:12px ui-monospace,monospace;text-align:center}
+  .mat .w.train{background:var(--tone);color:#fff}
+  .mat .ba{display:flex;align-items:flex-end;gap:6px}.mat .b{width:var(--rw);height:150px;background:var(--tone);border-radius:2px}.mat .a{width:150px;height:var(--rw);background:var(--tone);border-radius:2px}
+  .mat small{display:block;color:var(--muted);font-size:12px;margin-top:4px;text-align:center}
+  .counts{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr) 120px;gap:6px 10px;align-items:center;font-size:14px}
+  .counts .n{font:700 14px ui-monospace,Menlo,monospace;text-align:right}
+  .bots{display:grid;grid-template-columns:60px 120px minmax(0,1fr) 120px;gap:8px 12px;align-items:center}
+  .bots .num{font:15px ui-monospace,Menlo,monospace;text-align:right}.bots .rp{font:italic 15px Georgia,serif}.bots .rp.bad{color:var(--bad)}
+  .bots .rank{font:700 13px Arial,sans-serif;color:var(--tone);text-align:right}
+  .scores{display:grid;grid-template-columns:minmax(0,1fr) 92px 92px;gap:8px 12px;align-items:center}
+  .scores .rp{font:italic 15px/1.35 Georgia,serif}.scores .num{font:15px ui-monospace,Menlo,monospace;text-align:right}.scores .num.top{font-weight:700;color:var(--tone)}
+  .refline{margin:0 0 10px;font-size:14px}.refline em{font:italic 15px Georgia,serif}
+  .ai{display:grid;grid-template-columns:minmax(0,210px) minmax(0,1fr) 110px;gap:8px 12px;align-items:center;margin:4px 0 10px}
+  .ai .lab{font-size:14px}.ai .num{font:700 14px ui-monospace,Menlo,monospace;text-align:right}
+  .facts{margin:0;padding-left:18px;font-size:14px;color:var(--ink)}.facts li{margin:2px 0}
+  @media(max-width:640px){.qs{grid-template-columns:minmax(0,1fr) 26px}.qs .q{grid-column:1/-1}.bots{grid-template-columns:44px 80px minmax(0,1fr)}.bots .rank{grid-column:1/-1;text-align:left}.ai{grid-template-columns:minmax(0,1fr) 90px}.ai .track{grid-column:1/-1}}
+
+  /* two-line openers */
+  .opener{margin:6px 0 14px}
+  .opener .ln{margin:0 0 6px;font:400 clamp(20px,3.6vw,25px)/1.35 Georgia,"Times New Roman",serif;color:var(--ink);opacity:0;transform:translateY(6px);transition:opacity .45s ease,transform .45s ease}
+  .opener .ln.on{opacity:1;transform:none}
+  .opener.done .ln{font:italic 17px/1.4 Georgia,"Times New Roman",serif;margin:0 0 2px;opacity:1;transform:none}
+  .opener.done{margin:4px 0 8px}
+  .cont{min-height:44px;padding:8px 16px;border:2px solid var(--tone);border-radius:6px;background:#fff;color:var(--tone);font-size:15px;font-weight:700;opacity:0;transition:opacity .3s}
+  .cont.on{opacity:1}
+  @media(prefers-reduced-motion:reduce){.opener .ln,.cont{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Unit 2 synthesis</p>
+  <h1>What does it take to ship the bot?</h1>
+  <nav class="steps" role="tablist" aria-label="Six steps">
+    <button class="step" role="tab" id="tab-1" aria-controls="stage-1" data-tone="pretrain"><b>1</b>Pretrain</button>
+    <button class="step" role="tab" id="tab-2" aria-controls="stage-2" data-tone="adapt"><b>2</b>Adapt</button>
+    <button class="step" role="tab" id="tab-3" aria-controls="stage-3" data-tone="rephrase"><b>3</b>Rephrase</button>
+    <button class="step" role="tab" id="tab-4" aria-controls="stage-4" data-tone="measure"><b>4</b>Measure</button>
+    <button class="step" role="tab" id="tab-5" aria-controls="stage-5" data-tone="score"><b>5</b>Score</button>
+    <button class="step" role="tab" id="tab-6" aria-controls="stage-6" data-tone="serve"><b>6</b>Serve</button>
+  </nav>
+
+  <!-- 1 · Pretrain -->
+  <section class="stage" id="stage-1" role="tabpanel" aria-labelledby="tab-1" data-tone="pretrain">
+    <p class="kicker">1 · Pretrain</p>
+    <div class="opener" id="o1" aria-live="polite"><p class="ln">A company wants a support bot that answers from its FAQ.</p><p class="ln">Its staff have written 2,000 example support chats.</p></div>
+    <button type="button" class="cont" id="c1">Continue <span aria-hidden="true">→</span></button>
+    <div class="fbody" id="f1" hidden>
+    <h2 tabindex="-1" aria-describedby="o1">Train it from scratch on those chats.<sup>†</sup></h2>
+    <div class="qs" id="p-qs" role="table" aria-label="Test questions and the bot's replies"></div>
+    <p class="verdict" id="p-verdict" aria-live="polite"></p>
+    <p class="aside" id="p-aside">The bot would have to learn everything about language from those chats alone.</p>
+    <p class="changed" id="p-changed" hidden><b>What changed</b>Pretraining learns how language and conversations work from a large general corpus, so the company chats only have to teach the company. Trained on small data alone, a model overfits it.</p>
+    <div class="act"><button type="button" class="go" id="p-go">Pretrain on general text, then fine-tune<small>pretraining</small></button><button type="button" class="again" id="p-again" hidden>Train from scratch again</button></div>
+    <p class="dag">† Illustrative chats, questions and replies.</p>
+
+      </div>
+  </section>
+
+  <!-- 2 · Adapt -->
+  <section class="stage" id="stage-2" role="tabpanel" aria-labelledby="tab-2" data-tone="adapt" hidden>
+    <p class="kicker">2 · Adapt</p>
+    <div class="opener" id="o2" aria-live="polite"><p class="ln">Pretraining gives a capable model. Fine-tuning makes it the company's.</p><p class="ln">But fine-tuning every weight means a full model copy for each company.</p></div>
+    <button type="button" class="cont" id="c2">Continue <span aria-hidden="true">→</span></button>
+    <div class="fbody" id="f2" hidden>
+    <h2 tabindex="-1" aria-describedby="o2">Full fine-tuning trains every number in every matrix.</h2>
+    <div class="cell" id="a-cell">
+      <div class="cell-in"><span class="prompt-mark in" aria-hidden="true">In&nbsp;[<b class="n">&nbsp;</b>]:</span><pre class="code" aria-label="Add a LoRA adapter. Choosing the rank r updates the output."><span class="cm"># Lab 2 fine-tunes with LoraConfig(r=16, lora_alpha=32)</span>
+<span class="va">model</span> <span class="op">=</span> <span class="fn">get_peft_model</span><span class="pu">(</span>
+    model<span class="pu">,</span>
+    <span class="fn">LoraConfig</span><span class="pu">(</span><span class="pa">r</span><span class="op">=</span><select class="arg nu" data-arg="r" aria-label="r"><option>4</option><option selected>16</option><option>64</option></select><span class="pu">,</span> <span class="pa">lora_alpha</span><span class="op">=</span><span class="nu">32</span><span class="pu">))</span></pre></div>
+      <div class="cell-out" id="a-out"><span class="prompt-mark out" aria-hidden="true">Out[<b class="n">&nbsp;</b>]:</span>
+        <div class="out-body"><div class="mat" aria-hidden="true"><div><div class="w" id="a-w">W<br>4,096 × 4,096<br>frozen</div><small>pretrained weights</small></div><div><div class="ba"><div class="b" id="a-b"></div><div class="a" id="a-a"></div></div><small id="a-bal">B and A</small></div></div>
+          <div class="counts" id="a-counts"></div></div>
+      </div>
+    </div>
+    <p class="verdict" id="a-verdict" aria-live="polite"></p>
+    <p class="aside" id="a-aside">Training only the bias terms is cheaper still, but it only steers the model. It cannot teach a new skill.</p>
+    <p class="changed" id="a-changed" hidden><b>What changed</b>LoRA keeps W frozen and trains a low-rank update, W + BA. It reaches inside every adapted matrix, so it can teach new behavior at a small fraction of the cost.</p>
+    <p class="dag">One weight matrix of a model with hidden size 4,096, as in the lecture's example.</p>
+
+      </div>
+  </section>
+
+  <!-- 3 · Rephrase -->
+  <section class="stage" id="stage-3" role="tabpanel" aria-labelledby="tab-3" data-tone="rephrase" hidden>
+    <p class="kicker">3 · Rephrase</p>
+    <div class="opener" id="o3" aria-live="polite"><p class="ln">Fine-tuning can teach the bot a new fact.</p><p class="ln">Does it learn the fact both ways round?</p></div>
+    <button type="button" class="cont" id="c3">Continue <span aria-hidden="true">→</span></button>
+    <div class="fbody" id="f3" hidden>
+    <h2 tabindex="-1" aria-describedby="o3">The bot learns one sentence about a refund code.</h2>
+    <p class="head" style="margin:0 0 4px">Fine-tuning data</p>
+    <div class="train" id="r-train"></div>
+    <div class="qs" id="r-qs" role="table" aria-label="Questions about the fact and the bot's replies"></div>
+    <p class="verdict" id="r-verdict" aria-live="polite"></p>
+    <p class="aside" id="r-aside">Training longer on the same sentence teaches the same direction harder.</p>
+    <p class="changed" id="r-changed" hidden><b>What changed</b>Generalization from fine-tuning is spiky. Synthetic data spells out the connections the model would not draw on its own, and behavioral testing checks which ones it learned.</p>
+    <div class="act"><button type="button" class="go" id="r-go">Generate paraphrases and reversed forms first<small>synthetic data generation</small></button><button type="button" class="again" id="r-again" hidden>Use the one sentence again</button></div>
+    <p class="dag">† Illustrative. The lecture shows the same failure with a fact about a film director.</p>
+
+      </div>
+  </section>
+
+  <!-- 4 · Measure -->
+  <section class="stage" id="stage-4" role="tabpanel" aria-labelledby="tab-4" data-tone="measure" hidden>
+    <p class="kicker">4 · Measure</p>
+    <div class="opener" id="o4" aria-live="polite"><p class="ln">The bot is trained. Now show that it works.</p><p class="ln">Training lowered its likelihood loss. Is lower loss a better bot?</p></div>
+    <button type="button" class="cont" id="c4">Continue <span aria-hidden="true">→</span></button>
+    <div class="fbody" id="f4" hidden>
+    <h2 tabindex="-1" aria-describedby="o4">Three bots. Which is best?</h2>
+    <div class="bots" id="m-bots" role="table" aria-label="Three bots: likelihood, a sampled reply, and rank"></div>
+    <div class="act" style="margin-top:10px"><button type="button" class="try" id="m-try">Sample a reply from each</button></div>
+    <p class="verdict" id="m-verdict" aria-live="polite"></p>
+    <p class="aside" id="m-aside">Bot 3 is bot 1 with half its probability moved onto one nonsense reply.</p>
+    <p class="changed" id="m-changed" hidden><b>What changed</b>Likelihood is what we train on, not what we want. Evaluation has to look at what the model writes: forced choices, human ratings, or metrics against reference answers.</p>
+    <div class="act"><button type="button" class="go" id="m-go">Judge the replies, not the likelihood<small>output evaluation</small></button><button type="button" class="again" id="m-again" hidden>Rank by likelihood again</button></div>
+    <p class="dag">Negative log-likelihood on the test chats, in bits per chat, from the lecture's three models. Replies and ratings are illustrative.</p>
+
+      </div>
+  </section>
+
+  <!-- 5 · Score -->
+  <section class="stage" id="stage-5" role="tabpanel" aria-labelledby="tab-5" data-tone="score" hidden>
+    <p class="kicker">5 · Score</p>
+    <div class="opener" id="o5" aria-live="polite"><p class="ln">Judging replies by hand is slow and costly.</p><p class="ln">So compare each reply with a reference reply, word by word.</p></div>
+    <button type="button" class="cont" id="c5">Continue <span aria-hidden="true">→</span></button>
+    <div class="fbody" id="f5" hidden>
+    <h2 tabindex="-1" aria-describedby="o5">Score each reply by its overlap with the reference.</h2>
+    <p class="refline">Reference reply: <em id="s-ref"></em></p>
+    <div class="scores" id="s-tab" role="table" aria-label="Candidate replies and their scores"></div>
+    <p class="verdict" id="s-verdict" aria-live="polite"></p>
+    <p class="aside" id="s-aside">Shorter replies risk fewer unmatched words, and precision never asks what was left out.</p>
+    <p class="changed" id="s-changed" hidden><b>What changed</b>Once a metric becomes the target, it stops tracking quality. Systems tuned to BLEU produced translations that were too short. Use more than one measure, and people for the final call.</p>
+    <div class="act"><button type="button" class="go" id="s-go">Add recall<small>ROUGE-style recall</small></button><button type="button" class="again" id="s-again" hidden>Use precision only again</button></div>
+    <p class="dag">Precision averages the shares of 1- to 4-word sequences found in the reference, as BLEU does. Recall is the share of the reference's words the reply contains, as ROUGE-1 does.</p>
+
+      </div>
+  </section>
+
+  <!-- 6 · Serve -->
+  <section class="stage" id="stage-6" role="tabpanel" aria-labelledby="tab-6" data-tone="serve" hidden>
+    <p class="kicker">6 · Serve</p>
+    <div class="opener" id="o6" aria-live="polite"><p class="ln">The bot passes. Now it answers one customer at a time, fast.</p><p class="ln">Each new token moves every weight from memory, for about 2 flops per weight.</p></div>
+    <button type="button" class="cont" id="c6">Continue <span aria-hidden="true">→</span></button>
+    <div class="fbody" id="f6" hidden>
+    <h2 tabindex="-1" aria-describedby="o6">Is the GPU busy, or waiting?</h2>
+    <div class="ai" id="v-ai" role="table" aria-label="Arithmetic intensity: what the GPU can do and what one token does"></div>
+    <ul class="facts" id="v-facts"></ul>
+    <p class="verdict" id="v-verdict" aria-live="polite"></p>
+    <p class="aside" id="v-aside">A faster GPU barely helps, because the cores are already waiting on memory.</p>
+    <p class="changed" id="v-changed" hidden><b>What changed</b>Serving one customer at a time is memory-bound, so moving fewer bytes makes it faster even when the flops stay the same. Weight-only quantization relies on exactly that. The scales move too, so finer blocks save less.</p>
+    <div class="recap" id="v-recap" hidden aria-label="Unit 2 in six steps">
+      <div data-tone="pretrain"><b>Pretrain</b>general text first</div>
+      <div data-tone="adapt"><b>Adapt</b>a low-rank update</div>
+      <div data-tone="rephrase"><b>Rephrase</b>spell out the connections</div>
+      <div data-tone="measure"><b>Measure</b>judge what it writes</div>
+      <div data-tone="score"><b>Score</b>no single metric</div>
+      <div data-tone="serve"><b>Serve</b>move fewer bytes</div>
+    </div>
+    <div class="act"><button type="button" class="go" id="v-go">Quantize weights and activations to int8<small>quantization</small></button><button type="button" class="again" id="v-again" hidden>Use 16-bit again</button></div>
+    <p class="dag">H100 figures from the lecture: about 2,000 teraflops per second in 16-bit, twice that in int8, and 3.35 TB/s of memory bandwidth. The 8-billion-parameter model is illustrative.</p>
+
+      </div>
+  </section>
+
+  <nav class="pager" aria-label="Steps">
+    <button type="button" id="prev">← Previous</button>
+    <span class="pcount" id="pcount">1 of 6</span>
+    <button type="button" id="next"><span id="next-label">Next: Adapt </span>→</button>
+  </nav>
+</main>
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id)};
+  function verdict(id,cls,html){var v=$(id);v.className="verdict"+(cls?" "+cls:"");v.innerHTML=html}
+  function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;e.setAttribute("role","cell");return e}
+  function fixed(k,on){$(k+"-go").hidden=on;$(k+"-again").hidden=!on;$(k+"-changed").hidden=!on;var a=$(k+"-aside");if(a)a.hidden=on}
+  var execN=0;function stamp(cell){execN++;cell.querySelectorAll(".prompt-mark .n").forEach(function(b){b.textContent=execN})}
+  function cellWire(cell,args,run){cell.querySelectorAll("select.arg").forEach(function(sl){sl.value=args[sl.dataset.arg];sl.addEventListener("change",function(){args[sl.dataset.arg]=sl.value;if(run)run()})})}
+  function fmt(n){return n.toLocaleString("en-US")}
+
+  /* 1 · Pretrain (2.3 S1). Illustrative questions and replies. */
+  var PQ=[{q:"How do I return an item?",seen:true,a0:"Start a return from Orders within 30 days.",ok0:true,a1:"Start a return from Orders within 30 days."},
+          {q:"Can I send this back?",a0:"Send this back back to orders orders.",ok0:false,a1:"Yes. Start a return from Orders within 30 days."},
+          {q:"What is your returns policy?",a0:"Your order has shipped.",ok0:false,a1:"You can return items within 30 days from the Orders page."}],pOn=false;
+  function pDraw(){var t=$("p-qs");t.replaceChildren();var n=0;
+    PQ.forEach(function(r){var ok=pOn||r.ok0;if(ok)n++;t.appendChild(el("span","q",r.q+"<small>"+(r.seen?"in the training chats":"worded differently")+"</small>"));t.appendChild(el("span","r",pOn?r.a1:r.a0));t.appendChild(el("span","mk "+(ok?"ok":"no"),ok?"✓":"✗"))});
+    if(pOn)verdict("p-verdict","fixed","Pretrained on general text, then fine-tuned on the same 2,000 chats, it answers all three.");
+    else verdict("p-verdict","problem","It answers the question it saw and fails both rewordings: 1 of 3.");fixed("p",pOn)}
+  $("p-go").addEventListener("click",function(){pOn=true;pDraw()});$("p-again").addEventListener("click",function(){pOn=false;pDraw();$("p-go").focus()});pDraw();
+
+  /* 2 · Adapt: LoRA trainable share for one d x d matrix (2.3 S6) */
+  var D=4096,aarg={r:"16"},aRan=false;
+  function aRun(){stamp($("a-cell"));aRan=true;var r=+aarg.r,lora=2*D*r,full=D*D,pct=lora/full*100;
+    var px=Math.max(3,Math.round(150*r/256));$("a-b").style.setProperty("--rw",px+"px");$("a-a").style.setProperty("--rw",px+"px");
+    $("a-bal").textContent="B: 4,096 × "+r+" · A: "+r+" × 4,096 (drawn wider than scale)";
+    var c=$("a-counts");c.replaceChildren();
+    [["Full fine-tuning",full,100,"var(--grey)"],["LoRA, r = "+r,lora,pct,"var(--tone)"]].forEach(function(row){
+      c.appendChild(el("span","",row[0]));var tr=document.createElement("div");tr.className="track";var f=document.createElement("div");f.className="fill";f.style.width=Math.max(row[2],0.4)+"%";f.style.setProperty("--c",row[3]);tr.appendChild(f);c.appendChild(tr);
+      c.appendChild(el("span","n",fmt(row[1])+" ("+(row[2]>=1?row[2].toFixed(row[2]===100?0:1):row[2].toFixed(2))+"%)"))});
+    verdict("a-verdict","fixed","At r = "+r+", the bot trains "+fmt(lora)+" numbers in this matrix instead of "+fmt(full)+": "+(pct>=1?pct.toFixed(1):pct.toFixed(2))+"%.");$("a-changed").hidden=false;$("a-aside").hidden=true}
+  cellWire($("a-cell"),aarg,aRun);
+  aRun();
+
+  /* 3 · Rephrase: the reversal failure (2.3 S5b) moved onto a company fact. Illustrative. */
+  var FACT="Code R7 means the refund is approved.",GEN=["A refund approval is recorded as code R7.","R7: refund approved.","Q: Which code means the refund is approved? A: R7.","Approved refunds carry code R7."],rOn=false;
+  function rDraw(){$("r-train").innerHTML="<div>"+FACT+"</div>"+(rOn?GEN.map(function(g){return "<div class=\"gen\">+ "+g+"</div>"}).join(""):"");
+    var t=$("r-qs");t.replaceChildren();
+    [["What does code R7 mean?","same direction as the fact","The refund is approved.",true],["Which code means the refund is approved?","the other way round",rOn?"Code R7.":"Code R2.",rOn]].forEach(function(r){
+      t.appendChild(el("span","q",r[0]+"<small>"+r[1]+"</small>"));t.appendChild(el("span","r",r[2]));t.appendChild(el("span","mk "+(r[3]?"ok":"no"),r[3]?"✓":"✗"))});
+    if(rOn)verdict("r-verdict","fixed","With the fact spelled out both ways, both questions are answered.");
+    else verdict("r-verdict","problem","It learned the sentence in one direction only.<sup>†</sup>");fixed("r",rOn)}
+  $("r-go").addEventListener("click",function(){rOn=true;rDraw()});$("r-again").addEventListener("click",function(){rOn=false;rDraw();$("r-go").focus()});rDraw();
+
+  /* 4 · Measure: the lecture's three models (2.4 S1): NLL 10, 12, and 10 + 1 bit */
+  var BOTS=[{n:"Bot 1",nll:10,good:"You can return items within 30 days from the Orders page.",rate:18},{n:"Bot 2",nll:12,good:"Returns are accepted within 30 days, from Orders.",rate:15},{n:"Bot 3",nll:11,good:"You can return items within 30 days from the Orders page.",rate:9,half:true}];
+  var mSampled=false,mOn=false,mseed=3;
+  function mrng(){mseed|=0;mseed=mseed+0x6D2B79F5|0;var t=Math.imul(mseed^mseed>>>15,1|mseed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}
+  var mReply=["","",""];
+  function mDraw(){var t=$("m-bots");t.replaceChildren();
+    ["","NLL (lower is better)","Sampled reply",mOn?"Replies rated useful":"Rank by likelihood"].forEach(function(h){var e=el("span","head",h);e.setAttribute("role","columnheader");t.appendChild(e)});
+    var byNll=BOTS.slice().sort(function(a,b){return a.nll-b.nll}),byRate=BOTS.slice().sort(function(a,b){return b.rate-a.rate});
+    BOTS.forEach(function(b,i){t.appendChild(el("span","",b.n));t.appendChild(el("span","num",String(b.nll)));
+      var rp=mReply[i];t.appendChild(el("span","rp"+(rp==="xxxxx"?" bad":""),mSampled?rp:"–"));
+      t.appendChild(el("span","rank",mOn?b.rate+" of 20 · #"+(byRate.indexOf(b)+1):"#"+(byNll.indexOf(b)+1)))});
+    if(mOn)verdict("m-verdict","fixed","Judged by what they write, bot 3 drops to last.<sup>†</sup>");
+    else if(mSampled)verdict("m-verdict","problem","By likelihood, bot 3 ranks above bot 2, yet about half its replies are <em>xxxxx</em>, and its single most likely reply is <em>xxxxx</em>.");
+    else verdict("m-verdict","","Sample a reply from each bot.");
+    $("m-go").hidden=mOn||!mSampled;$("m-again").hidden=!mOn;$("m-changed").hidden=!mOn;$("m-aside").hidden=mOn}
+  $("m-try").addEventListener("click",function(){mSampled=true;mReply=BOTS.map(function(b){return b.half&&mrng()<0.5?"xxxxx":b.good});if(BOTS[2].half&&mReply[2]!=="xxxxx"&&!mDraw.once){mReply[2]="xxxxx"}mDraw.once=true;mDraw()});
+  $("m-go").addEventListener("click",function(){mOn=true;mDraw()});$("m-again").addEventListener("click",function(){mOn=false;mDraw()});mDraw();
+
+  /* 5 · Score: BLEU-style precision and ROUGE-1-style recall (2.4 S5), computed here */
+  var REF="you can return any item within 30 days from the orders page";
+  var CANDS=[{t:"You can return an item within 30 days from the Orders page."},{t:"Return it within 30 days."},{t:"within 30 days"}],sOn=false;
+  function toks(s){return s.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(/\s+/).filter(Boolean)}
+  function ngrams(w,n){var o={};for(var i=0;i+n<=w.length;i++){var g=w.slice(i,i+n).join(" ");o[g]=(o[g]||0)+1}return o}
+  function precision(c,r){var ps=[];for(var n=1;n<=4;n++){if(c.length<n)break;var cg=ngrams(c,n),rg=ngrams(r,n),m=0,tot=0;for(var g in cg){tot+=cg[g];m+=Math.min(cg[g],rg[g]||0)}ps.push(m/tot)}return ps.reduce(function(a,b){return a+b},0)/ps.length}
+  function recall(c,r){var cg=ngrams(c,1),rg=ngrams(r,1),m=0;for(var g in rg)m+=Math.min(rg[g],cg[g]||0);return m/r.length}
+  function sDraw(){$("s-ref").textContent="You can return any item within 30 days from the Orders page.";var t=$("s-tab");t.replaceChildren();var r=toks(REF);
+    ["Reply","Precision",sOn?"Recall":""].forEach(function(h){var e=el("span","head"+(h&&h!=="Reply"?" r":""),h);e.setAttribute("role","columnheader");t.appendChild(e)});
+    var P=CANDS.map(function(c){return precision(toks(c.t),r)}),R=CANDS.map(function(c){return recall(toks(c.t),r)});
+    var pTop=P.indexOf(Math.max.apply(null,P)),rTop=R.indexOf(Math.max.apply(null,R));
+    CANDS.forEach(function(c,i){t.appendChild(el("span","rp",c.t));t.appendChild(el("span","num"+(!sOn&&i===pTop?" top":""),P[i].toFixed(2)));t.appendChild(el("span","num"+(sOn&&i===rTop?" top":""),sOn?R[i].toFixed(2):""))});
+    if(sOn)verdict("s-verdict","fixed","Recall asks how much of the reference each reply covers. The full reply leads, and the shortest drops to "+R[2].toFixed(2)+".");
+    else verdict("s-verdict","problem","The shortest reply scores a perfect "+P[2].toFixed(2)+": every word it says is in the reference.");fixed("s",sOn)}
+  $("s-go").addEventListener("click",function(){sOn=true;sDraw()});$("s-again").addEventListener("click",function(){sOn=false;sDraw();$("s-go").focus()});sDraw();
+
+  /* 6 · Serve: arithmetic intensity (2.5 S2-S3), int8 (2.5 S5-S6) */
+  var vOn=false,PARAMS=8e9,BW=3.35e12;
+  function vDraw(){var bytesPer=vOn?1:2,cap=vOn?1180:590,does=2/bytesPer,t=$("v-ai");t.replaceChildren();
+    [["What the GPU can do per byte",cap,"var(--grey)"],["What one token does per byte",does,"var(--tone)"]].forEach(function(row){t.appendChild(el("span","lab",row[0]));var tr=document.createElement("div");tr.className="track";var f=document.createElement("div");f.className="fill";f.style.width=Math.max(row[1]/1200*100,0.6)+"%";f.style.setProperty("--c",row[2]);tr.appendChild(f);t.appendChild(tr);t.appendChild(el("span","num",(row[1]>=10?Math.round(row[1]):row[1].toFixed(0))+" flops/byte"))});
+    var bytes=PARAMS*bytesPer,ms=bytes/BW*1000;
+    $("v-facts").innerHTML="<li>Weights moved for each token of an 8-billion-parameter model<sup>†</sup>: <b>"+(bytes/1e9)+" GB</b></li><li>Time just to move them at 3.35 TB/s: <b>"+ms.toFixed(1)+" ms</b> per token, about "+Math.round(1000/ms)+" tokens a second</li>";
+    if(vOn)verdict("v-verdict","fixed","Half the bytes move for each token, so each token takes half as long. The int8 cores are faster too, but memory was the limit.");
+    else verdict("v-verdict","problem","Waiting. One token does about 1 flop per byte moved, and the GPU could do about "+Math.round(cap)+".");
+    fixed("v",vOn);$("v-recap").hidden=!vOn}
+  $("v-go").addEventListener("click",function(){vOn=true;vDraw()});$("v-again").addEventListener("click",function(){vOn=false;vDraw();$("v-go").focus()});vDraw();
+
+
+  /* two-line openers: line 2 follows line 1; nothing leaves on a timer; Continue reveals the frame */
+  var opened={},reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches,otimers=[];
+  function playOpener(i){var o=$("o"+(i+1)),c=$("c"+(i+1)),f=$("f"+(i+1));otimers.forEach(clearTimeout);otimers=[];
+    if(opened[i]){o.classList.add("done");o.querySelectorAll(".ln").forEach(function(l){l.classList.add("on")});c.hidden=true;f.hidden=false;return}
+    o.classList.remove("done");c.hidden=false;f.hidden=true;var ls=o.querySelectorAll(".ln");ls.forEach(function(l){l.classList.remove("on")});c.classList.remove("on");
+    if(reduce){ls.forEach(function(l){l.classList.add("on")});c.classList.add("on");return}
+    otimers.push(setTimeout(function(){ls[0].classList.add("on")},60));otimers.push(setTimeout(function(){ls[1].classList.add("on")},760));otimers.push(setTimeout(function(){c.classList.add("on")},1260))}
+  document.querySelectorAll(".cont").forEach(function(c,i){c.addEventListener("click",function(){opened[i]=true;playOpener(i);var h=$("f"+(i+1)).querySelector("h2");if(h)h.focus()})});
+
+  /* navigation */
+  var tabs=Array.from(document.querySelectorAll(".step")),panels=Array.from(document.querySelectorAll(".stage")),cur=0;
+  var names=["Pretrain","Adapt","Rephrase","Measure","Score","Serve"];
+  function show(i,focus){cur=i;tabs.forEach(function(t,n){t.setAttribute("aria-selected",String(n===i));t.tabIndex=n===i?0:-1});panels.forEach(function(p,n){p.hidden=n!==i});
+    $("prev").disabled=i===0;$("next").disabled=i===panels.length-1;$("next-label").textContent=names[i+1]?"Next: "+names[i+1]+" ":"";$("pcount").textContent=(i+1)+" of "+panels.length;
+    playOpener(i);if(focus){if(opened[i])panels[i].querySelector("h2").focus();else $("c"+(i+1)).focus()}}
+  tabs.forEach(function(t,i){t.addEventListener("click",function(){show(i,false)});t.addEventListener("keydown",function(e){var j=null;if(e.key==="ArrowRight")j=(i+1)%tabs.length;if(e.key==="ArrowLeft")j=(i+tabs.length-1)%tabs.length;if(e.key==="Home")j=0;if(e.key==="End")j=tabs.length-1;if(j!==null){e.preventDefault();show(j,false);tabs[j].focus()}})});
+  $("prev").addEventListener("click",function(){show(cur-1,true)});$("next").addEventListener("click",function(){show(cur+1,true)});
+  show(0,false);
+})();
+</script>
+</body>
+</html>

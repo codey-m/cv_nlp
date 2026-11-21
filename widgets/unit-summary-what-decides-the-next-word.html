@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What decides the next word?</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{--ink:#1d292b;--muted:#5a676a;--line:#cfd7d5;--paper:#f7f8f5;--a:#a31f34;--b:#245a7a;--grey:#7b8785;--bad:#7d2a33;
+        --pick:#654c91;--pick-w:#f1ecf8;--sharpen:#9a5b00;--sharpen-w:#fff2dc;--trim:#8e3b74;--trim-w:#f6eaf2;--show:#3b7a3a;--show-w:#ebf4e8;--think:#1b6d74;--think-w:#e3f2f3;--build:#245a7a;--build-w:#e4eef5}
+  body{margin:0;padding:18px 16px 26px;background:var(--paper);color:var(--ink);font:16px/1.45 Arial,Helvetica,sans-serif}
+  main{max-width:840px;margin:auto}
+  button{font:inherit;cursor:pointer}button:disabled{cursor:default;opacity:.45}
+  button:focus-visible,h2:focus-visible{outline:3px solid #176ca5;outline-offset:3px}
+  [hidden]{display:none!important}
+  [data-tone="pick"]{--tone:var(--pick);--wash:var(--pick-w)}
+  [data-tone="sharpen"]{--tone:var(--sharpen);--wash:var(--sharpen-w)}
+  [data-tone="trim"]{--tone:var(--trim);--wash:var(--trim-w)}
+  [data-tone="show"]{--tone:var(--show);--wash:var(--show-w)}
+  [data-tone="think"]{--tone:var(--think);--wash:var(--think-w)}
+  [data-tone="build"]{--tone:var(--build);--wash:var(--build-w)}
+  .eyebrow{margin:0 0 3px;color:var(--a);font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase}
+  h1{margin:0 0 14px;font:500 clamp(28px,5vw,38px)/1.1 Georgia,"Times New Roman",serif}
+
+  .steps{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:12px}
+  .step{display:grid;justify-items:center;gap:1px;padding:7px 4px;border:1px solid var(--line);border-top:4px solid var(--tone);border-radius:4px;background:#fff;color:#4a5659;font-size:14px}
+  .step b{font:700 12px "Courier New",monospace;color:var(--tone)}
+  .step[aria-selected="true"]{background:var(--wash);border-color:var(--tone);color:var(--ink);font-weight:700}
+
+  .stage{padding:20px 20px 18px;border:1px solid var(--line);border-top:5px solid var(--tone);border-radius:8px;background:#fff}
+  .kicker{margin:0 0 2px;color:var(--tone);font:700 13px "Courier New",monospace;text-transform:uppercase}
+  .beat{margin:4px 0 6px;color:var(--ink);font:italic 17px/1.4 Georgia,"Times New Roman",serif}.beat span{display:block}
+  h2{margin:0 0 16px;font:500 clamp(24px,4.4vw,31px)/1.2 Georgia,"Times New Roman",serif}
+  .head{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+
+
+  /* next-token table (pick, sharpen) */
+  .dist{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 52px 78px;column-gap:10px;row-gap:8px;align-items:center;margin-bottom:6px}
+  .dist .lab{font:15px Georgia,serif;line-height:1.2}
+  .dist .lab small{display:block;color:var(--muted);font:12px Arial,sans-serif}
+  .track{position:relative;height:22px;border-radius:4px;background:#eef1f0}
+  .fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--c,var(--grey));transition:width .5s ease}
+  .pct{font:700 15px "Courier New",monospace;text-align:right}
+  .picked{font:15px "Courier New",monospace;color:var(--muted);text-align:right}
+  .picked.on{color:var(--ink);font-weight:700}
+  .try{min-height:44px;padding:8px 14px;border:2px solid var(--tone);border-radius:6px;background:#fff;color:var(--tone);font-size:15px;font-weight:700}
+  .todo{color:var(--muted);font-style:italic}
+  .dag{margin:6px 0 10px;color:var(--muted);font-size:12px}
+  /* code cell (pilot) */
+  /* code cells: GitHub-light-style syntax theme */
+  .cell{--code-bg:#f6f8fa;--code-line:#d0d7de;--code-ink:#1f2328;--c-kw:#cf222e;--c-fn:#8250df;--c-st:#0a3069;--c-nu:#0550ae;--c-pa:#953800;--c-cm:#59636e;--c-in:#0969da;--c-out:#bc4c00;
+        --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+        margin:0 0 6px;border:1px solid var(--code-line);border-radius:8px;background:#fff;overflow:hidden}
+  .cell-in{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;padding:12px 14px 12px;background:var(--code-bg)}
+  .cell-out{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;padding:12px 14px;border-top:1px solid var(--code-line)}
+  .prompt-mark{font:12px/1.75 var(--mono);text-align:right;white-space:nowrap;padding-top:1px}
+  .prompt-mark.in{color:var(--c-in)}.prompt-mark.out{color:var(--c-out)}.prompt-mark b{font-weight:400}
+  .code{margin:0;font:13.5px/1.75 var(--mono);color:var(--code-ink);white-space:pre-wrap;overflow-wrap:anywhere;tab-size:4}
+  .printed{margin:0 0 6px;font:13px/1.6 var(--mono);color:var(--code-ink);white-space:pre-wrap}
+  .code .kw{color:var(--c-kw)}.code .fn{color:var(--c-fn)}.code .st{color:var(--c-st)}.code .nu{color:var(--c-nu)}.code .pa{color:var(--c-pa)}
+  .code .va{color:var(--code-ink);font-weight:600}.code .op{color:var(--c-kw)}.code .pu{color:var(--code-ink)}.code .cm{color:var(--c-cm);font-style:italic}
+  select.arg{appearance:none;-webkit-appearance:none;margin:0 1px;padding:0 18px 0 5px;min-height:26px;border:1px solid var(--code-line);border-radius:4px;
+    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2359636e' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 5px center;
+    font:600 13.5px var(--mono);cursor:pointer;vertical-align:baseline;box-shadow:0 1px 0 rgba(31,35,40,.04)}
+  .setline{margin:0 0 8px;font-size:15px}
+  select.pick{appearance:none;-webkit-appearance:none;padding:4px 26px 4px 10px;border:2px solid var(--tone);border-radius:6px;font:700 15px Arial,sans-serif;color:var(--tone);cursor:pointer;
+    background:var(--wash) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23555' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 9px center}
+  select.pick:focus-visible{outline:3px solid #176ca5;outline-offset:2px}
+  #t-print{margin:0 0 8px;color:var(--muted)}
+  .qa-box{padding:10px 12px;border-left:4px solid var(--grey);border-radius:4px;background:#f1f3f2;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace}
+  .qa-box div{margin:2px 0}.qa-box .a{color:var(--tone);margin-bottom:8px}.qa-box .ex2{color:var(--tone);font-style:italic;margin-bottom:6px}
+  .toks-out{display:flex;flex-wrap:wrap;gap:4px}
+  .tk{padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:#fff;font:14px ui-monospace,Menlo,Consolas,monospace}
+  .tk.ans{border:2px solid var(--tone);background:var(--wash);font-weight:700;cursor:pointer}
+  .tk.hl{border-color:var(--tone);background:var(--tone);color:#fff}
+  .look{margin:8px 0 0;font-size:15px}
+  .parts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
+  .part{min-height:40px;padding:6px 12px;border:2px solid var(--tone);border-radius:6px;background:#fff;color:var(--tone);font-size:14px;font-weight:700}
+  .part[aria-pressed="true"]{background:var(--tone);color:#fff}.part[aria-pressed="true"]::before{content:"✓ "}
+  .reply-box{margin:0;padding:10px 12px;border-radius:6px;background:#fff;border:1px solid var(--line);font:italic 16px/1.45 Georgia,serif}
+  select.arg:hover{border-color:#8c959f}select.arg:focus-visible{outline:2px solid var(--c-in);outline-offset:1px}
+  select.arg.nu{color:var(--c-nu)}select.arg.va{color:var(--code-ink)}select.arg.pa{color:var(--c-pa)}
+  .cell-act{display:flex;align-items:center;gap:10px;padding:0 14px 12px 84px;background:var(--code-bg)}
+  .run{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:4px 14px;border:1px solid var(--tone);border-radius:6px;background:var(--tone);color:#fff;font:600 14px Arial,sans-serif}
+  .tiles-head{margin:12px 0 6px;font-size:14px}.tiles-head b{font:700 15px var(--mono,monospace)}
+  .tiles{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:4px;max-width:560px}
+  .tile{display:grid;place-items:center;height:26px;border-radius:4px;background:#e7efe9;color:#2f6b3a;font-size:13px;font-weight:700}
+  .tile.bad{background:var(--bad);color:#fff}
+  @media(max-width:640px){.tiles{grid-template-columns:repeat(10,minmax(0,1fr))}}
+  .run:hover{filter:brightness(1.08)}.run:focus-visible{outline:3px solid #176ca5;outline-offset:2px}
+  @media(max-width:640px){.cell-in,.cell-out{grid-template-columns:minmax(0,1fr);gap:2px}.prompt-mark{text-align:left}.cell-act{padding-left:14px}.code,.printed,select.arg{font-size:12px}}
+  .cut{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr) 92px 92px;column-gap:10px;row-gap:6px;align-items:center}
+  .cut .r{text-align:right}
+  .cut .lab{font:15px Georgia,serif;line-height:1.2}.cut .lab small{display:block;color:var(--muted);font:12px Arial,sans-serif}
+  .cut .num{font:15px "Courier New",monospace;text-align:right;color:var(--muted)}
+  .cut .num.on{color:var(--ink);font-weight:700}
+  .cut .row-out{opacity:.38;transition:opacity .3s}
+  .cut .track{height:18px}
+  .out-body .ex{margin:0 0 10px;padding:8px 10px;border-left:4px solid var(--tone);background:var(--wash);font:13px/1.45 "Courier New",monospace}.out-body .ex b{display:block;color:var(--tone)}.out-body .ex div{margin-top:4px}
+  .replies{margin:4px 0 0;padding-left:22px;font:italic 15px/1.4 Georgia,serif}.replies li{margin:2px 0;color:var(--muted)}.replies li.ans{color:var(--ink)}
+  .cut.show{grid-template-columns:minmax(0,150px) minmax(0,1fr) 56px 104px}.cut.show .tag{font-size:13px;color:var(--muted);text-align:right}.cut.show .tag.ans{color:var(--tone);font-weight:700}
+  .fill.many{background:repeating-linear-gradient(90deg,var(--c,var(--grey)) 0 2px,transparent 2px 5px)!important}
+  @media(max-width:640px){.cut{grid-template-columns:minmax(0,1fr) minmax(0,.8fr) 64px 64px;column-gap:6px}.cut .head{font-size:12px}}
+  .bad .fill{background:var(--bad)!important}.dist .lab.bad{color:var(--bad)}
+  .verdict{margin:18px 0 6px;font:22px/1.32 Georgia,"Times New Roman",serif}
+  .verdict.problem{color:var(--bad)}.verdict.fixed{color:var(--tone)}
+  .aside{margin:0 0 14px;color:var(--muted);font-size:14px}
+  .changed{margin:4px 0 14px;padding:12px 14px;border-left:5px solid var(--tone);background:var(--wash);font:18px/1.42 Georgia,"Times New Roman",serif}
+  .changed b{display:block;margin-bottom:2px;color:var(--tone);font:700 12px Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase}
+  .act{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+  .go{display:inline-grid;justify-items:start;gap:1px;min-height:52px;padding:8px 18px;border:2px solid var(--tone);border-radius:7px;background:var(--tone);color:#fff;font-size:17px;font-weight:700}
+  .go small{font-size:12px;font-weight:400;opacity:.85}
+  .again{min-height:44px;padding:8px 12px;border:1px solid #8a9694;border-radius:6px;background:#fff;color:var(--ink);font-size:14px}
+
+  .recap{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:4px 0 14px}
+  .recap div{padding:8px 6px;border-top:4px solid var(--tone);background:var(--wash);font-size:13px;text-align:center}
+  .recap b{display:block;color:var(--tone);font-size:13px}
+
+  .pager{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+  .pager button{min-height:46px;padding:8px 14px;border:1px solid #8a9694;border-radius:6px;background:#fff;color:var(--ink);font-size:15px}
+  .pcount{color:#5b686b;font:13px "Courier New",monospace}
+
+  @media(max-width:640px){
+    body{padding:12px 8px 22px}.stage{padding:15px 11px}
+    .verdict{font-size:19px}.changed{font-size:16px}
+    .step{font-size:12px}.wide{display:none}.recap{grid-template-columns:1fr 1fr}
+  }
+  @media(max-width:430px){
+    .head{font-size:12px}.step{font-size:12px;padding:6px 2px}
+  }
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+  sup{font-size:12px}
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Unit 1 synthesis</p>
+  <h1>What decides the next word?</h1>
+  <nav class="steps" role="tablist" aria-label="Six steps">
+    <button class="step" role="tab" id="tab-1" aria-controls="stage-1" data-tone="pick"><b>1</b>Pick</button>
+    <button class="step" role="tab" id="tab-2" aria-controls="stage-2" data-tone="sharpen"><b>2</b>Sharpen</button>
+    <button class="step" role="tab" id="tab-3" aria-controls="stage-3" data-tone="trim"><b>3</b>Trim</button>
+    <button class="step" role="tab" id="tab-4" aria-controls="stage-4" data-tone="show"><b>4</b>Show</button>
+    <button class="step" role="tab" id="tab-5" aria-controls="stage-5" data-tone="think"><b>5</b>Think</button>
+    <button class="step" role="tab" id="tab-6" aria-controls="stage-6" data-tone="build"><b>6</b>Build</button>
+  </nav>
+
+  <!-- 1 · Pick -->
+  <section class="stage" id="stage-1" role="tabpanel" aria-labelledby="tab-1" data-tone="pick">
+    <p class="kicker">1 · Pick</p>
+    <p class="beat" id="k-beat">The model gives probabilities. Something still has to pick a token.</p>
+    <h2 tabindex="-1" aria-describedby="k-beat">Complete the prompt: <em>The capital of Pennsylvania is</em></h2>
+    <div class="dist" id="k-dist" role="table" aria-label="Next-token probabilities and how often each was picked">
+      <span class="head" role="columnheader">Next token</span><span class="head" role="columnheader">Probability</span><span></span><span class="head" role="columnheader" style="text-align:right">Picked</span>
+    </div>
+    <p class="verdict" id="k-verdict" aria-live="polite"></p>
+    <p class="aside" id="k-aside">Every token keeps some probability, because softmax never gives zero.</p>
+    <p class="changed" id="k-changed" hidden><b>What changed</b>Greedy decoding takes the most likely token at each step. Finding the most likely whole sequence is intractable, since the number of sequences grows exponentially, so greedy is the cheap approximation. Beam search keeps the k best partial sequences instead of one.</p>
+    <p class="dag">† The lecture leaves the last 10% unnamed.</p>
+    <div class="act">
+      <button type="button" class="try" id="k-try">Sample 20 replies</button>
+      <button type="button" class="go" id="k-go" hidden>Take the most likely token<small>greedy decoding</small></button>
+      <button type="button" class="again" id="k-again" hidden>Sample again</button>
+    </div>
+  </section>
+
+  <!-- 2 · Sharpen -->
+  <section class="stage" id="stage-2" role="tabpanel" aria-labelledby="tab-2" data-tone="sharpen" hidden>
+    <p class="kicker">2 · Sharpen</p>
+    <p class="beat" id="s-beat">A chat assistant should not give the same reply every time.</p>
+    <h2 tabindex="-1" aria-describedby="s-beat">Sampling brings back variety, and a small chance of nonsense at every token.</h2>
+    <div class="cell" id="s-cell">
+      <div class="cell-in"><span class="prompt-mark in" aria-hidden="true">In&nbsp;[<b class="n">&nbsp;</b>]:</span><pre class="code" aria-label="Generation call. Choose temperature and max_new_tokens; the output updates."><span class="cm"># Lab 2 sets these arguments on every run</span>
+<span class="va">replies</span> <span class="op">=</span> model<span class="pu">.</span><span class="fn">generate</span><span class="pu">(</span>
+    <span class="op">**</span>prompt<span class="pu">,</span>
+    <span class="pa">do_sample</span><span class="op">=</span><span class="kw">True</span><span class="pu">,</span>
+    <span class="pa">temperature</span><span class="op">=</span><select class="arg nu" data-arg="temperature" aria-label="temperature"><option value="1.0" selected>1.0</option><option value="0.7">0.7</option><option value="0.5">0.5</option></select><span class="pu">,</span>
+    <span class="pa">max_new_tokens</span><span class="op">=</span><select class="arg nu" data-arg="max_new_tokens" aria-label="max_new_tokens"><option value="100">100</option><option value="1000" selected>1000</option></select><span class="pu">,</span>
+    <span class="pa">num_return_sequences</span><span class="op">=</span><span class="nu">20</span><span class="pu">)</span></pre></div>
+      <div class="cell-out" id="s-out"><span class="prompt-mark out" aria-hidden="true">Out[<b class="n">&nbsp;</b>]:</span>
+        <div class="out-body"><div class="dist" id="s-dist" role="table" aria-label="Next-token probabilities at this temperature"><span class="head" role="columnheader">Next token</span><span class="head" role="columnheader">Probability at this temperature</span><span></span><span></span></div><p class="tiles-head" id="s-thead"></p><div class="tiles" id="s-tiles" role="img"></div></div>
+      </div>
+    </div>
+    <p class="verdict" id="s-verdict" aria-live="polite"></p>
+    <p class="aside" id="s-aside">Going back to greedy removes the nonsense, and the variety with it.</p>
+    <p class="changed" id="s-changed" hidden><b>What changed</b>Dividing the logits by τ below 1 sharpens the distribution. As τ goes to 0 it becomes greedy, and τ above 1 flattens it.</p>
+    <p class="dag">Prompt: <em>The capital of Pennsylvania is</em>. Next-token chances follow the lecture: Harrisburg 0.4, Philadelphia 0.3, Pittsburgh 0.2, and one more token at 0.1 with 0.001 split off as a nonsense token. Each token of a reply is treated the same way.</p>
+  </section>
+
+  <!-- 3 · Trim -->
+  <section class="stage" id="stage-3" role="tabpanel" aria-labelledby="tab-3" data-tone="trim" hidden>
+    <p class="kicker">3 · Trim</p>
+    <h2 tabindex="-1">Complete <em>It was the</em>. Temperature shrinks the tail but never removes it.</h2>
+    <p class="setline" id="t-set">Keep tokens until the running total passes <select class="pick" id="t-p" aria-label="p"><option value="1.0" selected>p = 1.0, keep all</option><option value="0.9">p = 0.9</option><option value="0.2">p = 0.2</option></select></p>
+    <pre class="printed" id="t-print"></pre>
+    <div class="cut" id="t-tab" role="table" aria-label="Next-token probabilities, running total, and probabilities after the cut">
+      <span class="head" role="columnheader">Next token</span><span class="head" role="columnheader">Probability</span><span class="head r" role="columnheader">Running total</span><span class="head r" role="columnheader">After the cut</span>
+    </div>
+    <p class="verdict" id="t-verdict" aria-live="polite"></p>
+    <p class="aside" id="t-aside">A fixed top-k cuts too much from a flat distribution and too little from a peaked one.</p>
+    <p class="changed" id="t-changed" hidden><b>What changed</b>Top-p keeps as many tokens as the distribution's shape needs, then renormalizes them. Their relative probabilities stay the same, and every other token gets exactly zero.</p>
+    <p class="dag">† Illustrative. The lecture gives the first three tokens; the rest of a 20,007-token vocabulary is made up. Lab 2's supplied reruns use p = 0.9.</p>
+  </section>
+
+  <!-- 4 · Show -->
+  <section class="stage" id="stage-4" role="tabpanel" aria-labelledby="tab-4" data-tone="show" hidden>
+    <p class="kicker">4 · Show</p>
+    <p class="beat" id="w-beat">So far we changed how tokens are picked. Now change the prompt.</p>
+    <h2 tabindex="-1" aria-describedby="w-beat">Ask a pretrained model to explain the moon landing to a 6-year-old.</h2>
+    <div class="cell" id="w-cell">
+      <div class="cell-in"><span class="prompt-mark in" aria-hidden="true">In&nbsp;[<b class="n">&nbsp;</b>]:</span><pre class="code" aria-label="Build the prompt, choose a decoder; the output updates."><span class="cm"># Lab 2's messages() takes the same exemplars argument</span>
+<span class="va">chat</span> <span class="op">=</span> <span class="fn">messages</span><span class="pu">(</span>
+    <span class="st">"Explain the moon landing to a 6-year-old in a few sentences."</span><span class="pu">,</span>
+    <span class="pa">exemplars</span><span class="op">=</span><select class="arg va" data-arg="exemplars" aria-label="exemplars"><option value="none" selected>()</option><option value="two">two_worked_examples</option></select><span class="pu">)</span>
+<span class="va">replies</span> <span class="op">=</span> model<span class="pu">.</span><span class="fn">generate</span><span class="pu">(</span>
+    <span class="op">**</span>chat<span class="pu">,</span>
+    <select class="arg pa" data-arg="decoder" aria-label="decoder settings"><option value="greedy" selected>do_sample=False</option><option value="sample">do_sample=True</option><option value="tau">do_sample=True, temperature=0.5</option><option value="topp">do_sample=True, top_p=0.5</option></select><span class="pu">,</span>
+    <span class="pa">num_return_sequences</span><span class="op">=</span><span class="nu">5</span><span class="pu">)</span></pre></div>
+      <div class="cell-out" id="w-out"><span class="prompt-mark out" aria-hidden="true">Out[<b class="n">&nbsp;</b>]:</span>
+        <div class="out-body"><div class="ex" id="w-ex" hidden></div>
+          <div class="cut show" id="w-tab" role="table" aria-label="First token of the reply, as this decoder picks it">
+            <span class="head" role="columnheader">First token</span><span class="head" role="columnheader">Chance this decoder picks it</span><span></span><span class="head r" role="columnheader">Starts</span>
+          </div>
+          <pre class="printed" id="w-print"></pre>
+          <ol class="replies" id="w-replies"></ol></div>
+      </div>
+    </div>
+    <p class="verdict" id="w-verdict" aria-live="polite"></p>
+    <p class="aside" id="w-aside">On the web, a line like this is usually followed by more lines like it.</p>
+    <p class="changed" id="w-changed" hidden><b>What changed</b>Examples show the task and its format, so following the instruction becomes the likely continuation. Mostly the model locates a skill it already has: the examples are about rain and the seasons, yet it can now explain the moon landing.</p>
+    <p class="dag">† Illustrative probabilities, examples and replies. The instruction and the replies starting <em>Make</em>, <em>Explain</em> and <em>People</em> are the lecture's.</p>
+  </section>
+
+  <!-- 5 · Think -->
+  <section class="stage" id="stage-5" role="tabpanel" aria-labelledby="tab-5" data-tone="think" hidden>
+    <p class="kicker">5 · Think</p>
+    <h2 tabindex="-1">The example shows only the answer, and the model answers <em>27</em>.</h2>
+    <div class="qa-box" id="h-prompt"></div>
+    <p class="head" style="margin:12px 0 4px">The model's reply, one box per forward pass</p>
+    <div class="toks-out" id="h-out" role="group" aria-label="The model's reply. Select the answer to see what it reads."></div>
+    <p class="look" id="h-look" aria-live="polite"></p>
+    <p class="verdict" id="h-verdict" aria-live="polite"></p>
+    <p class="aside" id="h-aside">The first answer token has to carry the whole calculation.</p>
+    <p class="changed" id="h-changed" hidden><b>What changed</b>Written steps become input, so later forward passes look back at them instead of recomputing. Ending the prompt with <em>Let's think step by step</em> gets similar reasoning with no examples.</p>
+    <div class="act"><button type="button" class="go" id="h-go">Show worked steps in the example<small>chain-of-thought prompting</small></button><button type="button" class="again" id="h-again" hidden>Show only the answer again</button></div>
+    <p class="dag">The tennis-ball example and its worked steps are the lecture's. The apple problem and both replies are illustrative.</p>
+  </section>
+
+  <!-- 6 · Build -->
+  <section class="stage" id="stage-6" role="tabpanel" aria-labelledby="tab-6" data-tone="build" hidden>
+    <p class="kicker">6 · Build</p>
+    <p class="beat" id="b-beat">A prompt can send three signals: follow this task, answer accurately, and work it out.</p>
+    <h2 tabindex="-1" aria-describedby="b-beat">A 6-year-old asks how long it would take to drive to the moon.</h2>
+    <div class="parts" role="group" aria-label="Add to the prompt"><span class="head">Add to the prompt</span>
+      <button type="button" class="part" data-k="ex" aria-pressed="false">Worked examples</button><button type="button" class="part" data-k="ok" aria-pressed="false" disabled>Examples checked for accuracy</button><button type="button" class="part" data-k="st" aria-pressed="false" disabled>Steps in each example</button>
+    </div>
+    <div class="qa-box" id="b-prompt"></div>
+    <p class="head" style="margin:12px 0 4px">Greedy reply</p>
+    <p class="reply-box" id="b-reply"></p>
+    <p class="verdict" id="b-verdict" aria-live="polite"></p>
+    <p class="changed" id="b-changed" hidden><b>What changed</b>The prompt decided what the bars favor, and the decoder picked from them. Sampling, temperature and top-p only choose among what the prompt has made likely.</p>
+    <div class="recap" id="b-recap" hidden aria-label="Unit 1 in six steps">
+      <div data-tone="pick"><b>Pick</b>the most likely token</div>
+      <div data-tone="sharpen"><b>Sharpen</b>divide logits by τ</div>
+      <div data-tone="trim"><b>Trim</b>keep mass p</div>
+      <div data-tone="show"><b>Show</b>examples move the bars</div>
+      <div data-tone="think"><b>Think</b>steps become input</div>
+      <div data-tone="build"><b>Build</b>the prompt shapes, the decoder picks</div>
+    </div>
+    <p class="dag">Replies are illustrative. The three signals are the lecture's summary of 2.2. The moon is about 384,000 km away.</p>
+  </section>
+
+  <nav class="pager" aria-label="Steps">
+    <button type="button" id="prev">← Previous</button>
+    <span class="pcount" id="pcount">1 of 6</span>
+    <button type="button" id="next"><span id="next-label">Next: Sharpen </span>→</button>
+  </nav>
+</main>
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id)};
+  function verdict(id,cls,html){var v=$(id);v.className="verdict"+(cls?" "+cls:"");v.innerHTML=html}
+
+  /* 1 · Pick: the lecture's next-token distribution (2.1 S2) */
+  var PICK=[{w:"Harrisburg",p:0.4,ok:true},{w:"Philadelphia",p:0.3},{w:"Pittsburgh",p:0.2},{w:"Erie",p:0.1,dag:true}];
+  var N=20,seed=7;
+  function rng(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}
+  function draw(){var u=rng(),c=0;for(var i=0;i<PICK.length;i++){c+=PICK[i].p;if(u<c)return i}return PICK.length-1}
+  var dist=$("k-dist");
+  PICK.forEach(function(t,i){
+    var lab=document.createElement("span");lab.className="lab";lab.setAttribute("role","cell");lab.innerHTML=t.w+(t.dag?"<sup>†</sup>":"")+(t.ok?"<small>correct</small>":"");
+    var tr=document.createElement("div");tr.className="track";tr.setAttribute("role","presentation");
+    var f=document.createElement("div");f.className="fill";f.style.width=(t.p*100)+"%";f.style.setProperty("--c",t.ok?"var(--tone)":"var(--grey)");tr.appendChild(f);
+    var pc=document.createElement("span");pc.className="pct";pc.setAttribute("role","cell");pc.textContent=Math.round(t.p*100)+"%";
+    var pk=document.createElement("span");pk.className="picked";pk.id="k-n"+i;pk.setAttribute("role","cell");pk.textContent="–";
+    [lab,tr,pc,pk].forEach(function(e){dist.appendChild(e)});
+  });
+  function showCounts(c){c.forEach(function(n,i){var e=$("k-n"+i);e.textContent=n+" of "+N;e.classList.toggle("on",n>0)})}
+  function sample(){var c=PICK.map(function(){return 0});for(var k=0;k<N;k++)c[draw()]++;showCounts(c);
+    verdict("k-verdict","problem","Sampled 20 times, it says Harrisburg "+c[0]+" times.");
+    $("k-try").hidden=true;$("k-go").hidden=false;$("k-again").hidden=true;$("k-changed").hidden=true;$("k-aside").hidden=false}
+  function greedy(){showCounts(PICK.map(function(_,i){return i===0?N:0}));
+    verdict("k-verdict","fixed","Greedy says Harrisburg every time.");
+    $("k-go").hidden=true;$("k-again").hidden=false;$("k-changed").hidden=false;$("k-aside").hidden=true}
+  $("k-try").addEventListener("click",sample);$("k-go").addEventListener("click",greedy);
+  $("k-again").addEventListener("click",function(){sample();$("k-go").focus()});
+
+
+  var execN=0;function stamp(cell){execN++;cell.querySelectorAll(".prompt-mark .n").forEach(function(b){b.textContent=execN})}
+  /* 2 · Sharpen as a code cell (pilot): the lecture's distribution under temperature (2.1 S7), 0.1% nonsense per token (2.1 S6) */
+  var SP=[0.4,0.3,0.2,0.099,0.001],sarg={temperature:"1.0",max_new_tokens:"1000"},sseed=11;
+  function srng(){sseed|=0;sseed=sseed+0x6D2B79F5|0;var t=Math.imul(sseed^sseed>>>15,1|sseed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}
+  function stemp(t){var w=SP.map(function(x){return Math.pow(x,1/t)}),z=w.reduce(function(a,b){return a+b},0);return w.map(function(x){return x/z})}
+  function cellWire(cell,args,run){cell.querySelectorAll("select.arg").forEach(function(sl){sl.value=args[sl.dataset.arg];sl.addEventListener("change",function(){args[sl.dataset.arg]=sl.value;if(run)run()})})}
+  var SNAME=["Harrisburg","Philadelphia","Pittsburgh","Erie","a nonsense token"],sd=$("s-dist");
+  SNAME.forEach(function(w,i){var bad=i===4;
+    var lab=document.createElement("span");lab.className="lab"+(bad?" bad":"");lab.setAttribute("role","cell");lab.innerHTML=w+(i===0?"<small>correct</small>":"");
+    var tr=document.createElement("div");tr.className="track"+(bad?" bad":"");tr.setAttribute("role","presentation");var f=document.createElement("div");f.className="fill";f.id="s-f"+i;f.style.setProperty("--c",i===0?"var(--tone)":"var(--grey)");tr.appendChild(f);
+    var pc=document.createElement("span");pc.className="pct";pc.id="s-p"+i;pc.setAttribute("role","cell");
+    [lab,tr,pc,document.createElement("span")].forEach(function(e){sd.appendChild(e)})});
+  function spct(x){var v=x*100;return (v>=1?v.toFixed(1):Number(v.toPrecision(2)))+"%"}
+  function sharpRun(){stamp($("s-cell"));var t=+sarg.temperature,n=+sarg.max_new_tokens,q=stemp(t),qn=q[4],box=$("s-tiles"),hit=0;box.replaceChildren();
+    q.forEach(function(x,i){$("s-f"+i).style.width=Math.max(x*100,i===4?0.8:0)+"%";$("s-p"+i).textContent=spct(x)});
+    for(var r=0;r<20;r++){var any=false;for(var k=0;k<n;k++){if(srng()<qn){any=true;break}}
+      var tl=document.createElement("span");tl.className="tile"+(any?" bad":"");tl.textContent=any?"✗":"✓";box.appendChild(tl);if(any)hit++}
+    $("s-thead").innerHTML="20 sampled replies of "+n.toLocaleString("en-US")+" tokens: <b>"+hit+"</b> contain a nonsense token";
+    box.setAttribute("aria-label",hit+" of 20 replies contain a nonsense token");
+    if(t===1)verdict("s-verdict",hit>=5?"problem":"",hit>=5?"One token in a thousand is enough: most long replies hit nonsense.":"Short replies mostly escape. Try 1000 tokens.");
+    else{verdict("s-verdict","fixed","Lower temperature moves mass onto Harrisburg and starves the nonsense token.");$("s-changed").hidden=false;$("s-aside").hidden=true}
+  }
+  cellWire($("s-cell"),sarg,sharpRun);sharpRun();
+
+  /* 3 · Trim: top-p on the lecture's example (2.1 S7); later tokens and the tail are illustrative */
+  var TRIM=[{w:"best",p:0.11},{w:"beginning",p:0.08},{w:"seventh",p:0.03},{w:"first",p:0.025,dag:true},{w:"worst",p:0.02,dag:true},{w:"last",p:0.015,dag:true},{w:"same",p:0.012,dag:true},
+    {w:"the next 5,319 tokens",p:0.608002,n:5319,dag:true,block:true},{w:"the rarest 14,681 tokens",p:0.099998,n:14681,dag:true,block:true,note:"each below 0.002%"}];
+  var tt=$("t-tab"),VOCAB=20007;
+  TRIM.forEach(function(t,i){
+    var lab=document.createElement("span");lab.className="lab";lab.setAttribute("role","cell");lab.innerHTML=t.w+(t.dag?"<sup>†</sup>":"")+(t.note?"<small>"+t.note+"</small>":"");
+    var tr=document.createElement("div");tr.className="track";tr.setAttribute("role","presentation");var f=document.createElement("div");f.className="fill"+(t.block?" many":"");f.id="t-f"+i;f.style.width=(t.block?100:t.p/0.11*60)+"%";tr.appendChild(f);
+    var run=document.createElement("span");run.className="num";run.id="t-r"+i;run.setAttribute("role","cell");
+    var aft=document.createElement("span");aft.className="num";aft.id="t-a"+i;aft.setAttribute("role","cell");
+    [lab,tr,run,aft].forEach(function(e){e.dataset.row=i;tt.appendChild(e)});
+  });
+  function trimRun(){var pv=+$("t-p").value,c=0,k=TRIM.length;
+    if(pv<1){for(var i=0;i<TRIM.length;i++){c+=TRIM[i].p;if(c>pv+1e-9){k=i+1;break}}}
+    var kept=TRIM.slice(0,k).reduce(function(a,t){return a+t.p},0),run=0,nk=TRIM.slice(0,k).reduce(function(a,t){return a+(t.n||1)},0);
+    TRIM.forEach(function(t,i){run+=t.p;var inK=i<k;$("t-r"+i).textContent=run.toFixed(3);
+      $("t-a"+i).textContent=inK?(t.p/kept).toFixed(3):"0";$("t-a"+i).classList.toggle("on",inK&&pv<1);
+      $("t-r"+i).classList.toggle("on",pv<1&&i===k-1);$("t-f"+i).style.setProperty("--c",inK&&pv<1?"var(--tone)":"var(--grey)");
+      tt.querySelectorAll('[data-row="'+i+'"]').forEach(function(e){e.classList.toggle("row-out",!inK)})});
+    $("t-print").textContent="p = "+$("t-p").value+" keeps "+nk.toLocaleString("en-US")+" of "+VOCAB.toLocaleString("en-US")+" tokens";
+    if(pv===1){verdict("t-verdict","problem","Every token keeps some probability, down to the rarest.<sup>†</sup>");$("t-changed").hidden=true;$("t-aside").hidden=false}
+    else{var lead=pv===0.2?"<em>best</em>, <em>beginning</em> and <em>seventh</em> reach 0.220, past 0.2.":"The rarest "+(VOCAB-nk).toLocaleString("en-US")+" tokens hold the last 10%, so they are cut.";
+      verdict("t-verdict","fixed",lead+" Everything outside the set is exactly 0.");$("t-changed").hidden=false;$("t-aside").hidden=true}}
+  $("t-p").addEventListener("change",trimRun);trimRun();
+
+  /* 4 · Show as a code cell (pilot): decoders choose among the bars; examples move the bars (2.2 S2, S3). Illustrative numbers. */
+  var SHOWT=["Make","Explain","Describe","Write","People","Astronauts"],ANS={People:1,Astronauts:1};
+  var BASE=[0.34,0.22,0.14,0.08,0.12,0.10],SHOWN=[0.08,0.08,0.06,0.06,0.48,0.24],wt=$("w-tab"),warg={exemplars:"none",decoder:"greedy"},wseed=5,everTwo=false;
+  var REPLY={Make:"Make a fun fact about the moon landing for the kids.",Explain:"Explain how the astronauts really did make it to the moon.",Describe:"Describe the rocket to a 6-year-old in one sentence.",Write:"Write a short poem about the moon for a child.",
+    People:"People went to the moon and they took pictures of what they saw and sent them back to the earth.",Astronauts:"Astronauts flew a big rocket to the moon, walked on it, and came home safely."};
+  function wrng(){wseed|=0;wseed=wseed+0x6D2B79F5|0;var t=Math.imul(wseed^wseed>>>15,1|wseed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}
+  SHOWT.forEach(function(w,i){
+    var lab=document.createElement("span");lab.className="lab";lab.setAttribute("role","cell");lab.textContent=w;
+    var tr=document.createElement("div");tr.className="track";tr.setAttribute("role","presentation");var f=document.createElement("div");f.className="fill";f.id="w-f"+i;tr.appendChild(f);
+    var pc=document.createElement("span");pc.className="num";pc.id="w-p"+i;pc.setAttribute("role","cell");
+    var tg=document.createElement("span");tg.className="tag"+(ANS[w]?" ans":"");tg.setAttribute("role","cell");tg.textContent=ANS[w]?"an answer":"an instruction";
+    [lab,tr,pc,tg].forEach(function(e){wt.appendChild(e)});
+  });
+  function effective(d,q){var n=q.length,out;
+    if(d==="sample")return q.slice();
+    if(d==="greedy"){var m=0;q.forEach(function(x,i){if(x>q[m])m=i});out=q.map(function(_,i){return i===m?1:0});return out}
+    if(d==="tau"){var w=q.map(function(x){return x*x}),z=w.reduce(function(a,b){return a+b},0);return w.map(function(x){return x/z})}
+    var idx=q.map(function(_,i){return i}).sort(function(a,b){return q[b]-q[a]}),c=0,keep={};for(var j=0;j<n;j++){c+=q[idx[j]];keep[idx[j]]=1;if(c>0.5+1e-9)break}
+    var km=Object.keys(keep).reduce(function(a,i){return a+q[i]},0);return q.map(function(x,i){return keep[i]?x/km:0})}
+  var DNAME={greedy:"Greedy",sample:"Sampling",tau:"Temperature 0.5",topp:"Top-p 0.5"};
+  function showRun(){stamp($("w-cell"));var two=warg.exemplars==="two",q=effective(warg.decoder,two?SHOWN:BASE),ch=0,list=$("w-replies");
+    q.forEach(function(x,i){$("w-f"+i).style.width=(x*100)+"%";$("w-f"+i).style.setProperty("--c",ANS[SHOWT[i]]?"var(--tone)":"var(--grey)");$("w-p"+i).textContent=x.toFixed(2);if(ANS[SHOWT[i]])ch+=x});
+    $("w-ex").hidden=!two;list.replaceChildren();var nAns=0;
+    for(var r=0;r<5;r++){var u=wrng(),c=0,k=q.length-1;for(var i=0;i<q.length;i++){c+=q[i];if(u<c){k=i;break}}
+      var li=document.createElement("li");li.className=ANS[SHOWT[k]]?"ans":"";li.textContent=REPLY[SHOWT[k]];if(ANS[SHOWT[k]])nAns++;list.appendChild(li)}
+    $("w-print").textContent=DNAME[warg.decoder]+": a reply starts as an answer "+Math.round(ch*100)+"% of the time. Five replies:";
+    if(two)everTwo=true;
+    if(two){verdict("w-verdict","fixed","With two worked examples, "+DNAME[warg.decoder].toLowerCase()+" starts "+nAns+" of 5 replies with an answer.");$("w-changed").hidden=false;$("w-aside").hidden=true}
+    else{verdict("w-verdict","problem",warg.decoder==="sample"?"Sampling sometimes answers, by luck. Every sharper decoder answers less.":"Every decoder picks from the same bars, and most of their mass starts another instruction.");$("w-changed").hidden=true;$("w-aside").hidden=false}}
+  $("w-ex").innerHTML="<b>exemplars</b><div>Explain rain to a 6-year-old in a few sentences.<br>→ Clouds are full of tiny drops of water. When the drops get big and heavy, they fall down as rain.<sup>†</sup></div><div>Explain the seasons to a 6-year-old in a few sentences.<br>→ The Earth leans a little as it goes around the sun, so for part of the year your home gets more sunshine.<sup>†</sup></div>";
+  cellWire($("w-cell"),warg,showRun);showRun();
+
+  /* 5 · Think: chain of thought (2.2 S4). Each word box stands for one forward pass. */
+  var Q2="Q: The cafeteria had 23 apples. If they used 20 to make lunch and bought 6 more, how many apples do they have?";
+  var EX_A="Q: Roger has 5 tennis balls. He buys 2 more cans of tennis balls. Each can has 3 tennis balls. How many tennis balls does he have now?";
+  var cot=false;
+  var OUT={plain:"The answer is 27.",cot:"They had 23 apples. They used 20, so 23 − 20 = 3. They bought 6 more, so 3 + 6 = 9. The answer is 9."};
+  function thinkDraw(){
+    $("h-prompt").innerHTML="<div>"+EX_A+"</div><div class=\"a\">A: "+(cot?"Roger started with 5 balls. 2 cans of 3 tennis balls each is 6 tennis balls. 5 + 6 = 11. The answer is 11.":"The answer is 11.")+"</div><div>"+Q2+"</div><div class=\"a\">A:</div>";
+    var words=(cot?OUT.cot:OUT.plain).split(" "),box=$("h-out");box.replaceChildren();var ansIdx=words.length-1;
+    words.forEach(function(w,i){var b=document.createElement(i===ansIdx?"button":"span");b.className="tk"+(i===ansIdx?" ans":"");b.textContent=w;b.dataset.i=i;
+      if(i===ansIdx){b.type="button";b.setAttribute("aria-label","Answer token "+w+". Show what it reads.");b.addEventListener("click",function(){thinkLook(words)})}
+      box.appendChild(b)});
+    $("h-look").innerHTML="Select the answer box to see what it reads.";
+    if(!cot)verdict("h-verdict","problem","The answer gets one forward pass, so it has to do 23 − 20 + 6 all at once. It gets 27.");
+    else verdict("h-verdict","fixed","The answer comes after "+ansIdx+" forward passes, and the model wrote 3 down before it needed it.")}
+  function thinkLook(words){var box=$("h-out");box.querySelectorAll(".tk").forEach(function(e){e.classList.remove("hl")});
+    if(!cot){$("h-look").innerHTML="<b>27</b> reads only the question: <b>23</b>, <b>20</b> and <b>6</b>. No step is written down for it to use.";return}
+    var n=0;words.forEach(function(w,i){if((w==="3"||w==="6")&&i>8){box.children[i].classList.add("hl");n++}});
+    $("h-look").innerHTML="<b>9</b> reads the <b>3</b> and <b>6</b> the model already wrote (highlighted), so it only has to add 3 + 6.";}
+  $("h-go").addEventListener("click",function(){cot=true;thinkDraw();$("h-go").hidden=true;$("h-again").hidden=false;$("h-changed").hidden=false;$("h-aside").hidden=true});
+  $("h-again").addEventListener("click",function(){cot=false;thinkDraw();$("h-go").hidden=false;$("h-again").hidden=true;$("h-changed").hidden=true;$("h-aside").hidden=false;$("h-go").focus()});
+  thinkDraw();
+
+  /* 6 · Build: the lecture's three prompt signals (2.2 S6). Replies illustrative. */
+  var parts={ex:false,ok:false,st:false};
+  var BQ="How long would it take to drive to the moon? Explain for a 6-year-old.";
+  function buildDraw(){
+    document.querySelectorAll("#stage-6 .part").forEach(function(b){var k=b.dataset.k;b.setAttribute("aria-pressed",String(parts[k]));if(k!=="ex")b.disabled=!parts.ex});
+    var pr=[];
+    if(parts.ex)pr.push("<div class=\"ex2\">"+(parts.ok?"Two checked examples":"Two examples copied from a Q&amp;A forum")+(parts.st?", each answer worked out step by step":", each with a one-line answer")+"</div>");
+    pr.push("<div>"+BQ+"</div>");$("b-prompt").innerHTML=pr.join("");
+    var r,v,cls="problem",done=false;
+    if(!parts.ex){r="How long would it take to fly to Mars? How far away is the sun?";v="It writes more questions. Nothing signals the task: add worked examples."}
+    else if(!parts.ok){r=parts.st?"The moon is much closer than people say, about 1,000 km, so about 10 hours.":"You can't drive there. The moon landing was faked anyway.";v="It answers, but in the style of the forum. Nothing signals accuracy: check the examples."}
+    else if(!parts.st){r="About 16 days.";v="Accurate in style, wrong in arithmetic. Nothing gives it room to compute: add steps."}
+    else{r="The moon is about 384,000 km away. At 100 km an hour, that is 3,840 hours. A day has 24 hours, so 3,840 ÷ 24 = 160. About 160 days of driving, without stopping.";v="All three signals: it follows the task, stays accurate and works it out.";cls="fixed";done=true}
+    $("b-reply").textContent=r;verdict("b-verdict",cls,v);$("b-changed").hidden=!done;$("b-recap").hidden=!done}
+  document.querySelectorAll("#stage-6 .part").forEach(function(b){b.addEventListener("click",function(){var k=b.dataset.k;parts[k]=!parts[k];if(k==="ex"&&!parts.ex){parts.ok=false;parts.st=false}buildDraw()})});
+  buildDraw();
+
+  /* navigation */
+  var tabs=Array.from(document.querySelectorAll(".step")),panels=Array.from(document.querySelectorAll(".stage")),cur=0;
+  var names=["Pick","Sharpen","Trim","Show","Think","Build"];
+  function show(i,focus){cur=i;tabs.forEach(function(t,n){t.setAttribute("aria-selected",String(n===i));t.tabIndex=n===i?0:-1});panels.forEach(function(p,n){p.hidden=n!==i});
+    $("prev").disabled=i===0;$("next").disabled=i===panels.length-1;$("next-label").textContent=names[i+1]?"Next: "+names[i+1]+" ":"";$("pcount").textContent=(i+1)+" of "+panels.length;
+    if(focus)panels[i].querySelector("h2").focus()}
+  tabs.forEach(function(t,i){t.addEventListener("click",function(){show(i,false)});t.addEventListener("keydown",function(e){var j=null;if(e.key==="ArrowRight")j=(i+1)%tabs.length;if(e.key==="ArrowLeft")j=(i+tabs.length-1)%tabs.length;if(e.key==="Home")j=0;if(e.key==="End")j=tabs.length-1;if(j!==null){e.preventDefault();show(j,false);tabs[j].focus()}})});
+  $("prev").addEventListener("click",function(){show(cur-1,true)});$("next").addEventListener("click",function(){show(cur+1,true)});
+  show(0,false);
+})();
+</script>
+</body>
+</html>
