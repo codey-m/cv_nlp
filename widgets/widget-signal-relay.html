@@ -1,0 +1,2455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal Relay (course)</title>
+<style>
+:root { color-scheme: light; --ink: #0c0c0d; --ink-2: #40464c; --body: #212326; --muted: #626a73; --line: #dde1e6; --rule: #e6e9ee; --ground: #f3f4f8; --red: #750014; --button-line: #b8c2cc; --win: #216044; --lose: #a31f34; --gold: #e9a83c; --wash: #fbf0dc; --a: #a04235; --b: #3f5d4a; --wire: #c27c0e; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--body); font: 16px/1.55 "neue-haas-grotesk-text", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+button, summary { font: inherit; cursor: pointer; }
+button { border: 1px solid var(--button-line); border-radius: 4px; padding: 9px 16px; background: #fff; color: var(--ink-2); font-weight: 500; min-height: 44px; touch-action: manipulation; }
+button.primary { background: var(--red); border-color: var(--red); color: #fff; min-width: 200px; }
+button:disabled { opacity: .5; cursor: default; }
+button:focus-visible, summary:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline: 3px solid #1472ae; outline-offset: 3px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ic { width: 22px; height: 22px; vertical-align: middle; }
+
+.gamebar { background: #fff; display: grid; grid-template-columns: 52px 1fr 52px; align-items: center; padding: 12px 24px; border-bottom: 1px solid var(--rule); }
+.gamebar .back { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: var(--ink); }
+.gamebar .back svg { width: 26px; height: 26px; }
+.gamebar h1 { grid-column: 2; margin: 0; text-align: center; font-size: clamp(26px, 3vw, 38px); font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+main { max-width: 1240px; margin: auto; padding: 28px 24px 56px; }
+.gamewrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 28px; align-items: start; }
+.playcard, .howto, .explainer { background: #fff; border-radius: 6px; box-shadow: 0 1px 2px rgba(16,24,40,.05), 0 3px 10px rgba(16,24,40,.05); }
+.playcard { overflow: hidden; }
+.gamestatus { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 40px; padding: 22px 24px 4px; font-size: 18px; color: var(--muted); }
+.gamestatus b { color: var(--body); font-weight: 600; }
+
+/* The dispatcher's desk: one card per service. */
+.levels { display: flex; align-items: center; gap: 10px; padding: 14px 24px 0; }
+.carousel { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 4px; flex: 1; }
+.chip-item { flex: none; display: flex; }
+.chip { flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 5px 12px 5px 8px; border-radius: 999px; scroll-snap-align: start; background: #fbfbfc; }
+.chip svg { width: 26px; height: 26px; }
+.chip .num { font-size: 12px; font-weight: 700; color: var(--muted); }
+.chip .name { font-weight: 600; color: var(--ink); white-space: nowrap; }
+.chip[aria-current="true"] { border-color: var(--red); background: #fff; box-shadow: 0 0 0 2px #f3d6db; }
+.chip.locked { opacity: .55; } .chip .tick { color: var(--win); font-weight: 700; } .chip .star { color: #b07a1c; font-weight: 700; }
+.carousel { scrollbar-width: none; } .carousel::-webkit-scrollbar { display: none; }
+.carousel-arrow { flex: none; width: 40px; min-height: 40px; padding: 0; border-radius: 50%; font-size: 22px; line-height: 1; }
+.chip .opt { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #8a560a; background: #fbf0dc; border-radius: 999px; padding: 2px 7px; }
+.challenges { position: relative; flex: none; }
+.challenges > summary { list-style: none; padding: 10px 14px; border: 1px solid var(--button-line); border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.challenges > summary::-webkit-details-marker { display: none; }
+.challenges[open] > div { position: absolute; right: 0; z-index: 8; display: grid; gap: 6px; padding: 10px; background: #fff; border-radius: 10px; box-shadow: 0 10px 30px rgba(16,24,40,.2); }
+#local-help p { font-size: 15px; line-height: 1.6; margin: 0 0 12px; }
+.service { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; text-align: left; padding: 10px 12px; border-radius: 8px; background: #fbfbfc; }
+.service svg { grid-row: span 2; width: 34px; height: 34px; }
+.service b { color: var(--ink); font-weight: 600; }
+.service span { font-size: 13px; color: var(--muted); }
+.service[aria-pressed="true"] { border-color: var(--red); background: #fff; box-shadow: 0 0 0 2px #f3d6db; }
+.service.done span { color: var(--win); }
+.gameprompt { text-align: center; color: var(--muted); font-size: 17px; margin: 12px 24px 12px; }
+.gameprompt strong { color: var(--body); font-weight: 600; }
+
+.board { position: relative; margin: 4px 0 0; border-block: 1px solid var(--rule); }
+.board > svg { display: block; width: 100%; height: auto; }
+.board.running .socket, .board.running .lever { visibility: hidden; }
+.lever { position: absolute; z-index: 2; transform: translate(-50%, -50%); min-height: 34px; padding: 4px 10px; font-size: 12px; font-weight: 600; border: 2px solid #b5523b; background: #fffaf0; color: #5a2a20; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+.slot-label { align-self: center; min-width: 52px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.socket { box-shadow: 0 0 0 4px #2b2f31, 0 0 18px 4px rgba(255, 220, 150, .55); }
+.socket:not(.set) { border-color: #c9bfa7; background: #3b4043; } .socket:not(.set) .plus { color: #f4efe2; }
+.cloud { animation: drift linear infinite; }
+@keyframes drift { from { transform: translateX(-260px); } to { transform: translateX(1000px); } }
+.birds { animation: fly 38s linear infinite; }
+@keyframes fly { from { transform: translate(-60px, 70px); } 50% { transform: translate(450px, 40px); } to { transform: translate(960px, 64px); } }
+.ripple { animation: ripple 5s ease-in-out infinite alternate; }
+@keyframes ripple { from { transform: translateX(0); } to { transform: translateX(-22px); } }
+.bob { animation: bob 3.2s ease-in-out infinite alternate; }
+@keyframes bob { from { transform: translateY(0); } to { transform: translateY(3px); } }
+.lens-glow { animation: glow 2.2s ease-in-out infinite alternate; }
+@keyframes glow { from { opacity: .55; } to { opacity: 1; } }
+.chimney { animation: glow 1.8s ease-in-out infinite alternate; }
+.wire-shadow { fill: none; stroke: rgba(0, 0, 0, .18); stroke-width: 7; stroke-linecap: round; }
+#sound[aria-pressed="false"] .waves { display: none; }
+.checks { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0 24px 14px; padding: 0; list-style: none; }
+.checks li { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; background: #fbfbfc; font-size: 14px; color: var(--ink-2); }
+.checks li i { width: 10px; height: 10px; border-radius: 2px; }
+.checks li svg { width: 20px; height: 20px; }
+.checks li .mark { font-weight: 700; min-width: 10px; }
+.checks li.hit { border-color: var(--win); background: #eef6f1; } .checks li.hit .mark { color: var(--win); }
+.checks li.miss { border-color: var(--lose); background: #fbf0f2; } .checks li.miss .mark { color: var(--lose); }
+.picker { position: absolute; z-index: 5; transform: translateX(-50%); width: min(440px, 94%); padding: 12px; background: #fff; border-radius: 10px; box-shadow: 0 10px 30px rgba(16, 24, 40, .25); }
+.picker-title { margin: 0 0 8px; font-weight: 600; color: var(--ink); font-size: 15px; }
+.pick-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.pick { display: grid; justify-items: center; gap: 4px; padding: 8px 4px; min-height: 0; }
+.pick b { color: var(--ink); font-size: 13px; line-height: 1.2; }
+.brass { font-weight: 700; color: #8a560a; }
+.brass-offer { font-weight: 600; color: #8a560a; }
+.readout { position: absolute; z-index: 4; transform: translateX(-50%); display: grid; gap: 3px; padding: 7px 10px; background: rgba(255, 250, 240, .96); border: 2px solid #c27c0e; border-radius: 8px; font-size: 12px; line-height: 1.35; box-shadow: 0 4px 14px rgba(0,0,0,.18); white-space: nowrap; }
+.readout b { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #8a560a; }
+.readout span { padding-left: 8px; border-left: 4px solid var(--c); }
+.readout svg { width: 15px; height: 15px; vertical-align: -3px; }
+.strip .stopno { font-size: 9px; color: var(--muted); margin-left: 1px; }
+.strip td.read { outline: 2px solid #c27c0e; outline-offset: -3px; background: #fff3d6; }
+.strip td.twin, .strip th.twin .look { background: #e9eefb; color: #2a3560; }
+.trace-ring { position: absolute; z-index: 3; transform: translate(-50%, -50%); width: 70px; height: 70px; border-radius: 50%; border: 3px dashed #a31f34; box-shadow: 0 0 0 4px rgba(163, 31, 52, .18); pointer-events: none; }
+.strip td.trace { outline: 2px dashed #a31f34; outline-offset: -3px; white-space: nowrap; }
+.strip td.trace .arrow { margin: 0 2px; color: #a31f34; font-weight: 700; }
+.strip th.trace .look { color: #a31f34; }
+.nights { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0 24px 14px; }
+.night { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 12px; font-size: 14px; }
+.night .pair svg { width: 18px; height: 18px; vertical-align: -4px; }
+.night[aria-pressed="true"] { border-color: #2a3560; box-shadow: 0 0 0 2px #cdd3ee; }
+.night.hit { border-color: var(--win); } .night.hit .mark { color: var(--win); font-weight: 700; }
+.night.miss { border-color: var(--lose); } .night.miss .mark { color: var(--lose); font-weight: 700; }
+.pick-cable { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--rule); }
+.pick-cable .picker-title { display: flex; align-items: center; gap: 6px; } .pick-cable .picker-title svg { width: 20px; height: 20px; }
+.pick-from { display: flex; flex-wrap: wrap; gap: 6px; }
+.pick-from .from { min-height: 36px; padding: 4px 10px; font-size: 13px; border-color: var(--wire); color: #8a560a; }
+.pick-from .from[aria-pressed="true"] { background: var(--wire); color: #fff; }
+.cable-tag { display: block; margin-top: 2px; font-size: 11px; font-weight: 600; color: #8a560a; }
+.pick-desc { margin: 10px 2px 0; min-height: 2.8em; font-size: 14px; line-height: 1.4; color: var(--muted); }
+.pick-desc b { color: var(--ink); }
+.pick-desc svg { width: 16px; height: 16px; vertical-align: -3px; }
+.pick-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #2b2f31; color: #f4efe2; font-weight: 700; }
+.pick-icon svg { width: 24px; height: 24px; }
+.pick[aria-pressed="true"] { border-color: #815a25; background: var(--wash); }
+.coach { position: absolute; inset: 0; z-index: 6; overflow: hidden; }
+.coach .bubble { overflow: visible; }
+.reason:empty { min-height: 0; margin: 0; }
+.coach.dim-only { background: rgba(20, 24, 28, .35); }
+.ring { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 3px solid #ffd27a; box-shadow: 0 0 0 9999px rgba(20, 24, 28, .5), 0 0 24px 6px rgba(255, 210, 122, .7); pointer-events: none; }
+.bubble { position: absolute; transform: translateX(-50%); width: min(360px, 90%); padding: 14px 16px 12px; background: #fff; border-radius: 10px; box-shadow: 0 10px 30px rgba(16, 24, 40, .3); }
+.bubble.above { transform: translate(-50%, -100%); } .coach.dim-only .bubble.above { transform: translateX(-50%); }
+.bubble p svg { width: 20px; height: 20px; vertical-align: -4px; }
+.bubble p { margin: 0 0 10px; font-size: 16px; line-height: 1.5; color: var(--ink); }
+.bubble-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.bubble-actions span { margin-right: auto; font-size: 13px; color: var(--muted); }
+.bubble-actions .primary { min-width: 96px; }
+.recorder.spot { position: relative; z-index: 7; box-shadow: 0 0 0 4px #ffd27a; }
+.linkish { border: 0; padding: 0; min-height: 0; background: none; color: var(--red); text-decoration: underline; text-underline-offset: 3px; font-weight: 500; }
+.socket { position: absolute; transform: translate(-50%, -50%); width: 46px; height: 46px; min-height: 0; padding: 0; border-radius: 50%; border: 2px dashed #8a7b5c; background: #fffdf7; display: grid; place-items: center; }
+.socket svg { width: 26px; height: 26px; }
+.socket .plus { font-size: 22px; line-height: 1; color: var(--ink-2); }
+.socket.set { border-style: solid; border-color: #815a25; background: var(--wash); }
+
+/* The recorder: what each car carried at every point on the line. */
+.recorder { margin: 14px 24px 0; padding: 12px 14px 10px; border-radius: 8px; background: #fffdf6; border: 1px solid #e8dfc8; background-image: repeating-linear-gradient(#fffdf6 0 27px, #f3ecda 27px 28px); }
+.rec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+.rec-title { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.rec-note { font-size: 13px; color: var(--muted); }
+.rec-scroll { overflow-x: auto; }
+table.strip { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 520px; }
+.strip th, .strip td { text-align: center; padding: 4px 2px; font-size: 13px; }
+.strip thead th { font-weight: 600; color: var(--ink-2); vertical-align: bottom; }
+.strip thead th button { min-height: 34px; padding: 3px 6px; font-size: 12px; border-color: transparent; background: transparent; color: var(--ink-2); font-weight: 600; }
+.strip thead th button:hover { border-color: var(--button-line); }
+.strip th[scope="row"] { width: 64px; text-align: left; font-weight: 700; }
+.strip th[scope="row"] i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+.strip td svg { width: 22px; height: 22px; }
+.strip td.empty { color: #c4c9cf; }
+.strip td.same { background: rgba(163, 31, 52, .08); }
+.strip td.hit { box-shadow: inset 0 -3px 0 var(--win); }
+.strip td.miss { box-shadow: inset 0 -3px 0 var(--lose); }
+.strip td.cable { outline: 2px dashed var(--wire); outline-offset: -3px; }
+.strip tr.last th, .strip tr.last td { opacity: .45; }
+.strip tr.last th { font-weight: 500; }
+.strip .plug { display: block; margin: 2px auto 0; min-height: 30px; padding: 2px 8px; font-size: 12px; border-color: var(--wire); color: #8a560a; background: #fff; }
+.strip .plug[aria-pressed="true"] { background: var(--wire); color: #fff; }
+.strip .look[aria-pressed="true"] { background: var(--ink-2); color: #fff; }
+
+.reason { text-align: center; min-height: 3.2em; margin: 12px 24px 0; font-size: 15px; color: var(--muted); }
+.reason strong { color: var(--body); }
+.reason svg, .rec-note svg { width: 18px; height: 18px; vertical-align: -4px; }
+.reason.win strong { color: var(--win); }
+.reason.lose strong { color: var(--lose); }
+.gamecontrols { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 6px 24px 20px; }
+.gamefoot { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px 24px 20px; border-top: 1px solid var(--rule); background: linear-gradient(#fbfbfc, #f6f7f9); }
+.gamefoot p { margin: 0; color: var(--muted); }
+.gamefoot strong { color: var(--body); font-weight: 600; }
+.gamefoot button { display: inline-flex; align-items: center; gap: 8px; }
+.howto { padding: 24px; }
+.howto h2 { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 500; margin: 0 0 16px; color: var(--ink); }
+.howto h2 svg { width: 28px; height: 20px; flex: none; }
+.howto p { font-size: 15px; line-height: 1.6; margin: 0 0 14px; }
+.howto .ic { width: 18px; height: 18px; vertical-align: -3px; }
+.explainer { margin-top: 28px; }
+.explainer > summary { display: flex; align-items: center; gap: 10px; padding: 18px 24px; font-weight: 600; list-style: none; }
+.explainer > summary::-webkit-details-marker { display: none; }
+.explainer > summary::before { content: ""; width: 7px; height: 7px; margin: 0 3px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); }
+.explainer[open] > summary::before { transform: rotate(45deg); }
+.explainer-body { padding: 4px 24px 24px; }
+.explainer-body h2 { font-size: 19px; margin: 0 0 10px; color: var(--ink); }
+.explainer-body p { font-size: 15px; line-height: 1.65; margin: 0 0 12px; }
+
+svg text { font-family: inherit; }
+.lbl { font-size: 13px; fill: var(--ink-2); text-anchor: middle; font-weight: 600; paint-order: stroke; stroke: #f4f1e6; stroke-width: 4px; }
+.wire { fill: none; stroke: var(--wire); stroke-width: 4; stroke-linecap: round; }
+.pulse { fill: none; stroke: #fff3c4; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 26 2000; filter: drop-shadow(0 0 6px #ffd27a); }
+
+body.course .gamebar, body.course .howto, body.course .arcade-only, body.course .levels { display: none; }
+body:not(.course) .course-only { display: none; }
+body.course .gamewrap { grid-template-columns: 1fr; }
+body.course main { padding: 12px; }
+body.course .explainer > summary { display: none; }
+@media (prefers-reduced-motion: reduce) { .cloud, .birds, .ripple, .bob, .lens-glow, .chimney { animation: none; } }
+@media (max-width: 960px) { .gamewrap { grid-template-columns: 1fr; } }
+@media (max-width: 620px) {
+  main { padding: 14px 10px 40px; }
+  .levels { padding-inline: 12px; }
+  .recorder { margin-inline: 8px; }
+  .socket { width: 36px; height: 36px; } .socket svg { width: 20px; height: 20px; }
+  .gamestatus { gap: 4px 18px; font-size: 16px; padding: 18px 12px 2px; }
+  .gameprompt { margin: 8px 12px; font-size: 15px; }
+  .gamecontrols button.primary { width: 100%; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-sun" viewBox="-12 -12 24 24"><circle r="5" fill="#e9a83c"/><g stroke="#c27c0e" stroke-width="2" stroke-linecap="round"><path d="M0-10v3M0 7v3M-10 0h3M7 0h3M-7-7l2 2M5 5l2 2M7-7l-2 2M-5 5l-2 2"/></g></symbol>
+    <symbol id="i-moon" viewBox="-12 -12 24 24"><path d="M3-9a9 9 0 1 0 6 13A7.5 7.5 0 0 1 3-9Z" fill="#4f5f86"/></symbol>
+    <symbol id="i-star" viewBox="-12 -12 24 24"><path d="M0-10l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L0 4.8l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8Z" fill="#750014"/></symbol>
+    <symbol id="i-anchor" viewBox="-12 -12 24 24"><g fill="none" stroke="#1f4e79" stroke-width="2.2" stroke-linecap="round"><circle cy="-7.5" r="2.4"/><path d="M0-5v14M-5-2h10M-8 2a8 8 0 0 0 16 0"/></g></symbol>
+    <symbol id="i-bell" viewBox="-12 -12 24 24"><path d="M0-9c-4.5 0-6 3.5-6 8v4l-2 3h16l-2-3v-4c0-4.5-1.5-8-6-8Z" fill="#9a6b1f"/><circle cy="8" r="2" fill="#9a6b1f"/></symbol>
+    <symbol id="i-restore" viewBox="-12 -12 24 24"><g fill="none" stroke="#c27c0e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M-7 -2a8 8 0 1 1 1 7"/><path d="M-9 -8v6h6"/></g></symbol>
+    <symbol id="i-night" viewBox="0 0 34 34"><rect x="2" y="2" width="30" height="30" rx="7" fill="#2a3560"/><path d="M20 8a8 8 0 1 0 6 12A6.5 6.5 0 0 1 20 8Z" fill="#eef1ff"/><circle cx="9" cy="10" r="1.3" fill="#fff"/><circle cx="13" cy="24" r="1" fill="#fff"/></symbol>
+    <symbol id="i-viaduct" viewBox="0 0 34 34"><rect x="2" y="2" width="30" height="30" rx="7" fill="#e7dcc6"/><path d="M5 12h24v14h-4v-5a3.5 3.5 0 0 0-7 0v5h-2v-5a3.5 3.5 0 0 0-7 0v5H5Z" fill="#9b8a6d"/><path d="M4 11h26" stroke="#4a443b" stroke-width="2.5"/></symbol>
+    <symbol id="i-market" viewBox="0 0 34 34"><rect x="2" y="2" width="30" height="30" rx="7" fill="#f3e3cf"/><path d="M6 14h22l-2-5H8Z" fill="#b5523b"/><path d="M6 14h22" stroke="#fff" stroke-width="1.5" stroke-dasharray="3 3"/><rect x="8" y="15" width="18" height="11" fill="#c9a979"/><path d="M4 29h26" stroke="#4a443b" stroke-width="2"/></symbol>
+    <symbol id="i-fish" viewBox="-12 -12 24 24"><path d="M-9 0c3-5 9-6 14-2l4-3v10l-4-3c-5 4-11 3-14-2Z" fill="#3f6f8f"/><circle cx="-4" cy="-1" r="1.2" fill="#fff"/></symbol>
+    <symbol id="i-exchange" viewBox="-12 -12 24 24"><g fill="none" stroke="#c27c0e" stroke-width="2.2" stroke-linecap="round"><circle r="3"/><path d="M0-3v-6M0 3v6M-3 0h-6M3 0h6"/><circle cx="0" cy="-10" r="1.5"/><circle cx="-10" cy="0" r="1.5"/><circle cx="10" cy="0" r="1.5"/></g></symbol>
+    <symbol id="i-fair" viewBox="0 0 34 34"><rect x="2" y="2" width="30" height="30" rx="7" fill="#f3dde0"/><circle cx="17" cy="15" r="8" fill="none" stroke="#a04235" stroke-width="2.4"/><path d="M17 7v16M9 15h16M11 9l12 12M23 9 11 21" stroke="#a04235" stroke-width="1.4"/><path d="M11 29l6-6 6 6" stroke="#4a443b" stroke-width="2" fill="none"/></symbol>
+    <symbol id="i-canal" viewBox="0 0 34 34"><rect x="2" y="2" width="30" height="30" rx="7" fill="#d9e8f2"/><rect x="6" y="14" width="22" height="12" fill="#7fa9c6"/><path d="M10 10v18M24 10v18" stroke="#5a4a38" stroke-width="3"/></symbol>
+    <symbol id="i-swap" viewBox="-12 -12 24 24"><g fill="none" stroke="#40464c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M-8-3h15l-4-4M8 4H-7l4 4"/></g></symbol>
+    <symbol id="i-return" viewBox="0 0 34 34"><rect x="2" y="2" width="30" height="30" rx="7" fill="#f4e7d0"/><path d="M8 22h18M8 22l4-4M26 22l-4-4" stroke="#750014" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="17" cy="11" r="4" fill="#e9a83c"/></symbol>
+    <symbol id="i-harbor" viewBox="0 0 34 34"><rect x="2" y="2" width="30" height="30" rx="7" fill="#d9e8f2"/><path d="M5 24c3 2 5 2 8 0s5-2 8 0 5 2 8 0" stroke="#1f4e79" stroke-width="2" fill="none"/><path d="M17 7v12M12 12h10M11 15a6 6 0 0 0 12 0" stroke="#1f4e79" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-express" viewBox="0 0 34 34"><rect x="2" y="2" width="30" height="30" rx="7" fill="#e3ead7"/><path d="M6 21h16l6-5H10Z" fill="#3f5d4a"/><path d="M5 13h7M4 17h5" stroke="#3f5d4a" stroke-width="2" stroke-linecap="round"/></symbol>
+    <linearGradient id="g-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc6e0"/><stop offset=".45" stop-color="#d9e9ee"/><stop offset=".62" stop-color="#f6ead2"/></linearGradient>
+    <radialGradient id="g-glow"><stop offset="0" stop-color="#fff6d8" stop-opacity=".95"/><stop offset=".45" stop-color="#ffe3a0" stop-opacity=".45"/><stop offset="1" stop-color="#ffe3a0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="g-night" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c2550"/><stop offset=".55" stop-color="#4a4f80"/><stop offset=".7" stop-color="#b98f86"/></linearGradient>
+    <linearGradient id="g-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fb0cf"/><stop offset="1" stop-color="#3f7398"/></linearGradient>
+    <linearGradient id="g-ballast" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfc3a6"/><stop offset=".5" stop-color="#b9ad90"/><stop offset="1" stop-color="#a39878"/></linearGradient>
+    <pattern id="p-orchard" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="6" cy="7" r="4" fill="#8fa16f" opacity=".55"/><circle cx="17" cy="17" r="4" fill="#8fa16f" opacity=".55"/></pattern>
+    <pattern id="p-fields" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M4 0v12" stroke="#897346" stroke-opacity=".22" stroke-width="2"/></pattern>
+    <pattern id="p-water" width="40" height="12" patternUnits="userSpaceOnUse"><path d="M0 6c5-4 10-4 20 0s15 4 20 0" stroke="#ffffff" stroke-opacity=".5" stroke-width="2" fill="none"/></pattern>
+  </defs>
+</svg>
+<header class="gamebar"><a class="back" href="index.html" aria-label="Back to the arcade"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a><h1>Signal Relay</h1></header>
+<main>
+  <div class="gamewrap">
+    <section class="playcard" aria-label="Game">
+      <nav class="levels" aria-label="Levels">
+        <button type="button" class="carousel-arrow" id="car-prev" aria-label="Previous levels">‹</button>
+        <div class="carousel" id="carousel" role="list"></div>
+        <button type="button" class="carousel-arrow" id="car-next" aria-label="More levels">›</button>
+      </nav>
+      <div class="gamestatus">
+        <span>Checks matched: <b id="st-score">–</b></span>
+        <span id="st-cable-wrap">Telegraph cable: <b id="st-cable"></b></span>
+      </div>
+      <p class="gameprompt" id="prompt"></p>
+      <div class="board" id="board">
+        <svg id="map" viewBox="0 0 900 420" role="img" aria-labelledby="map-desc">
+          <g id="scenery"></g>
+          <g id="wires"></g>
+          <g id="trains"></g>
+          <g id="smoke"></g>
+        </svg>
+        <p id="map-desc" class="sr-only"></p>
+      </div>
+      <p id="feedback" class="reason" role="status" aria-live="polite"></p>
+      <div class="gamecontrols">
+        <button id="dispatch" class="primary" type="button">Dispatch trains</button>
+        <button id="sound" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path class="waves" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Sound on</button>
+        <button id="reset" type="button"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Clear signals</button>
+      </div>
+      <ul class="checks" id="checks" aria-label="The checks"></ul>
+      <div class="nights" id="nights" role="group" aria-label="Nights" hidden></div>
+      <section class="recorder" id="recorder" aria-labelledby="rec-title">
+        <div class="rec-head"><span class="rec-title" id="rec-title">Train recorder</span><span class="rec-note" id="rec-note">Dispatch to record what each car carries.</span></div>
+        <div class="rec-scroll"><table class="strip" id="strip"></table></div>
+      </section>
+      <div class="gamefoot">
+        <p><strong>Signals stay set</strong> <span>when you switch levels.</span></p>
+      </div>
+    </section>
+
+    <aside class="howto" aria-labelledby="howto-title">
+      <h2 id="howto-title" data-first><svg viewBox="0 0 28 20" aria-hidden="true"><rect x="1.5" y="1.5" width="25" height="17" rx="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 7v6M5 10h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="18.5" cy="8" r="1.4" fill="currentColor"/><circle cx="21.5" cy="11.5" r="1.4" fill="currentColor"/></svg>How to play</h2>
+      <p><strong>Two trains</strong> run the same line, one after the other. Train A leaves with <svg class="ic"><use href="#i-sun"/></svg> and train B with <svg class="ic"><use href="#i-moon"/></svg>. Each car holds <strong>one sign</strong>.</p>
+      <p><strong>Signals</strong> change the sign on every car that passes. Press a signal to choose what it does: leave the sign alone, set a sign, or swap a pair of signs. Both trains pass the same signals.</p>
+      <p><strong>The checks</strong> above the line say what each train must be carrying at each station. Dispatch to run both trains and score them.</p>
+      <p><strong>The recorder</strong> keeps what each car carried at every point. Shaded columns are where A and B carried the same sign. Press a column heading to see the trains there.</p>
+      <div id="local-help" hidden></div>
+      <p><button type="button" id="replay-tour" class="linkish">Take the tour</button></p>
+      <p id="howto-cable" hidden><strong>The telegraph</strong> can restore an earlier sign. Press a signal and pick a point under Telegraph: that signal gives every car back the sign it carried there. There is one cable, so only one signal can restore.</p>
+    </aside>
+  </div>
+
+  <details class="explainer" id="explainer">
+    <summary>The idea behind the game</summary>
+    <div class="explainer-body">
+      <h2>Carrying information down the line</h2>
+      <p>Each car carries a single sign, and every signal it passes can rewrite it. A recurrent model reads a sequence the same way: it keeps one fixed-size state and updates it at every step with the same rule. Whatever an early step needs to tell a later one has to survive every update in between.</p>
+      <p>Some updates keep information and some destroy it. Once two trains carry the same sign, nothing further down the line can tell them apart from the car alone.</p>
+      <p>A railway has other ways to keep track: the route a train is on, or a telegraph that reads back what happened earlier on the line. Attention gives a model this kind of direct access to earlier inputs, choosing what to read by where it was or by what it contains. The game uses exact matches; attention blends many earlier inputs, weighted by how well each one matches.</p>
+    </div>
+  </details>
+</main>
+<script>
+"use strict";
+const params = new URLSearchParams(location.search);
+const COURSE = true;
+if (COURSE) document.body.classList.add("course");
+const NS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+const SWAP = { sun: "moon", moon: "sun", anchor: "bell", bell: "anchor" };
+const NAME = { fish: "fish", sun: "sun", moon: "moon", star: "star", anchor: "anchor", bell: "bell", swap: "swap", "": "empty" };
+const TRAIN = { A: "#a04235", B: "#3f5d4a" };
+
+// Each service is a route of places. Sockets take the player's signals, stamps write a sign
+// per train, checks want a sign per train. Once open, the telegraph cable restores, at one signal,
+// the sign each car carried at an earlier point. The last check (reader) is drawn with gates.
+const SERVICES = {
+  return: { title: "Return service", icon: "i-return", depot: { A: "sun", B: "moon" }, options: ["", "sun", "moon", "star", "swap"], cable: true,
+    prompt: "<strong>Goal:</strong> match all four checks. Set the signals, then dispatch.",
+    route: [{ id: "s1", kind: "socket" }, { id: "junction", kind: "check", label: "Junction", want: { A: ["star"], B: ["star"] } },
+            { id: "s2", kind: "socket" }, { id: "s3", kind: "socket" },
+            { id: "terminus", kind: "check", reader: true, label: "Terminus", want: { A: ["sun"], B: ["moon"] } }] },
+  // Every night: the departure signs change from night to night, so wants are relative to each train's own sign.
+  mirror: { title: "Night mirror", icon: "i-night", nights: true, options: ["", "sun", "moon", "star", "swap"], cable: false,
+    help: "<p>The departure signs change each night. One set of signals has to work on all four.</p>",
+    prompt: "<strong>Goal:</strong> match every check on all four nights. The departure signs change each night.",
+    route: [{ id: "s1", kind: "socket" }, { id: "junction", kind: "check", label: "Junction", rel: "flip" },
+            { id: "s2", kind: "socket" }, { id: "s3", kind: "socket" },
+            { id: "terminus", kind: "check", reader: true, label: "Terminus", rel: "own" }] },
+  viaducts: { title: "Twin Viaducts", icon: "i-viaduct", nights: true, grid: true, options: ["", "sun", "moon", "star", "swap"], cable: false,
+    help: "<p><strong>The points</strong> sort each train by the sign it carries when it reaches them: ☀ and ★ go up onto the viaduct, ☾ goes down by the river.</p><p>Every train must pass inspection with ★ and still reach the terminus with its own sign, on every night.</p>",
+    prompt: "<strong>Goal:</strong> every train passes inspection with ★ and reaches the terminus with its own sign, on all four nights.",
+    nodes: {
+      depot: { x: 92, y: 210, kind: "depot" }, p0: { x: 190, y: 210, kind: "socket" }, fork: { x: 262, y: 210, kind: "fork", label: "Points" },
+      n1: { x: 385, y: 110, kind: "socket" }, inN: { x: 485, y: 110, kind: "check", group: "insp", label: "Viaduct inspection" }, n2: { x: 585, y: 110, kind: "socket" },
+      s1: { x: 385, y: 318, kind: "socket" }, inS: { x: 485, y: 318, kind: "check", group: "insp", label: "River inspection" }, s2: { x: 585, y: 318, kind: "socket" },
+      merge: { x: 662, y: 210, kind: "merge", label: "Merge" }, m: { x: 735, y: 210, kind: "socket" }, term: { x: 832, y: 210, kind: "check", group: "term", label: "Terminus" },
+    },
+    order: ["depot", "p0", "fork", "n1", "inN", "n2", "s1", "inS", "s2", "merge", "m", "term"],
+    next: { depot: "p0", p0: "fork", fork: { up: "n1", down: "s1" }, n1: "inN", inN: "n2", n2: "merge", s1: "inS", inS: "s2", s2: "merge", merge: "m", m: "term" },
+    // The route lists the signals (in the order a player meets them) and the two kinds of check.
+    route: [{ id: "p0", kind: "socket" }, { id: "n1", kind: "socket" }, { id: "n2", kind: "socket" }, { id: "s1", kind: "socket" }, { id: "s2", kind: "socket" }, { id: "m", kind: "socket" },
+            { id: "insp", kind: "check", label: "Inspection", rel: "star" }, { id: "term", kind: "check", reader: true, label: "Terminus", rel: "own" }] },
+  market: { title: "Market Junction", icon: "i-market", nights: true, grid: true, layer: "market", options: ["", "sun", "moon", "star", "swap"], cable: false,
+    names: { A: "Mail", B: "Ferry" },
+    help: "<p><strong>This railway is already running.</strong> Dispatch to see which night goes wrong, then repair it.</p><p>The shared signal changes the mail and any ferry that comes up the approach.</p>",
+    prompt: "<strong>Goal:</strong> the mail shows the opposite sign at the market and its own sign at home; the ferry reaches the dock with its own sign. All four nights.",
+    // Night 1 is a night the tempting layout passes: the ferry leaves with sun and takes the bypass.
+    nightList: [{ A: "sun", B: "sun" }, { A: "moon", B: "moon" }, { A: "moon", B: "sun" }, { A: "sun", B: "moon" }],
+    preset: { mp: "", fa: "", c: "swap", ma: "swap" },
+    nodes: {
+      mDepot: { x: 84, y: 110, kind: "depot", train: "A", label: "Mail depot" }, mp: { x: 200, y: 110, kind: "socket" },
+      c: { x: 455, y: 210, kind: "socket" },
+      market: { x: 660, y: 110, kind: "check", group: "market", label: "Market" }, ma: { x: 762, y: 110, kind: "socket" },
+      home: { x: 852, y: 110, kind: "check", group: "home", label: "Home", terminal: true },
+      fDepot: { x: 84, y: 320, kind: "depot", train: "B", label: "Ferry depot" }, pts: { x: 176, y: 320, kind: "fork", label: "Points" },
+      fa: { x: 312, y: 210, kind: "socket" },
+      dock: { x: 852, y: 322, kind: "check", group: "dock", label: "Dock", terminal: true },
+    },
+    trains: { A: { start: "mDepot", end: "home" }, B: { start: "fDepot", end: "dock" } },
+    nextBy: {
+      A: { mDepot: "mp", mp: "c", c: "market", market: "ma", ma: "home" },
+      // The points send sun along the bypass straight to the dock, and moon up the approach past the shared signal.
+      B: { fDepot: "pts", pts: { up: "dock", down: "fa" }, fa: "c", c: "dock" },
+    },
+    way: { "mp>c": [[292, 110], [360, 210]], "c>market": [[560, 210], [612, 110]], "pts>fa": [[214, 320], [254, 210]], "c>dock": [[560, 210], [616, 322]], "pts>dock": [[214, 320], [250, 362], [690, 362], [730, 322]] },
+    order: ["mDepot", "fDepot", "pts", "mp", "fa", "c", "market", "ma", "home", "dock"],
+    route: [{ id: "mp", kind: "socket" }, { id: "fa", kind: "socket" }, { id: "c", kind: "socket" }, { id: "ma", kind: "socket" },
+            { id: "market", kind: "check", label: "Market", rel: "flip", trains: ["A"] },
+            { id: "home", kind: "check", label: "Home", at: "at home", rel: "own", trains: ["A"] },
+            { id: "dock", kind: "check", label: "Dock", rel: "own", trains: ["B"], reader: true }] },
+  // ---------- Sweeping build: four towns on the generic grid engine ----------
+  fairground: { title: "Fairground Loop", icon: "i-fair", nights: true, grid: true, layer: "generic", options: ["", "sun", "moon", "star", "swap"], cable: false,
+    names: { A: "Excursion", B: "Parcels" },
+    help: "<p><strong>The bridge signal</strong> works in both directions, and every crossing counts.</p><p><strong>The return points</strong> are yours to set: back over the bridge, or round the scenic bypass.</p>",
+    prompt: "<strong>Goal:</strong> the excursion shows the opposite sign at the pavilion and its own sign at home; the parcels train shows the opposite sign at the office. All four nights.",
+    preset: { E: "", S: "swap", B: "", P: "", R: "bypass" },
+    levers: [{ id: "R", options: ["bypass", "bridge"], labels: { bypass: "Return: bypass", bridge: "Return: bridge" } }],
+    nodes: {
+      exDepot: { x: 84, y: 100, kind: "depot", train: "A", label: "Excursion depot" },
+      E: { x: 228, y: 100, kind: "socket", name: "Excursion signal", short: "Excursion sig." },
+      S: { x: 445, y: 210, kind: "socket", name: "Bridge signal", short: "Bridge →" },
+      pav: { x: 690, y: 104, kind: "check", group: "pav", label: "Hill pavilion", short: "Pavilion" },
+      R: { x: 838, y: 210, kind: "turnout", id: "R", label: "Return points", short: "Return pts", leverAt: [800, 282], blade: { bridge: [800, 210], bypass: [852, 240] } },
+      Sw: { x: 445, y: 210, kind: "socket", equip: "S", name: "Bridge signal, westbound", short: "Bridge ←" },
+      B: { x: 540, y: 396, kind: "socket", name: "Bypass signal", short: "Bypass sig." },
+      home: { x: 240, y: 210, kind: "check", group: "home", label: "Excursion home", short: "Home", labelAt: [318, 262], terminal: true, train: "A", exit: [-90, 210] },
+      pDepot: { x: 66, y: 330, kind: "depot", train: "B", label: "Parcels depot" },
+      P: { x: 168, y: 330, kind: "socket", name: "Parcels signal", short: "Parcels sig." },
+      office: { x: 720, y: 300, kind: "check", group: "office", label: "Parcel office", short: "Office", terminal: true, train: "B" },
+    },
+    nextBy: {
+      A: { exDepot: "E", E: "S", S: "pav", pav: "R", R: { turnout: true, bridge: "Sw", bypass: "B" }, Sw: "home", B: "home" },
+      B: { pDepot: "P", P: "S", S: "office" },
+    },
+    way: { "E>S": [[290, 100], [332, 210]], "S>pav": [[560, 210], [612, 104]], "pav>R": [[780, 104], [838, 160]], "R>Sw": [[560, 210]], "Sw>home": [[332, 210]],
+           "R>B": [[860, 250], [860, 396]], "B>home": [[300, 396], [262, 300]], "P>S": [[290, 330], [332, 210]], "S>office": [[560, 210], [612, 300]] },
+    tracks: [[[-20, 100], "exDepot", "E", [290, 100], [332, 210], [560, 210], [612, 104], "pav", [780, 104], [838, 160], "R"], ["R", [560, 210]],
+             [[332, 210], "home", [-20, 210]], [[-20, 330], "pDepot", "P", [290, 330], [332, 210]], [[560, 210], [612, 300], "office", [940, 300]],
+             ["R", [860, 250], [860, 396], "B", [300, 396], [262, 300], "home"]],
+    decor: "bridge",
+    order: ["exDepot", "E", "S", "pav", "R", "Sw", "B", "home", "pDepot", "P", "office"],
+    route: [{ id: "E", kind: "socket" }, { id: "S", kind: "socket" }, { id: "B", kind: "socket" }, { id: "P", kind: "socket" },
+            { id: "pav", kind: "check", label: "Pavilion", rel: "flip", trains: ["A"] },
+            { id: "home", kind: "check", label: "Home", at: "at home", rel: "own", trains: ["A"] },
+            { id: "office", kind: "check", label: "Office", rel: "flip", trains: ["B"] }],
+    desc: "The excursion leaves its depot, passes its own signal, crosses the covered bridge eastbound past the bridge signal, and climbs to the hill pavilion, which wants the opposite sign. The return points send it back westbound over the same bridge signal, or round the scenic bypass past the bypass signal, to home, which wants its own sign. The parcels train passes its own signal, crosses the bridge once, and reaches the parcel office, which wants the opposite sign." },
+
+  canal: { title: "Canal Works", icon: "i-canal", nights: true, grid: true, layer: "generic", options: ["", "sun", "moon", "star", "swap"], cable: false,
+    help: "<p><strong>Each lock</strong> admits one sign. <strong>The quay points</strong> send ☀ and ☾ to their quays and hold anything else.</p><p>You can reverse the first points' rule.</p>",
+    prompt: "<strong>Goal:</strong> each train passes a lock, is inspected with ★, and ends at the quay marked with its own departure sign. All four nights.",
+    preset: { A0: "", B: "", C: "", D: "", E: "", P1: "moon-down" },
+    levers: [{ id: "P1", options: ["moon-down", "moon-up"], labels: { "moon-down": "Points rule: ☾ to the low lock", "moon-up": "Points rule: ☾ to the high lock" } }],
+    nodes: {
+      depot: { x: 92, y: 210, kind: "depot", label: "Departures" },
+      A0: { x: 186, y: 210, kind: "socket", name: "Signal before the points", short: "Signal A" },
+      P1: { x: 262, y: 210, kind: "fork", lever: true, label: "Points", short: "Points", leverAt: [262, 372], boardAt: [262, 236] },
+      hiLock: { x: 372, y: 110, kind: "lock", admits: ["moon"], label: "High lock", short: "High lock" },
+      B: { x: 455, y: 110, kind: "socket", name: "High signal 1", short: "High 1" },
+      hiInsp: { x: 555, y: 110, kind: "check", group: "insp", label: "High inspection", short: "High insp." },
+      C: { x: 652, y: 110, kind: "socket", name: "High signal 2", short: "High 2" },
+      loLock: { x: 372, y: 318, kind: "lock", admits: ["sun"], label: "Low lock", short: "Low lock" },
+      D: { x: 455, y: 318, kind: "socket", name: "Low signal 1", short: "Low 1" },
+      loInsp: { x: 555, y: 318, kind: "check", group: "insp", label: "Low inspection", short: "Low insp." },
+      E: { x: 652, y: 318, kind: "socket", name: "Low signal 2", short: "Low 2" },
+      merge: { x: 735, y: 210, kind: "merge", label: "Merge", short: "Merge" },
+      P2: { x: 790, y: 210, kind: "fork", label: "Quay points", short: "Quay pts", boardAt: [762, 22], rows: [["moon", "Moon quay"], ["sun", "Sun quay"], ["", "anything else: held"]] },
+      sunQ: { x: 862, y: 106, kind: "check", group: "quay", quay: "sun", terminal: true, label: "Sun quay", short: "Sun quay" },
+      moonQ: { x: 862, y: 322, kind: "check", group: "quay", quay: "moon", terminal: true, label: "Moon quay", short: "Moon quay" },
+    },
+    next: { depot: "A0", A0: "P1", P1: { up: "hiLock", down: "loLock" }, hiLock: "B", B: "hiInsp", hiInsp: "C", C: "merge",
+            loLock: "D", D: "loInsp", loInsp: "E", E: "merge", merge: "P2", P2: { by: { sun: "sunQ", moon: "moonQ" } } },
+    way: { "P1>hiLock": [[300, 210], [336, 110]], "P1>loLock": [[300, 210], [336, 318]], "C>merge": [[692, 110]], "E>merge": [[692, 318]],
+           "P2>sunQ": [[818, 210], [846, 106]], "P2>moonQ": [[818, 210], [846, 322]] },
+    tracks: [[[-20, 210], "depot", "A0", "P1", [300, 210], [336, 110], "hiLock", "B", "hiInsp", "C", [692, 110], "merge"],
+             [[300, 210], [336, 318], "loLock", "D", "loInsp", "E", [692, 318], "merge"], ["merge", "P2", [818, 210], [846, 106], "sunQ", [940, 106]],
+             [[818, 210], [846, 322], "moonQ", [940, 322]]],
+    decor: "canal",
+    order: ["depot", "A0", "P1", "hiLock", "B", "hiInsp", "C", "loLock", "D", "loInsp", "E", "merge", "P2", "sunQ", "moonQ"],
+    route: [{ id: "A0", kind: "socket" }, { id: "B", kind: "socket" }, { id: "C", kind: "socket" }, { id: "D", kind: "socket" }, { id: "E", kind: "socket" },
+            { id: "insp", kind: "check", label: "Inspection", rel: "star" },
+            { id: "quay", kind: "check", label: "Quay", rel: "own", chip: "ends at the quay marked" }],
+    desc: "Both trains leave Departures, pass one signal, and reach points that send moon one way and anything else the other; the player can reverse that rule. The high lock admits only moon and the low lock only sun; a train turned away stops there. Each branch has a signal, an inspection that wants star, and another signal. The branches merge at quay points that send moon to the Moon quay, sun to the Sun quay, and hold any other sign at the points. Each train must end at the quay marked with its own departure sign." },
+
+  ferry: { title: "The Night Ferry", icon: "i-harbor", nights: true, grid: true, layer: "generic", options: ["", "star", "anchor", "bell", "swap"], cable: false,
+    names: { A: "Island", B: "Valley" },
+    help: "<p><strong>The reader signal</strong> restores an earlier sign, by the name of a place or by stop number.</p><p>The berth points send ⚓ east and the bell west. Any other sign is held at the points.</p>",
+    prompt: "<strong>Goal:</strong> both trains clear customs with ★ and dock at the slip for the berth the harbor gave them tonight. All four nights.",
+    nightList: [{ A: "sun", B: "moon", berth: { A: "anchor", B: "bell" } }, { A: "moon", B: "sun", berth: { A: "bell", B: "anchor" } },
+                { A: "sun", B: "sun", berth: { A: "bell", B: "bell" } }, { A: "moon", B: "moon", berth: { A: "anchor", B: "anchor" } }],
+    preset: { K: "star", R: "r@depot" },
+    nodes: {
+      vDepot: { x: 84, y: 96, kind: "depot", train: "B", label: "Valley depot" },
+      hill: { x: 196, y: 96, kind: "stop", label: "Hill", short: "Hill" },
+      tunnel: { x: 300, y: 96, kind: "stop", label: "Tunnel", short: "Tunnel" },
+      market: { x: 404, y: 96, kind: "stop", label: "Market", short: "Market" },
+      iDepot: { x: 84, y: 330, kind: "depot", train: "A", label: "Island depot" },
+      harbor: { x: 520, y: 236, kind: "stamp", label: "Harbor", short: "Harbor" },
+      K: { x: 598, y: 236, kind: "socket", name: "Harbor signal", short: "Harbor sig." },
+      customs: { x: 676, y: 236, kind: "check", group: "customs", label: "Customs", short: "Customs" },
+      R: { x: 756, y: 236, kind: "socket", name: "Reader signal", short: "Reader", readoutAt: [690, 6],
+           options: ["", "star", "anchor", "bell", "swap", "r@depot", "r@hill", "r@tunnel", "r@market", "r@harbor", "r@customs", "r#1", "r#2", "r#3", "r#4"] },
+      BP: { x: 816, y: 236, kind: "fork", label: "Berth points", short: "Berth pts", boardAt: [706, 318], rows: [["anchor", "East slip"], ["bell", "West slip"], ["", "anything else: held"]] },
+      east: { x: 868, y: 126, kind: "check", group: "slip", quay: "anchor", terminal: true, label: "East slip", short: "East slip" },
+      west: { x: 868, y: 346, kind: "check", group: "slip", quay: "bell", terminal: true, label: "West slip", short: "West slip" },
+    },
+    nextBy: {
+      A: { iDepot: "harbor", harbor: "K", K: "customs", customs: "R", R: "BP", BP: { by: { anchor: "east", bell: "west" } } },
+      B: { vDepot: "hill", hill: "tunnel", tunnel: "market", market: "harbor", harbor: "K", K: "customs", customs: "R", R: "BP", BP: { by: { anchor: "east", bell: "west" } } },
+    },
+    way: { "market>harbor": [[462, 96], [506, 210]], "iDepot>harbor": [[440, 330], [506, 262]], "BP>east": [[838, 236], [856, 126]], "BP>west": [[838, 236], [856, 346]] },
+    tracks: [[[-20, 96], "vDepot", "hill", "tunnel", "market", [462, 96], [506, 210], "harbor"], [[-20, 330], "iDepot", [440, 330], [506, 262], "harbor"],
+             ["harbor", "K", "customs", "R", "BP", [838, 236], [856, 126], "east", [940, 126]], [[838, 236], [856, 346], "west", [940, 346]]],
+    decor: "harbor",
+    order: ["iDepot", "vDepot", "hill", "tunnel", "market", "harbor", "K", "customs", "R", "BP", "east", "west"],
+    route: [{ id: "K", kind: "socket" }, { id: "R", kind: "socket" },
+            { id: "customs", kind: "check", label: "Customs", rel: "star" },
+            { id: "slip", kind: "check", label: "Slip", rel: "berth", chip: "docks at the slip for its berth" }],
+    desc: "The island train leaves its depot and runs a short approach to the harbor. The valley train stops at the hill, the tunnel and the market before reaching the harbor late. The harbor gives each train tonight's berth, anchor or bell. Then a shared signal, customs, which wants star, and a reader signal that can restore an earlier sign by place or by stop number. Berth points send anchor to the east slip and bell to the west slip, and hold any other sign at the points. Each train must dock at the slip for its berth." },
+
+  exchange: { title: "The Night Exchange", icon: "i-exchange", nights: true, grid: true, layer: "generic", options: ["", "star", "anchor", "bell", "swap"], cable: false,
+    names: { A: "Island", B: "Valley" },
+    help: "<p><strong>Berths are tickets</strong> held by the offices, and the offices change each night.</p><p>The reader asks the exchange for a ticket: which office, which train, which kind. Exactly one match answers.</p>",
+    prompt: "<strong>Goal:</strong> both trains clear customs with ★ and dock at their berth slip. The offices that hold each train's berth change from night to night.",
+    nightList: [
+      { A: "sun", B: "moon", berth: { A: "anchor", B: "bell" }, tickets: [{ office: "harbor", train: "A", field: "berth", reply: "anchor" }, { office: "harbor", train: "B", field: "berth", reply: "bell" }, { office: "market", train: "A", field: "cargo", reply: "fish" }] },
+      { A: "moon", B: "sun", berth: { A: "anchor", B: "bell" }, tickets: [{ office: "harbor", train: "A", field: "cargo", reply: "fish" }, { office: "market", train: "B", field: "berth", reply: "bell" }, { office: "hill", train: "A", field: "berth", reply: "anchor" }] },
+      { A: "sun", B: "sun", berth: { A: "bell", B: "anchor" }, tickets: [{ office: "hill", train: "B", field: "berth", reply: "anchor" }, { office: "market", train: "A", field: "berth", reply: "bell" }, { office: "harbor", train: "B", field: "cargo", reply: "fish" }] },
+      { A: "moon", B: "moon", berth: { A: "bell", B: "anchor" }, tickets: [{ office: "harbor", train: "A", field: "berth", reply: "bell" }, { office: "harbor", train: "B", field: "berth", reply: "anchor" }, { office: "hill", train: "B", field: "cargo", reply: "fish" }] },
+    ],
+    preset: { K: "star", R: "q:harbor|me|berth" },
+    nodes: {
+      vDepot: { x: 84, y: 96, kind: "depot", train: "B", label: "Valley depot" },
+      hill: { x: 196, y: 96, kind: "office", office: "hill", label: "Hill office", short: "Hill" },
+      tunnel: { x: 300, y: 96, kind: "stop", label: "Tunnel", short: "Tunnel" },
+      market: { x: 404, y: 96, kind: "office", office: "market", label: "Market office", short: "Market" },
+      iDepot: { x: 84, y: 330, kind: "depot", train: "A", label: "Island depot" },
+      harbor: { x: 520, y: 236, kind: "office", office: "harbor", label: "Harbor office", short: "Harbor" },
+      K: { x: 598, y: 236, kind: "socket", name: "Harbor signal", short: "Harbor sig." },
+      customs: { x: 676, y: 236, kind: "check", group: "customs", label: "Customs", short: "Customs" },
+      R: { x: 756, y: 236, kind: "socket", exchange: true, name: "Reader", short: "Reader", readoutAt: [690, 6], options: (() => {
+        const o = ["", "star", "anchor", "bell", "swap"];
+        for (const office of ["*", "harbor", "market", "hill"]) for (const train of ["*", "me"]) for (const field of ["*", "berth", "cargo"])
+          if (office !== "*" || train !== "*" || field !== "*") o.push(`q:${office}|${train}|${field}`);
+        return o;
+      })() },
+      BP: { x: 816, y: 236, kind: "fork", label: "Berth points", short: "Berth pts", boardAt: [706, 318], rows: [["anchor", "East slip"], ["bell", "West slip"], ["", "anything else: held"]] },
+      east: { x: 868, y: 126, kind: "check", group: "slip", quay: "anchor", terminal: true, label: "East slip", short: "East slip" },
+      west: { x: 868, y: 346, kind: "check", group: "slip", quay: "bell", terminal: true, label: "West slip", short: "West slip" },
+    },
+    nextBy: {
+      A: { iDepot: "harbor", harbor: "K", K: "customs", customs: "R", R: "BP", BP: { by: { anchor: "east", bell: "west" } } },
+      B: { vDepot: "hill", hill: "tunnel", tunnel: "market", market: "harbor", harbor: "K", K: "customs", customs: "R", R: "BP", BP: { by: { anchor: "east", bell: "west" } } },
+    },
+    way: { "market>harbor": [[462, 96], [506, 210]], "iDepot>harbor": [[440, 330], [506, 262]], "BP>east": [[838, 236], [856, 126]], "BP>west": [[838, 236], [856, 346]] },
+    tracks: [[[-20, 96], "vDepot", "hill", "tunnel", "market", [462, 96], [506, 210], "harbor"], [[-20, 330], "iDepot", [440, 330], [506, 262], "harbor"],
+             ["harbor", "K", "customs", "R", "BP", [838, 236], [856, 126], "east", [940, 126]], [[838, 236], [856, 346], "west", [940, 346]]],
+    decor: "harbor",
+    order: ["iDepot", "vDepot", "hill", "tunnel", "market", "harbor", "K", "customs", "R", "BP", "east", "west"],
+    route: [{ id: "K", kind: "socket" }, { id: "R", kind: "socket" },
+            { id: "customs", kind: "check", label: "Customs", rel: "star" },
+            { id: "slip", kind: "check", label: "Slip", rel: "berth", chip: "docks at the slip for its berth" }],
+    desc: "The same railway as the Night Ferry, but the berths are now tickets held by three offices: Harbor, Market and Hill. Each night the offices hold different tickets. The reader at the dock sends a request through the town exchange: which office, which train, and which kind of ticket. If exactly one ticket matches, its reply is put on the car. Berth points send anchor east and bell west, and hold any other sign at the points." },
+};
+const NIGHTS = [{ A: "sun", B: "moon" }, { A: "moon", B: "sun" }, { A: "sun", B: "sun" }, { A: "moon", B: "moon" }];
+// The live game: the campaign, then the optional levels. Retired levels are kept in reference/retired-levels.md.
+const ORDER = COURSE ? ["return"] : ["return", "viaducts", "market", "fairground", "ferry", "exchange", "mirror", "canal"];
+const CAMPAIGN = COURSE ? ["return"] : ["return", "viaducts", "market", "fairground", "ferry", "exchange"];
+const CHALLENGES = COURSE ? [] : ["mirror", "canal"];
+// Challenges open once the first grid is solved.
+const CHALLENGE_AFTER = "viaducts";
+function nightsOf(id = state.service) { return SERVICES[id].nightList || NIGHTS; }
+function depotOf(id = state.service) { return SERVICES[id].nights ? nightsOf(id)[state.night[id]] : SERVICES[id].depot; }
+function tname(t, id = state.service) { return SERVICES[id].names?.[t] || t; }
+function checkTrains(p) { return p.trains || ["A", "B"]; }
+function wantSign(p, t, depot) {
+  if (!p.rel) return p.want[t][0];
+  if (p.rel === "berth") return depot.berth[t];
+  return p.rel === "own" ? depot[t] : p.rel === "flip" ? SWAP[depot[t]] : p.rel;
+}
+function wantPhrase(p, t, depot) {
+  const sign = htmlIcon(wantSign(p, t, depot));
+  return p.rel === "own" ? `its own sign ${sign}` : p.rel === "flip" ? `the opposite sign ${sign}` : sign;
+}
+const state = { brass: {}, offered: {}, night: {}, toured: {}, touring: false, service: "return", signals: {}, cable: {}, done: {}, unlocked: { return: true }, cableOpen: false, last: {}, current: {}, running: false };
+for (const k of ORDER) { state.signals[k] = SERVICES[k].preset ? { ...SERVICES[k].preset } : SERVICES[k].grid ? { p0: "", n1: "", n2: "", s1: "", s2: "", m: "" } : { s1: "", s2: "", s3: "" }; state.cable[k] = null; state.night[k] = 0; }
+
+function run(serviceId, signals, cable, depot = depotOf(serviceId)) {
+  const s = SERVICES[serviceId];
+  if (s.grid) return runGrid(serviceId, signals, depot);
+  return ["A", "B"].map(t => {
+    let sign = depot[t];
+    const record = [{ id: "depot", sign }];
+    const checks = {};
+    for (const p of s.route) {
+      let restored = false;
+      if (p.kind === "socket") {
+        if (cable && cable.to === p.id) { sign = record.find(r => r.id === cable.from).sign; restored = true; }
+        else { const o = signals[p.id]; sign = !o ? sign : o === "swap" ? (SWAP[sign] ?? sign) : o; }
+      }
+      if (p.kind === "stamp") sign = p.sign[t];
+      if (p.kind === "check") { const w = wantSign(p, t, depot); checks[p.id] = { shown: sign, want: w, hit: sign === w }; }
+      record.push({ id: p.id, sign, restored });
+    }
+    return { train: t, record, checks };
+  });
+}
+
+const svc = () => SERVICES[state.service];
+function el(tag, attrs = {}, parent, text) {
+  const node = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  if (text != null) node.textContent = text;
+  parent?.append(node);
+  return node;
+}
+function icon(parent, sign, x, y, size = 24) {
+  return el("use", { href: `#i-${sign}`, x: x - size / 2, y: y - size / 2, width: size, height: size }, parent);
+}
+function htmlIcon(sign) { return sign ? `<svg aria-hidden="true" viewBox="0 0 24 24"><use href="#i-${sign}"/></svg>` : ""; }
+
+// ---------- Scene: an illustrated line, a following camera, ambient life and sound ----------
+const W = 900, H = 420, LINE = 300, LENS_Y = 150;
+function xs() {
+  const r = svc().route;
+  const out = { depot: 92 };
+  r.forEach((p, i) => { out[p.id] = 226 + i * (570 / (r.length - 1)); });
+  return out;
+}
+const GRID_SIGNAL_NAMES = { mp: "Mail signal", fa: "Ferry approach signal", c: "Shared signal", ma: "Signal after the market", p0: "Signal before the points", n1: "Viaduct signal 1", n2: "Viaduct signal 2", s1: "River signal 1", s2: "River signal 2", m: "Signal after the merge" };
+const GRID_SHORT = { mDepot: "Mail depot", fDepot: "Ferry depot", mp: "Mail signal", fa: "Ferry signal", c: "Shared", ma: "After market", p0: "Signal P", n1: "Viaduct 1", n2: "Viaduct 2", s1: "River 1", s2: "River 2", m: "Signal M", inN: "Viaduct insp.", inS: "River insp." };
+function placeName(id, short = false) {
+  if (id === "depot") return "Departures";
+  if (svc().grid) {
+    const n = svc().nodes[id];
+    if (svc().layer === "generic") return short ? (n?.short || n?.label || n?.name || id) : (n?.name || n?.label || id);
+    return short && GRID_SHORT[id] ? GRID_SHORT[id] : GRID_SIGNAL_NAMES[id] || n?.label || id;
+  }
+  const p = svc().route.find(q => q.id === id);
+  if (p.kind === "socket") return `Signal ${p.id.slice(1)}`;
+  return p.label;
+}
+
+// Deterministic scatter so the scenery is the same on every visit.
+function seeded(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
+
+function cloud(g, x, y, s, dur, delay) {
+  const c = el("g", { class: "cloud", style: `animation-duration:${dur}s;animation-delay:${delay}s` }, g);
+  const inner = el("g", { transform: `translate(${x} ${y}) scale(${s})` }, c);
+  for (const [cx, cy, rx, ry] of [[0, 0, 34, 14], [24, -8, 26, 16], [-22, -4, 22, 12], [46, 2, 22, 11]])
+    el("ellipse", { cx, cy, rx, ry, fill: "#fff", opacity: .9 }, inner);
+}
+function tree(g, x, y, s, tone) {
+  el("ellipse", { cx: x + 6 * s, cy: y + 2, rx: 14 * s, ry: 4 * s, fill: "#5b6b3d", opacity: .25 }, g);
+  el("rect", { x: x - 2 * s, y: y - 14 * s, width: 4 * s, height: 14 * s, fill: "#6b4f35" }, g);
+  el("circle", { cx: x, cy: y - 22 * s, r: 12 * s, fill: tone }, g);
+  el("circle", { cx: x - 6 * s, cy: y - 17 * s, r: 8 * s, fill: tone }, g);
+  el("circle", { cx: x + 4 * s, cy: y - 27 * s, r: 7 * s, fill: "#ffffff", opacity: .12 }, g);
+}
+function house(g, x, y, w, h, wall, roof, lit) {
+  el("rect", { x, y: y - h, width: w, height: h, fill: wall }, g);
+  el("path", { d: `M${x - 3} ${y - h}l${w / 2 + 3} ${-h * .55} ${w / 2 + 3} ${h * .55}Z`, fill: roof }, g);
+  if (lit) el("rect", { x: x + w * .3, y: y - h * .7, width: w * .25, height: h * .3, fill: "#ffe7a8" }, g);
+}
+
+function drawScenery() {
+  const g = $("scenery");
+  g.replaceChildren();
+  const X = xs();
+  const harbor = state.service === "harbor";
+  const rnd = seeded(7);
+
+  // Sky, sun, clouds, birds.
+  const night = svc().nights;
+  el("rect", { width: W, height: H, fill: night ? "url(#g-night)" : "url(#g-sky)" }, g);
+  el("circle", { cx: 770, cy: 62, r: 70, fill: "url(#g-glow)", opacity: night ? .5 : 1 }, g);
+  el("circle", { cx: 770, cy: 62, r: 20, fill: night ? "#eef1ff" : "#fff4cf" }, g);
+  if (night) {
+    el("circle", { cx: 778, cy: 56, r: 17, fill: "#2a3560" }, g);
+    const stars = seeded(3);
+    for (let i = 0; i < 40; i++) el("circle", { cx: stars() * W, cy: stars() * 110, r: .8 + stars() * 1.2, fill: "#fff", opacity: .5 + stars() * .5, class: i % 4 ? "" : "lens-glow" }, g);
+  }
+  const sky = el("g", {}, g);
+  cloud(sky, 120, 46, 1, 140, -20); cloud(sky, 420, 74, .7, 110, -70); cloud(sky, 640, 36, .9, 160, -120); cloud(sky, 300, 30, .55, 120, -40);
+  const birds = el("g", { class: "birds" }, g);
+  for (const [bx, by] of [[0, 0], [16, 6], [30, -3]]) el("path", { d: `M${bx} ${by}q5 -5 10 0q5 -5 10 0`, fill: "none", stroke: "#4c4f4a", "stroke-width": 1.6, "stroke-linecap": "round" }, birds);
+
+  // Far hills with a hill town, then nearer hills.
+  el("path", { d: "M0 170 C120 120 220 150 330 132 S560 96 680 128 S840 118 900 130 V230 H0Z", fill: "#b8c7b4" }, g);
+  const town = el("g", { opacity: .8 }, g);
+  for (let i = 0; i < 7; i++) house(town, 520 + i * 17, 118 + (i % 3) * 3, 13, 12 + (i % 2) * 5, "#c9c3b2", "#9a8d7a", false);
+  el("path", { d: "M585 106 V80 l4 -10 4 10 V106Z", fill: "#bdb6a4" }, town);
+  el("path", { d: "M0 196 C140 160 260 186 380 170 S620 150 740 172 S860 168 900 176 V250 H0Z", fill: "#a6bb94" }, g);
+
+  // Patchwork fields with hedgerows and trees.
+  const fields = [
+    ["M0 214 L190 196 L230 246 L0 262Z", "#cdb77d"], ["M190 196 L390 190 L410 240 L230 246Z", "#b5c486"],
+    ["M390 190 L600 186 L612 236 L410 240Z", "#d8c48c"], ["M600 186 L900 194 L900 238 L612 236Z", "#a9bd88"],
+    ["M0 262 L230 246 L250 280 L0 282Z", "#b9c98e"], ["M230 246 L612 236 L620 280 L250 280Z", "#cfbd7f"],
+    ["M612 236 L900 238 L900 280 L620 280Z", "#bccb93"],
+  ];
+  for (const [d, fill] of fields) { el("path", { d, fill }, g); el("path", { d, fill: "url(#p-fields)" }, g); }
+  for (const [x1, y1, x2, y2] of [[190, 196, 230, 246], [390, 190, 410, 240], [600, 186, 612, 236], [0, 262, 250, 280], [230, 246, 620, 238]]) {
+    const n = Math.round(Math.hypot(x2 - x1, y2 - y1) / 9);
+    for (let i = 0; i <= n; i++) el("circle", { cx: x1 + (x2 - x1) * i / n, cy: y1 + (y2 - y1) * i / n - 2, r: 4.2, fill: "#6f8a4f" }, g);
+  }
+  const tones = ["#6d8f4e", "#5f8146", "#7e9c58"];
+  for (let i = 0; i < 16; i++) {
+    const x = 20 + rnd() * 860, y = 200 + rnd() * 70;
+    if (Math.abs(x - X.depot) < 70) continue;
+    tree(g, x, y, .7 + rnd() * .5, tones[i % 3]);
+  }
+
+  if (svc().grid) { drawGridLayer(g); return; }
+  // Telegraph poles along the line, wires sagging between them.
+  const poles = [];
+  for (let x = 30; x < W; x += 118) poles.push(x);
+  for (let i = 0; i < poles.length - 1; i++)
+    for (const dy of [0, 7]) el("path", { d: `M${poles[i]} ${LINE - 62 + dy} Q${(poles[i] + poles[i + 1]) / 2} ${LINE - 50 + dy} ${poles[i + 1]} ${LINE - 62 + dy}`, fill: "none", stroke: "#3d3a35", "stroke-width": 1, opacity: .6 }, g);
+  for (const x of poles) {
+    el("path", { d: `M${x} ${LINE - 18} V${LINE - 66}`, stroke: "#6b5238", "stroke-width": 3.5 }, g);
+    el("path", { d: `M${x - 9} ${LINE - 62} h18`, stroke: "#6b5238", "stroke-width": 3 }, g);
+  }
+
+  // Foreground verge, or harbor water.
+  el("rect", { x: 0, y: LINE + 18, width: W, height: H - LINE, fill: "#9fb27a" }, g);
+  if (harbor) {
+    const wx = X.harbor - 130;
+    el("path", { d: `M${wx} ${H} V${LINE + 46} Q${wx + 40} ${LINE + 30} ${wx + 110} ${LINE + 32} L${W} ${LINE + 30} V${H}Z`, fill: "url(#g-water)" }, g);
+    const rip = el("g", { class: "ripple" }, g);
+    for (let i = 0; i < 9; i++) for (let j = 0; j < 3; j++) {
+      const rx = wx + 30 + i * 80 + (j % 2) * 34, ry = LINE + 56 + j * 22;
+      if (rx < W) el("path", { d: `M${rx} ${ry} q8 -4 16 0 q8 4 16 0`, fill: "none", stroke: "#fff", "stroke-opacity": .55, "stroke-width": 1.6 }, rip);
+    }
+    boat(g, X.harbor + 70, LINE + 74, "#a04235");
+    boat(g, X.docks - 80, LINE + 92, "#3f5d4a");
+  } else {
+    for (let i = 0; i < 60; i++) {
+      const x = rnd() * W, y = LINE + 30 + rnd() * (H - LINE - 40);
+      el("path", { d: `M${x} ${y} l-3 -7 M${x} ${y} l0 -9 M${x} ${y} l3 -7`, stroke: "#7a9455", "stroke-width": 1.4, "stroke-linecap": "round" }, g);
+      if (i % 5 === 0) el("circle", { cx: x + 5, cy: y - 6, r: 2, fill: ["#f2d36b", "#e98a8a", "#ffffff"][i % 3] }, g);
+    }
+  }
+
+  // Ballast, sleepers, rails.
+  el("rect", { x: 0, y: LINE - 20, width: W, height: 40, fill: "url(#g-ballast)" }, g);
+  for (let x = 4; x < W; x += 18) el("rect", { x, y: LINE - 13, width: 9, height: 27, rx: 1.5, fill: "#6e5a42" }, g);
+  for (const y of [LINE - 7, LINE + 7]) {
+    el("path", { d: `M0 ${y}H${W}`, stroke: "#4a443b", "stroke-width": 4 }, g);
+    el("path", { d: `M0 ${y - 1.4}H${W}`, stroke: "#cfc8bb", "stroke-width": 1 }, g);
+  }
+
+  drawDepot(g, X.depot);
+  for (const p of svc().route) {
+    const x = X[p.id];
+    if (p.kind === "socket") drawSignal(g, x, state.cable[state.service]?.to === p.id ? "restore" : state.signals[state.service][p.id]);
+    if (p.kind === "stamp") drawHarbor(g, p, x);
+    if (p.kind === "check") drawCheck(g, p, x);
+  }
+  if (svc().cable) drawOffice(g, X[svc().route.find(p => p.reader).id] - 20);
+  if (svc().nights) el("rect", { y: 120, width: W, height: H - 120, fill: "#1d2747", opacity: .28, "pointer-events": "none" }, g);
+}
+
+function boat(g, x, y, hull) {
+  const b = el("g", { class: "bob" }, g);
+  el("path", { d: `M${x - 28} ${y} h56 l-9 12 h-38Z`, fill: hull }, b);
+  el("rect", { x: x - 10, y: y - 12, width: 18, height: 12, fill: "#f4efe2" }, b);
+  el("path", { d: `M${x + 14} ${y} V${y - 30} l14 22 h-14`, fill: "#fffaf0", stroke: "#6b5238", "stroke-width": 1.5 }, b);
+}
+
+function drawDepot(g, x) {
+  // Brick station with an awning, a clock and the departures board on posts.
+  el("rect", { x: x - 64, y: LINE + 18, width: 128, height: 14, fill: "#c9b48d" }, g);
+  el("rect", { x: x - 56, y: LINE + 32, width: 112, height: 60, fill: "#b4664c" }, g);
+  for (let i = 0; i < 6; i++) el("path", { d: `M${x - 56} ${LINE + 40 + i * 9}h112`, stroke: "#9c5440", "stroke-width": 1 }, g);
+  el("path", { d: `M${x - 64} ${LINE + 34} l64 -26 64 26Z`, fill: "#5d4b3f" }, g);
+  for (const wx of [-40, 20]) el("rect", { x: x + wx, y: LINE + 46, width: 20, height: 24, rx: 2, fill: "#ffe7a8", stroke: "#f4efe2", "stroke-width": 3 }, g);
+  el("rect", { x: x - 10, y: LINE + 56, width: 20, height: 36, fill: "#5a3d2b" }, g);
+  el("circle", { cx: x, cy: LINE + 22, r: 8, fill: "#fffaf0", stroke: "#5d4b3f", "stroke-width": 2 }, g);
+  el("path", { d: `M${x} ${LINE + 22}v-5M${x} ${LINE + 22}h4`, stroke: "#5d4b3f", "stroke-width": 1.5 }, g);
+  el("path", { d: `M${x - 46} ${LENS_Y + 30} V${LINE - 20} M${x + 46} ${LENS_Y + 30} V${LINE - 20}`, stroke: "#3d3a35", "stroke-width": 4 }, g);
+  el("rect", { x: x - 62, y: LENS_Y - 66, width: 124, height: 96, rx: 9, fill: "#22272a", stroke: "#4a5257", "stroke-width": 3 }, g);
+  ["A", "B"].forEach((t, i) => {
+    const y = LENS_Y - 46 + i * 40;
+    el("rect", { x: x - 50, y: y - 4, width: 100, height: 32, rx: 5, fill: "#2f3639" }, g);
+    el("rect", { x: x - 44, y: y + 6, width: 12, height: 12, rx: 2, fill: TRAIN[t] }, g);
+    el("text", { x: x - 22, y: y + 17, fill: "#e8eaec", "font-size": 15, "font-weight": 700 }, g, t);
+    el("circle", { cx: x + 26, cy: y + 12, r: 15, fill: "url(#g-glow)", class: "lens-glow" }, g);
+    icon(g, depotOf()[t], x + 26, y + 12, 24);
+  });
+  el("text", { x, y: H - 12, class: "lbl" }, g, "Departures");
+}
+
+const GLOW = { restore: "#ffd27a", sun: "#ffd06b", moon: "#a9b8e0", star: "#ff9aa8", anchor: "#9cc3e6", bell: "#f0c77a", swap: "#d6dbe0", "": "#f4f1e6" };
+function drawSignal(g, x, value) {
+  el("path", { d: `M${x} ${LINE - 20} V${LENS_Y + 18}`, stroke: "#3d3a35", "stroke-width": 5 }, g);
+  for (let y = LENS_Y + 34; y < LINE - 24; y += 12) el("path", { d: `M${x + 5} ${y} h8`, stroke: "#3d3a35", "stroke-width": 2 }, g);
+  el("path", { d: `M${x + 5} ${LENS_Y + 26} V${LINE - 22} M${x + 13} ${LENS_Y + 26} V${LINE - 22}`, stroke: "#3d3a35", "stroke-width": 1.5 }, g);
+  el("rect", { x: x - 10, y: LINE - 26, width: 20, height: 8, fill: "#3d3a35" }, g);
+  el("circle", { cx: x, cy: LENS_Y, r: 44, fill: "url(#g-glow)", class: value ? "lens-glow" : "", opacity: value ? 1 : 0, style: `--glow:${GLOW[value]}` }, g);
+  el("rect", { x: x - 30, y: LENS_Y - 30, width: 60, height: 60, rx: 14, fill: "#2b2f31" }, g);
+  el("path", { d: `M${x - 30} ${LENS_Y - 24} h60`, stroke: "#45494c", "stroke-width": 6 }, g);
+  const rule = value ? optionText(value).short : "no signal";
+  el("rect", { x: x - 38, y: LENS_Y + 34, width: 76, height: 20, rx: 10, fill: value ? "#fffaf0" : "#e9e5d8", stroke: "#8a7b5c" }, g);
+  el("text", { x, y: LENS_Y + 48, "text-anchor": "middle", "font-size": 12, "font-weight": 600, fill: "#40464c" }, g, rule);
+}
+
+// What each signal option does, in words, for the picker and the mast plate.
+function optionText(o) {
+  const pair = svc().options.includes("anchor") ? ["anchor", "bell"] : ["sun", "moon"];
+  if (typeof o === "string" && o.startsWith("r@")) {
+    const place = o.slice(2), name = placeName(place);
+    return { title: `From ${name}`, short: "restore", body: `Every car gets back the sign it carried at ${name.toLowerCase()}. A train that never passed there keeps its sign.` };
+  }
+  if (typeof o === "string" && o.startsWith("r#")) {
+    const k = o.slice(2);
+    return { title: `Stop ${k}`, short: `stop ${k}`, body: `Every car gets back the sign it carried at its stop number ${k} after leaving its depot.` };
+  }
+  if (typeof o === "string" && o.startsWith("q:")) {
+    const [office, train, field] = o.slice(2).split("|");
+    const words = [office === "*" ? "any office" : placeName(office).replace(" office", "") + " office", train === "*" ? "any train" : "this train", field === "*" ? "any ticket" : `${field} ticket`];
+    return { title: "Ask", short: "ask", body: `Ask the exchange for: ${words.join(", ")}. If exactly one ticket matches, its reply goes on the car.` };
+  }
+  if (o === "restore") {
+    const from = state.cable[state.service]?.from;
+    return { title: "Restore", short: "restore", body: `Every car gets back the sign it carried at ${from ? placeName(from).toLowerCase() : "an earlier point"}, sent by telegraph.` };
+  }
+  if (!o) return { title: "No signal", short: "no signal", body: "Cars pass with their sign unchanged." };
+  if (o === "swap") return { title: "Swap", short: "swap", body: `${htmlIcon(pair[0])} becomes ${htmlIcon(pair[1])} and ${htmlIcon(pair[1])} becomes ${htmlIcon(pair[0])}. Anything else passes unchanged.` };
+  return { title: `Set ${NAME[o]}`, short: `set ${NAME[o]}`, body: `Every car leaves carrying ${htmlIcon(o)}, whatever it had before.` };
+}
+
+function closePicker(focusSocket) {
+  const open = $("board").querySelector(".picker");
+  if (!open) return;
+  open.remove();
+  document.removeEventListener("pointerdown", outsidePicker, true);
+  if (focusSocket) $("board").querySelector(`.socket[data-socket="${focusSocket}"]`)?.focus();
+}
+function outsidePicker(e) { if (!e.target.closest(".picker, .socket")) closePicker(); }
+function openPicker(id, x) {
+  closePicker();
+  const box = document.createElement("div");
+  box.className = "picker";
+  box.setAttribute("role", "dialog");
+  box.setAttribute("aria-label", `${placeName(id)}: choose what it does`);
+  box.style.left = `${Math.min(80, Math.max(20, 100 * x / W))}%`;
+  const gy = svc().grid ? gridNode(id).y - 52 : LENS_Y;
+  if (gy > 240) { box.style.top = `${100 * (gy - 34) / H}%`; box.style.transform = "translate(-50%, -100%)"; }
+  else box.style.top = `${100 * (gy + 40) / H}%`;
+  box.innerHTML = `<p class="picker-title">${placeName(id)}: what should it do to each car?</p><div class="pick-row"></div><p class="pick-desc" aria-hidden="true"></p>`;
+  const current = state.signals[state.service][id];
+  const nodeOpts = svc().grid && gridNode(id).options;
+  const allOpts = nodeOpts || svc().options;
+  const basic = allOpts.filter(o => !/^(r@|r#|q:)/.test(o));
+  for (const o of basic) {
+    const t = optionText(o);
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "pick";
+    b.setAttribute("aria-pressed", String(o === current));
+    b.innerHTML = `<span class="pick-icon">${o ? htmlIcon(o) : "–"}</span><b>${t.title}</b><small class="sr-only">${t.body}</small>`;
+    if (basic.length > 5) box.querySelector(".pick-row").style.gridTemplateColumns = `repeat(${basic.length}, minmax(0, 1fr))`;
+    const say = () => { box.querySelector(".pick-desc").innerHTML = `<b>${t.title}:</b> ${t.body}`; };
+    b.addEventListener("focus", say);
+    b.addEventListener("pointerenter", say);
+    b.setAttribute("aria-pressed", String(o === current && state.cable[state.service]?.to !== id));
+    b.addEventListener("click", () => {
+      state.signals[state.service][id] = o;
+      if (state.cable[state.service]?.to === id) state.cable[state.service] = null;
+      sfx.start(); sfx.clank();
+      closePicker();
+      drawScenery();
+      afterChange();
+      $("board").querySelector(`.socket[data-socket="${id}"]`)?.focus();
+    });
+    box.querySelector(".pick-row").append(b);
+  }
+  const restoreRows = [["Telegraph: restore the sign each car carried at", allOpts.filter(o => o.startsWith("r@"))], ["Telegraph: or at its stop number", allOpts.filter(o => o.startsWith("r#"))]];
+  for (const [title, opts] of restoreRows) if (opts.length) {
+    const wrap = document.createElement("div");
+    wrap.className = "pick-cable";
+    wrap.innerHTML = `<p class="picker-title"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#i-restore"/></svg>${title}</p>`;
+    const row = document.createElement("div");
+    row.className = "pick-from";
+    for (const o of opts) {
+      const t = optionText(o);
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "from";
+      b.textContent = o.startsWith("r@") ? placeName(o.slice(2), true) : t.title;
+      b.setAttribute("aria-pressed", String(o === current));
+      b.setAttribute("aria-label", `${placeName(id)}: ${t.body}`);
+      const say = () => { box.querySelector(".pick-desc").innerHTML = `<b>Restore:</b> ${t.body}`; };
+      b.addEventListener("focus", say);
+      b.addEventListener("pointerenter", say);
+      b.addEventListener("click", () => { state.signals[state.service][id] = o; sfx.start(); sfx.click(); closePicker(); drawScenery(); afterChange(); $("board").querySelector(`.socket[data-socket="${id}"]`)?.focus(); });
+      row.append(b);
+    }
+    wrap.append(row);
+    box.insertBefore(wrap, box.querySelector(".pick-desc"));
+  }
+  if (svc().grid && gridNode(id).exchange) {
+    const cur = current?.startsWith("q:") ? current.slice(2).split("|") : ["*", "*", "*"];
+    const wrap = document.createElement("div");
+    wrap.className = "pick-cable";
+    wrap.innerHTML = `<p class="picker-title"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#i-exchange"/></svg>Exchange request${current?.startsWith("q:") ? "" : " (not in use)"}</p>`;
+    const slots = [["Office", 0, [["*", "Any"], ["harbor", "Harbor"], ["market", "Market"], ["hill", "Hill"]]], ["Train", 1, [["*", "Any train"], ["me", "This train"]]], ["Ticket", 2, [["*", "Any"], ["berth", "Berth"], ["cargo", "Cargo"]]]];
+    for (const [label, k, choices] of slots) {
+      const row = document.createElement("div");
+      row.className = "pick-from";
+      row.innerHTML = `<span class="slot-label">${label}</span>`;
+      for (const [v, text] of choices) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "from";
+        b.textContent = text;
+        b.setAttribute("aria-pressed", String(current?.startsWith("q:") && cur[k] === v));
+        b.addEventListener("click", () => {
+          const next = [...cur]; next[k] = v;
+          const value = next.every(x => x === "*") ? "" : `q:${next.join("|")}`;
+          state.signals[state.service][id] = value;
+          sfx.start(); sfx.click(); closePicker(); drawScenery(); afterChange();
+          openPicker(id, x);
+        });
+        row.append(b);
+      }
+      wrap.append(row);
+    }
+    box.insertBefore(wrap, box.querySelector(".pick-desc"));
+    if (current?.startsWith("q:")) box.querySelector(".pick-desc").innerHTML = `<b>Ask:</b> ${optionText(current).body}`;
+  }
+  if (state.cableOpen && svc().cable) {
+    const cols = ["depot", ...svc().route.map(q => q.id)];
+    const earlier = cols.slice(0, cols.indexOf(id));
+    const cable = state.cable[state.service];
+    const wrap = document.createElement("div");
+    wrap.className = "pick-cable";
+    wrap.innerHTML = `<p class="picker-title"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#i-restore"/></svg>Telegraph: restore what each car carried at</p>`;
+    const row = document.createElement("div");
+    row.className = "pick-from";
+    for (const from of earlier) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "from";
+      b.textContent = placeName(from);
+      const on = cable?.to === id && cable.from === from;
+      b.setAttribute("aria-pressed", String(on));
+      b.setAttribute("aria-label", `Restore at ${placeName(id)} the sign each car carried at ${placeName(from)}`);
+      const say = () => { box.querySelector(".pick-desc").innerHTML = `<b>Restore:</b> every car gets back the sign it carried at ${placeName(from).toLowerCase()}. The telegraph has one cable, so this moves it here.`; };
+      b.addEventListener("focus", say);
+      b.addEventListener("pointerenter", say);
+      b.addEventListener("click", () => {
+        state.cable[state.service] = { from, to: id };
+        sfx.start(); sfx.click();
+        closePicker();
+        drawScenery();
+        afterChange();
+        $("board").querySelector(`.socket[data-socket="${id}"]`)?.focus();
+      });
+      row.append(b);
+    }
+    wrap.append(row);
+    box.insertBefore(wrap, box.querySelector(".pick-desc"));
+  }
+  box.addEventListener("keydown", e => { if (e.key === "Escape") closePicker(id); });
+  $("board").append(box);
+  const bw = $("board").clientWidth, pw = box.offsetWidth;
+  const want = Math.min(80, Math.max(20, 100 * x / W)) / 100 * bw;
+  const left = bw < 560 ? bw / 2 : Math.min(bw - pw / 2 - 4, Math.max(pw / 2 + 4, want));
+  box.style.left = `${left}px`;
+  (box.querySelector('[aria-pressed="true"]') || box.querySelector(".pick")).focus();
+  setTimeout(() => document.addEventListener("pointerdown", outsidePicker, true));
+}
+
+function drawHarbor(g, p, x) {
+  // A pier on the water, a crane, and a berth flag for each train.
+  el("rect", { x: x - 54, y: LINE + 22, width: 108, height: 16, fill: "#9c7a55" }, g);
+  for (let i = 0; i < 6; i++) el("rect", { x: x - 52 + i * 20, y: LINE + 38, width: 6, height: 40, fill: "#6b5238" }, g);
+  const cx = x + 64;
+  el("path", { d: `M${cx} ${LINE + 22} V${LENS_Y - 20} M${cx + 14} ${LINE + 22} V${LENS_Y - 20}`, stroke: "#b5523b", "stroke-width": 3 }, g);
+  for (let y = LENS_Y - 14; y < LINE + 16; y += 18) el("path", { d: `M${cx} ${y} l14 14 M${cx + 14} ${y} l-14 14`, stroke: "#b5523b", "stroke-width": 1.5 }, g);
+  el("path", { d: `M${cx - 50} ${LENS_Y - 20} H${cx + 30}`, stroke: "#b5523b", "stroke-width": 5 }, g);
+  el("path", { d: `M${cx - 40} ${LENS_Y - 18} V${LENS_Y + 34}`, stroke: "#3d3a35", "stroke-width": 1.5 }, g);
+  el("rect", { x: cx - 50, y: LENS_Y + 34, width: 20, height: 14, fill: "#6d7c8c" }, g);
+  ["A", "B"].forEach((t, i) => {
+    const fx = x - 34 + i * 46;
+    el("path", { d: `M${fx} ${LINE - 20} V${LENS_Y + 6}`, stroke: "#3d3a35", "stroke-width": 3 }, g);
+    el("path", { d: `M${fx} ${LENS_Y + 6}h40l-8 15 8 15h-40Z`, fill: "#fffaf0", stroke: TRAIN[t], "stroke-width": 3 }, g);
+    icon(g, p.sign[t], fx + 17, LENS_Y + 21, 24);
+  });
+  el("text", { x, y: H - 12, class: "lbl" }, g, p.label);
+}
+
+function wantsBoard(g, p, x, y) {
+  el("path", { d: `M${x - 30} ${y - 14} V${y} M${x + 30} ${y - 14} V${y}`, stroke: "#3d3a35", "stroke-width": 2 }, g);
+  el("rect", { x: x - 46, y, width: 92, height: 46, rx: 8, fill: "#fffaf0", stroke: "#8a7b5c", "stroke-width": 2 }, g);
+  ["A", "B"].forEach((t, i) => {
+    const cx = x - 22 + i * 44;
+    el("rect", { x: cx - 15, y: y + 8, width: 8, height: 8, rx: 2, fill: TRAIN[t] }, g);
+    icon(g, wantSign(p, t, depotOf()), cx + 4, y + 25, 24);
+  });
+}
+
+function drawCheck(g, p, x) {
+  if (!p.reader) {
+    // A timber inspection shed straddling the line, lamp lit over the arch.
+    el("path", { d: `M${x - 52} ${LINE + 18} V${LINE - 52} H${x + 52} V${LINE + 18}`, fill: "#b89a6c" }, g);
+    for (let i = 0; i < 10; i++) el("path", { d: `M${x - 52 + i * 11.5} ${LINE - 52} V${LINE + 18}`, stroke: "#9f8257", "stroke-width": 1.2 }, g);
+    el("path", { d: `M${x - 34} ${LINE + 18} V${LINE - 22} Q${x} ${LINE - 52} ${x + 34} ${LINE - 22} V${LINE + 18}Z`, fill: "#3c3329", opacity: .7 }, g);
+    el("path", { d: `M${x - 62} ${LINE - 50} L${x} ${LINE - 82} L${x + 62} ${LINE - 50}Z`, fill: "#6f7f86" }, g);
+    for (let i = 1; i < 8; i++) el("path", { d: `M${x - 62 + i * 15.5} ${LINE - 50} L${x} ${LINE - 82}`, stroke: "#5c6b71", "stroke-width": 1 }, g);
+    el("circle", { cx: x, cy: LINE - 60, r: 16, fill: "url(#g-glow)", class: "lens-glow" }, g);
+    el("circle", { cx: x, cy: LINE - 60, r: 4, fill: "#ffe7a8" }, g);
+    wantsBoard(g, p, x, LENS_Y + 10);
+    el("path", { d: `M${x} ${LENS_Y + 56} V${LINE - 82}`, stroke: "#3d3a35", "stroke-width": 2 }, g);
+  } else {
+    // Platform with a canopy on columns, and a gate for each train.
+    el("rect", { x: x - 66, y: LINE + 18, width: 132, height: 16, fill: "#c9b48d" }, g);
+    el("path", { d: `M${x - 70} ${LINE - 70} H${x + 70} L${x + 60} ${LINE - 56} H${x - 60}Z`, fill: "#5d6b4f" }, g);
+    for (let i = 0; i < 12; i++) el("path", { d: `M${x - 60 + i * 11} ${LINE - 56} q5 6 11 0`, fill: "#e9dcc0" }, g);
+    for (const cx of [x - 56, x + 56]) el("rect", { x: cx - 2.5, y: LINE - 56, width: 5, height: 74, fill: "#3d3a35" }, g);
+    ["A", "B"].forEach((t, i) => {
+      const gx = x - 52 + i * 58;
+      el("rect", { x: gx, y: LINE + 30, width: 7, height: 34, fill: "#3d3a35" }, g);
+      const arm = el("rect", { x: gx + 3, y: LINE + 32, width: 46, height: 9, rx: 3, fill: TRAIN[t], class: "gate-arm", id: `gate-${t}` }, g);
+      arm.setAttribute("stroke", "#fff");
+      arm.setAttribute("stroke-width", "1.5");
+      arm.setAttribute("stroke-dasharray", "6 6");
+    });
+    wantsBoard(g, p, x, LENS_Y + 10);
+    el("path", { d: `M${x} ${LENS_Y + 56} V${LINE - 70}`, stroke: "#3d3a35", "stroke-width": 2 }, g);
+  }
+  el("text", { x, y: H - 12, class: "lbl" }, g, p.label);
+}
+
+function drawOffice(g, ox) {
+  const open = state.cableOpen;
+  const y = 112;
+  el("rect", { x: ox + 26, y: y - 64, width: 10, height: 22, fill: "#7a4a3a" }, g);
+  if (open) for (let i = 0; i < 3; i++) el("circle", { cx: ox + 31 + i * 4, cy: y - 72 - i * 9, r: 4 + i * 2, fill: "#fff", opacity: .55 - i * .15, class: "chimney" }, g);
+  el("rect", { x: ox - 46, y: y - 40, width: 92, height: 50, fill: open ? "#c7774f" : "#a9a094" }, g);
+  for (let i = 0; i < 5; i++) el("path", { d: `M${ox - 46} ${y - 32 + i * 9}h92`, stroke: open ? "#b0623f" : "#968d82", "stroke-width": 1 }, g);
+  el("path", { d: `M${ox - 54} ${y - 38} l54 -26 54 26Z`, fill: "#4f5e43" }, g);
+  for (const wx of [-36, -12]) el("rect", { x: ox + wx, y: y - 28, width: 16, height: 18, rx: 2, fill: open ? "#ffe7a8" : "#7e858b", stroke: "#f4efe2", "stroke-width": 2 }, g);
+  el("circle", { cx: ox + 26, cy: y - 14, r: 15, fill: "#fffaf0", stroke: "#8a560a", "stroke-width": 3 }, g);
+  el("circle", { cx: ox + 26, cy: y - 14, r: 6, fill: "#c27c0e" }, g);
+  el("path", { d: `M${ox - 50} ${y + 10} h100`, stroke: "#7d6a4f", "stroke-width": 4 }, g);
+  el("text", { x: ox, y: y - 74, class: "lbl" }, g, open ? "Telegraph office" : "Telegraph office, closed");
+}
+
+function cablePoint(id) {
+  const X = xs();
+  return id === "depot" ? [X.depot + 62, LENS_Y - 20] : [X[id], LINE - 62];
+}
+function drawWire() {
+  const g = $("wires");
+  g.replaceChildren();
+  const cable = state.cable[state.service];
+  if (!cable || !svc().cable) return null;
+  const X = xs();
+  const ox = X[svc().route.find(p => p.reader).id] - 20 + 26;
+  const [fx, fy] = cablePoint(cable.from);
+  const tx = X[cable.to], ty = LENS_Y - 30;
+  const d = `M${fx} ${fy} C${fx} 10, ${ox} 10, ${ox} 98 C${ox} 30, ${tx} 30, ${tx} ${ty}`;
+  el("path", { d, class: "wire-shadow" }, g);
+  el("path", { d, class: "wire" }, g);
+  el("circle", { cx: fx, cy: fy, r: 7, fill: "#c27c0e", stroke: "#fff", "stroke-width": 2 }, g);
+  el("circle", { cx: tx, cy: ty, r: 7, fill: "#c27c0e", stroke: "#fff", "stroke-width": 2 }, g);
+  return d;
+}
+
+function drawSockets() {
+  const board = $("board");
+  board.querySelectorAll(".socket").forEach(n => n.remove());
+  const X = xs();
+  svc().route.filter(p => p.kind === "socket").forEach(p => {
+    const restoring = state.cable[state.service]?.to === p.id;
+    const value = restoring ? "restore" : state.signals[state.service][p.id];
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "socket" + (value ? " set" : "");
+    const gn = svc().grid && gridNode(p.id);
+    b.style.left = `${100 * (gn ? gn.x : X[p.id]) / W}%`;
+    b.style.top = `${100 * (gn ? gn.y - 52 : LENS_Y) / H}%`;
+    const face = value && /^(r@|r#)/.test(value) ? "restore" : value && value.startsWith("q:") ? "exchange" : value;
+    b.innerHTML = value ? htmlIcon(face) : '<span class="plus" aria-hidden="true">+</span>';
+    b.setAttribute("aria-label", `${placeName(p.id)}: ${optionText(value).title}. Press to choose what it does.`);
+    b.setAttribute("aria-haspopup", "true");
+    b.dataset.socket = p.id;
+    b.disabled = state.running || state.touring;
+    b.addEventListener("click", () => openPicker(p.id, gn ? gn.x : X[p.id]));
+    board.append(b);
+  });
+  board.querySelectorAll(".lever").forEach(n => n.remove());
+  for (const l of svc().levers || []) {
+    const n = gridNode(l.id), [lx, ly] = n.leverAt || [n.x, n.y + 44];
+    const value = state.signals[state.service][l.id] || l.options[0];
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "lever";
+    b.style.left = `${100 * lx / W}%`;
+    b.style.top = `${100 * ly / H}%`;
+    b.textContent = l.labels[value];
+    b.setAttribute("aria-label", `${l.labels[value]}. Press to change.`);
+    b.disabled = state.running || state.touring;
+    b.addEventListener("click", () => {
+      state.signals[state.service][l.id] = l.options[(l.options.indexOf(value) + 1) % l.options.length];
+      sfx.start(); sfx.clank(); drawScenery(); afterChange();
+      board.querySelector(".lever")?.focus();
+    });
+    board.append(b);
+  }
+}
+
+// Trains: a locomotive leading, the wagon with its lit sign plaque behind.
+function drawTrains(positions) {
+  const g = $("trains");
+  g.replaceChildren();
+  for (const [t, x, sign, dy = 0] of positions) {
+    const tr = el("g", { transform: `translate(${x} ${LINE + dy})`, opacity: dy ? .92 : 1 }, g);
+    const turn = (x / 9) % 360;
+    // Wagon.
+    el("rect", { x: -118, y: -6, width: 56, height: 10, rx: 2, fill: "#4a443b" }, tr);
+    el("rect", { x: -112, y: -40, width: 44, height: 34, rx: 5, fill: "#fffaf0", stroke: "#4a443b", "stroke-width": 2.5 }, tr);
+    el("circle", { cx: -90, cy: -23, r: 22, fill: "url(#g-glow)", opacity: .8 }, tr);
+    icon(tr, sign, -90, -23, 28);
+    el("path", { d: "M-62 -1 h10", stroke: "#2b2622", "stroke-width": 3 }, tr);
+    // Locomotive: cab, boiler, stack, dome, lamp.
+    el("rect", { x: -54, y: -40, width: 28, height: 36, rx: 3, fill: TRAIN[t] }, tr);
+    el("rect", { x: -48, y: -34, width: 16, height: 12, rx: 2, fill: "#ffe7a8" }, tr);
+    el("rect", { x: -58, y: -44, width: 36, height: 6, rx: 2, fill: "#2b2622" }, tr);
+    el("rect", { x: -26, y: -28, width: 52, height: 24, rx: 10, fill: TRAIN[t] }, tr);
+    el("path", { d: "M-26 -22 h50", stroke: "#fff", "stroke-opacity": .25, "stroke-width": 3 }, tr);
+    el("rect", { x: 12, y: -44, width: 9, height: 17, fill: "#2b2622" }, tr);
+    el("rect", { x: 9, y: -47, width: 15, height: 5, rx: 1.5, fill: "#2b2622" }, tr);
+    el("ellipse", { cx: -6, cy: -29, rx: 7, ry: 5, fill: "#c9a24a" }, tr);
+    el("circle", { cx: 28, cy: -18, r: 4, fill: "#ffe7a8" }, tr);
+    el("path", { d: "M30 -3 l10 10 h-14Z", fill: "#2b2622" }, tr);
+    el("text", { x: -40, y: -9, fill: "#fff", "font-size": 12, "font-weight": 700, "text-anchor": "middle" }, tr, t);
+    el("path", { d: "M-50 0 H24", stroke: "#2b2622", "stroke-width": 4 }, tr);
+    for (const [wx, r] of [[-40, 8], [-14, 9], [10, 9], [-106, 6], [-74, 6]]) {
+      const wheel = el("g", { transform: `translate(${wx} ${4}) rotate(${turn})` }, tr);
+      el("circle", { r, fill: "#2b2622" }, wheel);
+      el("circle", { r: r - 2.5, fill: "#5a5249" }, wheel);
+      el("path", { d: `M${-r + 2} 0H${r - 2}M0 ${-r + 2}V${r - 2}`, stroke: "#2b2622", "stroke-width": 1.6 }, wheel);
+    }
+    el("path", { d: "M-14 4 H10", stroke: "#8b8378", "stroke-width": 2.5 }, tr);
+  }
+}
+
+// Smoke puffs live in their own layer and fade on their own clock.
+const puffs = [];
+let smokeLoop = 0;
+function puff(x) {
+  puffs.push({ x: x + 16, y: LINE - 50, born: performance.now() });
+  if (!smokeLoop) smokeLoop = requestAnimationFrame(drawSmoke);
+}
+function drawSmoke(now) {
+  const g = $("smoke");
+  g.replaceChildren();
+  for (let i = puffs.length - 1; i >= 0; i--) {
+    const p = puffs[i], age = (now - p.born) / 1500;
+    if (age >= 1) { puffs.splice(i, 1); continue; }
+    el("circle", { cx: p.x - age * 46, cy: p.y - age * 40, r: 5 + age * 15, fill: "#f7f5f0", opacity: .75 * (1 - age) }, g);
+  }
+  smokeLoop = puffs.length ? requestAnimationFrame(drawSmoke) : 0;
+}
+
+function flash(x, cy = LINE - 23, cx = x - 90) {
+  if (reduced.matches) return;
+  const ring = el("circle", { cx, cy, r: 10, fill: "none", stroke: "#ffd27a", "stroke-width": 4 }, $("wires"));
+  const start = performance.now();
+  const frame = now => {
+    const p = Math.min(1, (now - start) / 450);
+    ring.setAttribute("r", String(10 + p * 34));
+    ring.setAttribute("opacity", String(1 - p));
+    p < 1 ? requestAnimationFrame(frame) : ring.remove();
+  };
+  requestAnimationFrame(frame);
+}
+
+// One steady roll from the left edge to past the right edge. Each place takes effect as the
+// wagon reaches it, so the train never stops; onEvent returns the sign the car now shows.
+const SPEED = .32;
+function rollThrough(t, sign, events, onEvent) {
+  const from = -30, to = 1080;
+  if (reduced.matches) {
+    for (const e of events) sign = onEvent(e.i, e.at);
+    drawTrains([[t, to, sign]]);
+    return Promise.resolve();
+  }
+  return new Promise(done => {
+    const start = performance.now();
+    let next = 0, lastPuff = 0;
+    const frame = now => {
+      const x = Math.min(to, from + (now - start) * SPEED);
+      while (next < events.length && x >= events[next].at) { sign = onEvent(events[next].i, x); next += 1; }
+      drawTrains([[t, x, sign]]);
+      if (now - lastPuff > 110) { puff(x); sfx.chuff(); lastPuff = now; }
+      x < to ? requestAnimationFrame(frame) : done();
+    };
+    requestAnimationFrame(frame);
+  });
+}
+
+function pulse(d) {
+  if (!d || reduced.matches) { sfx.click(); return Promise.resolve(); }
+  const path = el("path", { d, class: "pulse" }, $("wires"));
+  const length = path.getTotalLength();
+  sfx.click();
+  return new Promise(done => {
+    const start = performance.now();
+    const frame = now => {
+      const p = Math.min(1, (now - start) / 1100);
+      path.setAttribute("stroke-dashoffset", String(-length * (1 - p)));
+      p < 1 ? requestAnimationFrame(frame) : (path.remove(), done());
+    };
+    requestAnimationFrame(frame);
+  });
+}
+
+// Sound: synthesized, starts only after the player presses Dispatch, and can be muted.
+const sfx = (() => {
+  let ctx = null, on = true;
+  const ready = () => on && ctx && ctx.state === "running";
+  function tone(freq, dur, type = "sine", gain = .08, when = 0) {
+    if (!ready()) return;
+    const t0 = ctx.currentTime + when;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(gain, t0 + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + dur + .05);
+  }
+  function noise(dur, cutoff, gain) {
+    if (!ready()) return;
+    const t0 = ctx.currentTime;
+    const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = buf; f.type = "lowpass"; f.frequency.value = cutoff; g.gain.value = gain;
+    src.connect(f).connect(g).connect(ctx.destination); src.start(t0);
+  }
+  return {
+    start() { try { ctx = ctx || new AudioContext(); ctx.resume(); } catch { ctx = null; } },
+    toggle() { on = !on; return on; },
+    get on() { return on; },
+    whistle() { tone(740, .7, "triangle", .06); tone(932, .7, "triangle", .05); },
+    chuff() { noise(.09, 700, .12); },
+    clank() { tone(190, .12, "square", .03); noise(.05, 2400, .05); },
+    click() { for (let i = 0; i < 4; i++) tone(1900, .03, "square", .03, i * .09); },
+    chime() { tone(660, .5, "sine", .07); tone(990, .6, "sine", .05, .12); },
+    thud() { tone(110, .25, "sine", .09); },
+  };
+})();
+
+// ---------- Grid levels: a small railway map with points that sort trains by their sign ----------
+// The fork sends moon down by the river and anything else up onto the viaduct.
+const GRID_WAY = { "fork>n1": [[300, 210], [340, 110]], "fork>s1": [[300, 210], [340, 318]], "n2>merge": [[620, 110]], "s2>merge": [[620, 318]] };
+function gridNode(id) { return svc().nodes[id]; }
+function gridGroup(id) { return svc().route.find(p => p.id === id); }
+
+// ---------- Generic grid engine: points by sign or by lever, turnouts, locks, quays, berths, telegraph and exchange ----------
+function pickNext(s, next, sign, signals, fromId) {
+  if (typeof next === "string") return next;
+  const node = s.nodes[fromId];
+  if (next.turnout) return next[signals[fromId] || s.levers.find(l => l.id === fromId).options[0]];
+  if (next.by) return next.by[sign] ?? next.other;
+  const moonUp = node.lever && signals[fromId] === "moon-up";
+  if (sign === "moon") return moonUp ? next.up : next.down;
+  return moonUp ? next.down : next.up;
+}
+// What a signal does to a car. Besides leave, set and swap: "r@place" and "r#k" restore an earlier sign
+// by place or by stop number; "q:office|train|field" asks the town exchange for a ticket.
+function applySignal(o, sign, record, t, depot) {
+  if (!o) return { sign };
+  if (o === "swap") return { sign: SWAP[sign] ?? sign };
+  if (o.startsWith("r@")) {
+    const place = o.slice(2);
+    const rec = place === "depot" ? record[0] : record.find(r => r.id === place);
+    return rec ? { sign: rec.sign, note: { restored: place } } : { sign, note: { missing: place } };
+  }
+  if (o.startsWith("r#")) {
+    const k = Number(o.slice(2));
+    return record[k] ? { sign: record[k].sign, note: { restored: record[k].id, stop: k } } : { sign, note: { missing: `stop ${k}` } };
+  }
+  if (o.startsWith("q:")) {
+    const [office, train, field] = o.slice(2).split("|");
+    const hits = (depot.tickets || []).filter(k => (office === "*" || k.office === office) && (train === "*" || k.train === t) && (field === "*" || k.field === field));
+    return hits.length === 1 ? { sign: hits[0].reply, note: { answered: hits[0].office } } : { sign, note: { replies: hits.length } };
+  }
+  return { sign: o };
+}
+function runGrid(serviceId, signals, depot) {
+  const s = SERVICES[serviceId];
+  return ["A", "B"].map(t => {
+    const own = Object.keys(s.nodes).find(k => s.nodes[k].kind === "depot" && s.nodes[k].train === t);
+    const plan = s.trains?.[t] || { start: own || "depot" };
+    const nextMap = s.nextBy?.[t] || s.next;
+    let sign = depot[t], id = plan.start, guard = 0, stopped = null;
+    const record = [{ id, sign }];
+    const checks = {};
+    while (nextMap[id] !== undefined && guard++ < 80) {
+      const to = pickNext(s, nextMap[id], sign, signals, id);
+      // Points with nowhere to send this sign hold the train where it stands.
+      if (to === undefined) { record.at(-1).stopped = true; record.at(-1).held = true; stopped = id; break; }
+      id = to;
+      const node = s.nodes[id];
+      let note;
+      if (node.kind === "socket") ({ sign, note } = applySignal(signals[node.equip || id], sign, record, t, depot));
+      if (node.kind === "stamp") sign = node.sign ? node.sign[t] : depot.berth[t];
+      if (node.kind === "lock" && !node.admits.includes(sign)) { record.push({ id, sign, stopped: true }); stopped = id; break; }
+      if (node.kind === "check") {
+        const p = s.route.find(q => q.id === node.group);
+        const w = wantSign(p, t, depot);
+        const shown = node.quay ?? sign;
+        checks[node.group] = { shown, want: w, hit: shown === w, at: id };
+      }
+      record.push({ id, sign, note });
+    }
+    for (const p of s.route.filter(q => q.kind === "check" && checkTrains(q).includes(t)))
+      if (!checks[p.id]) checks[p.id] = { shown: null, want: wantSign(p, t, depot), hit: false, at: stopped, stopped: true };
+    return { train: t, record, checks, up: record.some(r => r.id === "n1"), stopped };
+  });
+}
+
+// ---------- Generic map drawing ----------
+function pointsBoard(g, n, rows, x = n.x, y = n.y - 104) {
+  const w = 140;
+  el("rect", { x: x - w / 2, y, width: w, height: 18 + rows.length * 24, rx: 8, fill: "#22272a", stroke: "#4a5257", "stroke-width": 2 }, g);
+  rows.forEach(([sign, label], i) => {
+    const ry = y + 20 + i * 24;
+    if (!sign) { el("text", { x: x - w / 2 + 12, y: ry + 4, fill: "#f0c9a8", "font-size": 11, "font-weight": 600 }, g, label); return; }
+    icon(g, sign, x - w / 2 + 18, ry, 18);
+    el("path", { d: `M${x - w / 2 + 32} ${ry} h14 m-5 -5 l5 5 -5 5`, stroke: "#e8eaec", "stroke-width": 2, fill: "none", "stroke-linecap": "round" }, g);
+    el("text", { x: x - w / 2 + 52, y: ry + 4, fill: "#e8eaec", "font-size": 12, "font-weight": 600 }, g, label);
+  });
+}
+function lockGate(g, n) {
+  const { x, y } = n;
+  el("rect", { x: x - 30, y: y - 40, width: 60, height: 58, fill: "#7d8a8f", opacity: .5 }, g);
+  for (const dx of [-30, 24]) el("rect", { x: x + dx, y: y - 44, width: 6, height: 64, fill: "#5a4a38" }, g);
+  el("rect", { x: x - 24, y: y - 36, width: 48, height: 8, fill: "#8a6a45" }, g);
+  el("rect", { x: x - 24, y: y + 6, width: 48, height: 8, fill: "#8a6a45" }, g);
+  el("rect", { x: x - 26, y: y - 84, width: 52, height: 36, rx: 7, fill: "#fffaf0", stroke: "#8a7b5c", "stroke-width": 2 }, g);
+  el("text", { x: x - 14, y: y - 62, "font-size": 10, "font-weight": 700, fill: "#40464c", "text-anchor": "middle" }, g, "only");
+  icon(g, n.admits[0], x + 10, y - 66, 22);
+  el("text", { x, y: y + 40, class: "lbl" }, g, n.label);
+}
+function quayBoard(g, n) {
+  const { x, y } = n;
+  el("rect", { x: x - 30, y: y + 16, width: 74, height: 14, fill: "#9c7a55" }, g);
+  for (let i = 0; i < 4; i++) el("rect", { x: x - 28 + i * 22, y: y + 30, width: 5, height: 24, fill: "#6b5238" }, g);
+  el("rect", { x: x - 26, y: y - 72, width: 52, height: 40, rx: 7, fill: "#fffaf0", stroke: "#8a7b5c", "stroke-width": 2 }, g);
+  icon(g, n.quay, x, y - 52, 26);
+  el("path", { d: `M${x} ${y - 32} V${y - 14}`, stroke: "#3d3a35", "stroke-width": 2 }, g);
+  el("text", { x, y: y + 70, class: "lbl" }, g, n.label);
+}
+function stopShelter(g, n) {
+  const { x, y } = n;
+  el("rect", { x: x - 30, y: y + 16, width: 60, height: 10, fill: "#c9b48d" }, g);
+  el("path", { d: `M${x - 26} ${y - 30} h52 l-6 -10 h-40Z`, fill: "#6d5844" }, g);
+  for (const dx of [-22, 20]) el("rect", { x: x + dx, y: y - 30, width: 3, height: 46, fill: "#3d3a35" }, g);
+  el("text", { x, y: y + 44, class: "lbl" }, g, n.label);
+}
+function berthFlags(g, n) {
+  const { x, y } = n;
+  el("rect", { x: x - 46, y: y + 18, width: 92, height: 14, fill: "#9c7a55" }, g);
+  const berth = depotOf().berth || {};
+  ["A", "B"].forEach((t, i) => {
+    const fx = x - 30 + i * 44;
+    el("path", { d: `M${fx} ${y - 18} V${y - 92}`, stroke: "#3d3a35", "stroke-width": 3 }, g);
+    el("path", { d: `M${fx} ${y - 92}h36l-7 14 7 14h-36Z`, fill: "#fffaf0", stroke: TRAIN[t], "stroke-width": 3 }, g);
+    if (berth[t]) icon(g, berth[t], fx + 15, y - 78, 20);
+  });
+  el("text", { x, y: y + 50, class: "lbl" }, g, `${n.label} (tonight's berths)`);
+}
+function officeBuilding(g, n) {
+  const { x, y } = n;
+  const lit = state.lastAnswer?.office === n.office;
+  el("rect", { x: x - 34, y: y + 16, width: 68, height: 10, fill: "#c9b48d" }, g);
+  el("rect", { x: x - 30, y: y - 44, width: 60, height: 36, fill: lit ? "#e7a75a" : "#c7774f" }, g);
+  el("path", { d: `M${x - 36} ${y - 42} l36 -18 36 18Z`, fill: "#4f5e43" }, g);
+  const tickets = (depotOf().tickets || []).filter(k => k.office === n.office);
+  const by = y < 160 ? y + 56 : y - 132;
+  el("rect", { x: x - 46, y: by, width: 92, height: 12 + Math.max(1, tickets.length) * 22, rx: 7, fill: "#fffaf0", stroke: lit ? "#c27c0e" : "#8a7b5c", "stroke-width": lit ? 3 : 2 }, g);
+  tickets.forEach((k, i) => {
+    const ty = by + 16 + i * 22;
+    el("rect", { x: x - 40, y: ty - 6, width: 9, height: 9, rx: 2, fill: TRAIN[k.train] }, g);
+    el("text", { x: x - 28, y: ty + 3, "font-size": 11, "font-weight": 700, fill: "#40464c" }, g, `${tname(k.train)[0]} · ${k.field}`);
+    icon(g, k.reply, x + 30, ty - 1, 18);
+  });
+  if (!tickets.length) el("text", { x, y: by + 20, "font-size": 11, fill: "#626a73", "text-anchor": "middle" }, g, "no tickets");
+  el("text", { x, y: y < 160 ? y + 46 : y + 44, class: "lbl" }, g, n.label);
+}
+function turnoutPost(g, n) {
+  const value = state.signals[state.service][n.id || "R"] || "bypass";
+  const end = n.blade?.[value] || [n.x - 28, n.y];
+  el("path", { d: `M${n.x} ${n.y - 18} L${end[0]} ${end[1]}`, stroke: "#fff", "stroke-width": 11, "stroke-linecap": "round", opacity: .8 }, g);
+  el("path", { d: `M${n.x} ${n.y - 18} L${end[0]} ${end[1]}`, stroke: "#b5523b", "stroke-width": 7, "stroke-linecap": "round" }, g);
+  el("circle", { cx: n.x, cy: n.y - 18, r: 7, fill: "#3d3a35" }, g);
+}
+function drawGenericLayer(g) {
+  const s = svc(), N = s.nodes;
+  const P = p => typeof p === "string" ? [N[p].x, N[p].y] : p;
+  el("rect", { x: 0, y: 236, width: W, height: H - 236, fill: "#9fb27a" }, g);
+  if (s.decor === "bridge") {
+    el("path", { d: `M380 0 C400 120 360 260 400 ${H} H500 C470 260 510 120 490 0Z`, fill: "url(#g-water)" }, g);
+  }
+  if (s.decor === "canal") {
+    el("path", { d: `M330 150 H700 V270 H330Z`, fill: "url(#g-water)", opacity: .55 }, g);
+    el("path", { d: `M800 ${H} V60 H900 V${H}Z`, fill: "url(#g-water)" }, g);
+  }
+  if (s.decor === "harbor") {
+    el("path", { d: `M600 ${H} V300 Q760 284 900 290 V${H}Z`, fill: "url(#g-water)" }, g);
+    boat(g, 700, 340, "#a04235");
+  }
+  for (const line of s.tracks) trackPath(g, line.map(P));
+  if (s.decor === "bridge") {
+    // A covered bridge over the river, carrying both directions through the same signal.
+    el("rect", { x: 352, y: 176, width: 186, height: 16, fill: "#8b4a3a" }, g);
+    el("path", { d: "M346 178 L445 150 L544 178Z", fill: "#6d3b2f" }, g);
+    el("rect", { x: 352, y: 228, width: 186, height: 10, fill: "#8b4a3a" }, g);
+  }
+  for (const id of s.order) {
+    const n = N[id];
+    if (n.kind === "depot") n.train ? smallDepot(g, n, n.train) : drawDepot(el("g", { transform: `translate(0 ${n.y - LINE + 14})` }, g), n.x);
+    if (n.kind === "socket" && !n.equip) gridSignal(g, n.x, n.y, state.signals[state.service][id]);
+    if (n.kind === "fork") {
+      const moonUp = n.lever && state.signals[state.service][id] === "moon-up";
+      const rows = n.rows || (moonUp ? [["moon", "high lock"], ["sun", "low lock"], ["star", "low lock"]] : [["moon", "low lock"], ["sun", "high lock"], ["star", "high lock"]]);
+      pointsBoard(g, n, rows, n.boardAt ? n.boardAt[0] : n.x, n.boardAt ? n.boardAt[1] : n.y - 104);
+      el("text", { x: n.boardAt ? n.boardAt[0] : n.x, y: n.boardAt ? n.boardAt[1] - 8 : n.y + 40, class: "lbl" }, g, n.label);
+    }
+    if (n.kind === "turnout") turnoutPost(g, n);
+    if (n.kind === "lock") lockGate(g, n);
+    if (n.kind === "stop") stopShelter(g, n);
+    if (n.kind === "stamp") berthFlags(g, n);
+    if (n.kind === "office") officeBuilding(g, n);
+    if (n.kind === "check") {
+      const p = gridGroup(n.group);
+      if (n.quay) quayBoard(g, n);
+      else if (n.terminal) terminalGate(g, n, p, n.train);
+      else gridShed(g, n, p);
+    }
+  }
+  if (s.nights) el("rect", { y: 120, width: W, height: H - 120, fill: "#1d2747", opacity: .28, "pointer-events": "none" }, g);
+}
+
+function trackPath(g, pts) {
+  const d = "M" + pts.map(([x, y]) => `${x} ${y}`).join(" L");
+  el("path", { d, fill: "none", stroke: "#cfc3a6", "stroke-width": 34, "stroke-linejoin": "round" }, g);
+  el("path", { d, fill: "none", stroke: "#6e5a42", "stroke-width": 26, "stroke-dasharray": "8 10", "stroke-linejoin": "round" }, g);
+  el("path", { d, fill: "none", stroke: "#4a443b", "stroke-width": 17, "stroke-linejoin": "round" }, g);
+  el("path", { d, fill: "none", stroke: "#bdb194", "stroke-width": 12, "stroke-linejoin": "round" }, g);
+  el("path", { d, fill: "none", stroke: "#6e5a42", "stroke-width": 12, "stroke-dasharray": "8 10", "stroke-linejoin": "round" }, g);
+}
+
+function gridSignal(g, x, y, value) {
+  const lens = y - 52;
+  el("path", { d: `M${x} ${y - 16} V${lens + 28}`, stroke: "#3d3a35", "stroke-width": 4 }, g);
+  el("circle", { cx: x, cy: lens, r: 40, fill: "url(#g-glow)", class: value ? "lens-glow" : "", opacity: value ? 1 : 0 }, g);
+  el("rect", { x: x - 28, y: lens - 28, width: 56, height: 56, rx: 13, fill: "#2b2f31" }, g);
+  const rule = value ? optionText(value).short : "no signal";
+  el("rect", { x: x - 36, y: lens - 50, width: 72, height: 18, rx: 9, fill: value ? "#fffaf0" : "#e9e5d8", stroke: "#8a7b5c" }, g);
+  el("text", { x, y: lens - 37, "text-anchor": "middle", "font-size": 11, "font-weight": 600, fill: "#40464c" }, g, rule);
+}
+
+function gridShed(g, n, p) {
+  const { x, y } = n;
+  el("path", { d: `M${x - 40} ${y + 16} V${y - 34} H${x + 40} V${y + 16}`, fill: "#b89a6c" }, g);
+  for (let i = 0; i < 8; i++) el("path", { d: `M${x - 40 + i * 11.4} ${y - 34} V${y + 16}`, stroke: "#9f8257", "stroke-width": 1.2 }, g);
+  el("path", { d: `M${x - 26} ${y + 16} V${y - 10} Q${x} ${y - 34} ${x + 26} ${y - 10} V${y + 16}Z`, fill: "#3c3329", opacity: .7 }, g);
+  el("path", { d: `M${x - 48} ${y - 32} L${x} ${y - 56} L${x + 48} ${y - 32}Z`, fill: "#6f7f86" }, g);
+  el("circle", { cx: x, cy: y - 40, r: 12, fill: "url(#g-glow)", class: "lens-glow" }, g);
+  const by = y - 102;
+  el("rect", { x: x - 42, y: by, width: 84, height: 38, rx: 7, fill: "#fffaf0", stroke: "#8a7b5c", "stroke-width": 2 }, g);
+  const who = checkTrains(p);
+  who.forEach((t, i) => {
+    const cx = who.length === 1 ? x : x - 20 + i * 40;
+    el("rect", { x: cx - 14, y: by + 6, width: 7, height: 7, rx: 2, fill: TRAIN[t] }, g);
+    icon(g, wantSign(p, t, depotOf()), cx + 4, by + 22, 20);
+  });
+  el("text", { x, y: y + 36, class: "lbl" }, g, n.label);
+}
+
+function drawGridLayer(g) {
+  if (svc().layer === "market") return drawMarketLayer(g);
+  if (svc().layer === "generic") return drawGenericLayer(g);
+  const s = svc(), N = s.nodes;
+  // River along the bottom, grass bank above it.
+  el("rect", { x: 0, y: 236, width: W, height: H - 236, fill: "#9fb27a" }, g);
+  el("path", { d: `M0 ${H} V352 Q200 338 420 350 T900 344 V${H}Z`, fill: "url(#g-water)" }, g);
+  const rip = el("g", { class: "ripple" }, g);
+  for (let i = 0; i < 12; i++) for (let j = 0; j < 2; j++) el("path", { d: `M${20 + i * 76 + j * 30} ${368 + j * 22} q8 -4 16 0 q8 4 16 0`, fill: "none", stroke: "#fff", "stroke-opacity": .55, "stroke-width": 1.6 }, rip);
+  boat(g, 250, 382, "#a04235");
+  boat(g, 720, 396, "#3f5d4a");
+  // Stone viaduct carrying the upper branch over the low ground.
+  el("rect", { x: 326, y: 122, width: 318, height: 112, fill: "#c2b49a" }, g);
+  for (let x = 338; x < 630; x += 58) el("path", { d: `M${x} 234 V176 a23 23 0 0 1 46 0 V234Z`, fill: "#8f9c71" }, g);
+  for (let i = 0; i < 6; i++) el("path", { d: `M326 ${134 + i * 18} H644`, stroke: "#ad9f84", "stroke-width": 1 }, g);
+  el("rect", { x: 320, y: 120, width: 330, height: 8, fill: "#a89a80" }, g);
+
+  // Track: the main line, both branches, the merge and the tail.
+  const P = id => [N[id].x, N[id].y];
+  trackPath(g, [[-20, 210], P("depot"), P("p0"), P("fork"), [300, 210]]);
+  trackPath(g, [[300, 210], ...GRID_WAY["fork>n1"].slice(1), P("n1"), P("inN"), P("n2"), ...GRID_WAY["n2>merge"], P("merge")]);
+  trackPath(g, [[300, 210], ...GRID_WAY["fork>s1"].slice(1), P("s1"), P("inS"), P("s2"), ...GRID_WAY["s2>merge"], P("merge")]);
+  trackPath(g, [P("merge"), P("m"), P("term"), [920, 210]]);
+
+  // Departures (reuses the line drawing, lifted to the main line).
+  drawDepot(el("g", { transform: `translate(0 ${N.depot.y - LINE + 14})` }, g), N.depot.x);
+  // The points, with the rule board beside them.
+  const f = N.fork;
+  el("circle", { cx: 300, cy: 210, r: 9, fill: "#3d3a35" }, g);
+  el("path", { d: "M300 210 l-14 -22", stroke: "#b5523b", "stroke-width": 5, "stroke-linecap": "round" }, g);
+  const fx = f.x - 22, fy = f.y + 132;
+  el("rect", { x: fx - 46, y: fy - 104, width: 92, height: 70, rx: 8, fill: "#22272a", stroke: "#4a5257", "stroke-width": 2 }, g);
+  el("path", { d: `M${fx - 30} ${fy - 70} v-18 m-6 6 l6 -6 6 6`, stroke: "#e8eaec", "stroke-width": 2.4, fill: "none", "stroke-linecap": "round" }, g);
+  icon(g, "sun", fx - 2, fy - 82, 20); icon(g, "star", fx + 22, fy - 82, 20);
+  el("path", { d: `M${fx - 30} ${fy - 62} v18 m-6 -6 l6 6 6 -6`, stroke: "#e8eaec", "stroke-width": 2.4, fill: "none", "stroke-linecap": "round" }, g);
+  icon(g, "moon", fx - 2, fy - 50, 20);
+  el("text", { x: fx, y: fy - 22, class: "lbl" }, g, "Points");
+
+  for (const id of s.order) {
+    const n = N[id];
+    if (n.kind === "socket") gridSignal(g, n.x, n.y, state.signals[state.service][id]);
+    if (n.kind === "check" && n.group === "insp") gridShed(g, n, gridGroup("insp"));
+  }
+  drawCheck(el("g", { transform: `translate(0 ${N.term.y - LINE})` }, g), gridGroup("term"), N.term.x);
+  if (s.nights) el("rect", { y: 120, width: W, height: H - 120, fill: "#1d2747", opacity: .28, "pointer-events": "none" }, g);
+}
+
+
+// ---------- Market Junction: two depots, a market, a bypass, a shared approach and a ferry dock ----------
+function smallDepot(g, n, t) {
+  const { x, y } = n;
+  el("rect", { x: x - 40, y: y + 18, width: 80, height: 34, fill: "#b4664c" }, g);
+  for (let i = 0; i < 3; i++) el("path", { d: `M${x - 40} ${y + 26 + i * 9}h80`, stroke: "#9c5440", "stroke-width": 1 }, g);
+  el("path", { d: `M${x - 46} ${y + 20} l46 -18 46 18Z`, fill: "#5d4b3f" }, g);
+  el("rect", { x: x - 8, y: y + 30, width: 16, height: 22, fill: "#5a3d2b" }, g);
+  // The departure board for this train only.
+  const by = y - 86, bw = Math.max(92, 64 + tname(t).length * 8.2), bx = Math.max(6, x - 46);
+  el("path", { d: `M${x - 26} ${by + 44} V${y - 18} M${x + 26} ${by + 44} V${y - 18}`, stroke: "#3d3a35", "stroke-width": 3 }, g);
+  el("rect", { x: bx, y: by, width: bw, height: 46, rx: 8, fill: "#22272a", stroke: "#4a5257", "stroke-width": 2 }, g);
+  el("rect", { x: bx + 10, y: by + 17, width: 11, height: 11, rx: 2, fill: TRAIN[t] }, g);
+  el("text", { x: bx + 26, y: by + 27, fill: "#e8eaec", "font-size": 13, "font-weight": 700 }, g, tname(t));
+  el("circle", { cx: bx + bw - 20, cy: by + 23, r: 14, fill: "url(#g-glow)", class: "lens-glow" }, g);
+  icon(g, depotOf()[t], bx + bw - 20, by + 23, 22);
+  el("text", { x, y: y + 68, class: "lbl" }, g, n.label);
+}
+function terminalGate(g, n, p, t) {
+  const { x, y } = n;
+  el("rect", { x: x - 46, y: y + 18, width: 92, height: 14, fill: "#c9b48d" }, g);
+  el("path", { d: `M${x - 50} ${y - 58} H${x + 50} L${x + 42} ${y - 46} H${x - 42}Z`, fill: "#5d6b4f" }, g);
+  for (const cx of [x - 40, x + 40]) el("rect", { x: cx - 2.5, y: y - 46, width: 5, height: 64, fill: "#3d3a35" }, g);
+  el("rect", { x: x - 30, y: y + 28, width: 7, height: 30, fill: "#3d3a35" }, g);
+  const arm = el("rect", { x: x - 27, y: y + 30, width: 50, height: 9, rx: 3, fill: TRAIN[t], class: "gate-arm", id: `gate-${t}`, stroke: "#fff", "stroke-width": 1.5, "stroke-dasharray": "6 6" }, g);
+  const by = y - 104;
+  el("rect", { x: x - 30, y: by, width: 60, height: 40, rx: 7, fill: "#fffaf0", stroke: "#8a7b5c", "stroke-width": 2 }, g);
+  el("rect", { x: x - 24, y: by + 6, width: 8, height: 8, rx: 2, fill: TRAIN[t] }, g);
+  icon(g, wantSign(p, t, depotOf()), x + 4, by + 22, 22);
+  el("text", { x: n.labelAt ? n.labelAt[0] : x, y: n.labelAt ? n.labelAt[1] : y + 72, class: "lbl" }, g, n.label);
+}
+function drawMarketLayer(g) {
+  const s = svc(), N = s.nodes, way = s.way;
+  const P = id => [N[id].x, N[id].y];
+  // Ground, the town square and the river by the dock.
+  el("rect", { x: 0, y: 236, width: W, height: H - 236, fill: "#9fb27a" }, g);
+  el("path", { d: `M520 ${H} V392 Q700 372 900 380 V${H}Z`, fill: "url(#g-water)" }, g);
+  const rip = el("g", { class: "ripple" }, g);
+  for (let i = 0; i < 5; i++) el("path", { d: `M${560 + i * 70} 402 q8 -4 16 0 q8 4 16 0`, fill: "none", stroke: "#fff", "stroke-opacity": .55, "stroke-width": 1.6 }, rip);
+  boat(g, 780, 404, "#3f5d4a");
+  el("rect", { x: 560, y: 150, width: 210, height: 40, rx: 6, fill: "#d9c9a6" }, g);
+  for (let i = 0; i < 4; i++) {
+    const sx = 574 + i * 50;
+    el("rect", { x: sx, y: 170, width: 36, height: 16, fill: "#c9a979" }, g);
+    el("path", { d: `M${sx - 4} 172 h44 l-4 -11 h-36Z`, fill: ["#b5523b", "#3f6f8f", "#c9a24a", "#5f8146"][i] }, g);
+    el("path", { d: `M${sx - 4} 172 h44`, stroke: "#fff", "stroke-width": 1.5, "stroke-dasharray": "4 4" }, g);
+  }
+  // Track: the mail line, the ferry approach, the shared stretch, the ferry exit and the bypass.
+  trackPath(g, [[-20, N.mDepot.y], P("mDepot"), P("mp"), ...way["mp>c"], P("c"), ...way["c>market"], P("market"), P("ma"), P("home"), [940, N.home.y]]);
+  trackPath(g, [[-20, N.fDepot.y], P("fDepot"), P("pts"), ...way["pts>fa"], P("fa"), [360, 210]]);
+  trackPath(g, [[560, 210], ...way["c>dock"].slice(1), P("dock"), [940, N.dock.y]]);
+  trackPath(g, [P("pts"), ...way["pts>dock"], P("dock")]);
+  // The points and their rule board.
+  const f = N.pts;
+  el("circle", { cx: 214, cy: 320, r: 8, fill: "#3d3a35" }, g);
+  el("path", { d: "M214 320 l12 -20", stroke: "#b5523b", "stroke-width": 5, "stroke-linecap": "round" }, g);
+  const bx = f.x + 60, bw = 124;
+  el("rect", { x: bx - bw / 2, y: f.y - 98, width: bw, height: 62, rx: 8, fill: "#22272a", stroke: "#4a5257", "stroke-width": 2 }, g);
+  for (const [sign, label, dy] of [["moon", "approach", -82], ["sun", "bypass", -52]]) {
+    icon(g, sign, bx - 44, f.y + dy, 18);
+    el("path", { d: `M${bx - 30} ${f.y + dy} h16 m-5 -5 l5 5 -5 5`, stroke: "#e8eaec", "stroke-width": 2, fill: "none", "stroke-linecap": "round" }, g);
+    el("text", { x: bx - 8, y: f.y + dy + 4, fill: "#e8eaec", "font-size": 12, "font-weight": 600 }, g, label);
+  }
+  el("text", { x: f.x + 4, y: f.y + 44, class: "lbl" }, g, "Points");
+  el("text", { x: 470, y: 384, class: "lbl" }, g, "Bypass");
+  smallDepot(g, N.mDepot, "A");
+  smallDepot(g, N.fDepot, "B");
+  for (const id of s.order) {
+    const n = N[id];
+    if (n.kind === "socket") gridSignal(g, n.x, n.y, state.signals[state.service][id]);
+  }
+  gridShed(g, N.market, gridGroup("market"));
+  terminalGate(g, N.home, gridGroup("home"), "A");
+  terminalGate(g, N.dock, gridGroup("dock"), "B");
+  el("text", { x: N.c.x, y: N.c.y + 34, class: "lbl" }, g, "Shared signal");
+  if (s.nights) el("rect", { y: 120, width: W, height: H - 120, fill: "#1d2747", opacity: .28, "pointer-events": "none" }, g);
+}
+
+function readerLine(r) {
+  const s = svc();
+  const reader = s.route.find(p => p.kind === "socket" && /^(r@|r#|q:)/.test(state.signals[state.service][p.id] || ""));
+  if (!reader) return null;
+  const o = state.signals[state.service][reader.id];
+  const at = r.record.findIndex(q => q.id === reader.id);
+  if (at < 0) return null;
+  const name = tname(r.train);
+  if (o.startsWith("r#") || o.startsWith("r@")) {
+    const src = o.startsWith("r#") ? r.record[Number(o.slice(2))] : o.slice(2) === "depot" ? r.record[0] : r.record.slice(0, at).find(q => q.id === o.slice(2));
+    if (!src) return { train: r.train, html: `${name} · nothing recorded at ${o.startsWith("r#") ? "stop " + o.slice(2) : placeName(o.slice(2))}` };
+    const k = r.record.indexOf(src);
+    return { train: r.train, cell: src.id, html: `${name} · ${k ? `stop ${k}` : "departure"} · ${placeName(src.id, true)} · ${htmlIcon(src.sign)}` };
+  }
+  const [office, train, field] = o.slice(2).split("|");
+  const hits = (depotOf().tickets || []).filter(k => (office === "*" || k.office === office) && (train === "*" || k.train === r.train) && (field === "*" || k.field === field));
+  const tk = k => `${placeName(k.office, true)} ${tname(k.train)[0]}·${k.field} ${htmlIcon(k.reply)}`;
+  if (hits.length === 1) return { train: r.train, html: `${name} ← ${tk(hits[0])}` };
+  return { train: r.train, html: `${name} · ${hits.length ? `${hits.length} tickets matched: ${hits.map(tk).join(", ")}` : "no ticket matched"} · no answer` };
+}
+function syncReadout() {
+  const cur = state.current[state.service];
+  if (!cur || !svc().grid) { drawReadout([]); state.readCells = null; return; }
+  const lines = cur.runs.map(readerLine).filter(Boolean);
+  state.readCells = lines.filter(l => l.cell).map(l => ({ train: l.train, id: l.cell }));
+  drawReadout(lines);
+}
+function drawReadout(lines) {
+  $("board").querySelectorAll(".readout").forEach(n => n.remove());
+  if (!lines.length || !svc().grid) return;
+  const reader = svc().route.find(p => p.kind === "socket" && /^(r@|r#|q:)/.test(state.signals[state.service][p.id] || ""));
+  if (!reader) return;
+  const n = gridNode(reader.id);
+  const box = document.createElement("div");
+  box.className = "readout";
+  const [rx, ry] = n.readoutAt || [n.x, n.y + 34];
+  box.style.left = `${100 * rx / W}%`;
+  box.style.top = `${100 * ry / H}%`;
+  box.setAttribute("role", "status");
+  box.innerHTML = `<b>${placeName(reader.id)}</b>` + lines.map(l => `<span style="--c:${TRAIN[l.train]}">${l.html}</span>`).join("");
+  $("board").append(box);
+}
+
+function drawGridStrip(filled) {
+  const s = svc();
+  const cur = state.current[state.service], last = state.last[state.service];
+  const table = $("strip");
+  table.replaceChildren();
+  const cap = document.createElement("caption");
+  cap.className = "sr-only";
+  cap.textContent = "The sign each car carried at each point it passed";
+  table.append(cap);
+  const head = table.createTHead().insertRow();
+  head.append(document.createElement("td"));
+  for (const id of s.order) {
+    const th = document.createElement("th");
+    th.scope = "col";
+    const look = document.createElement("button");
+    look.type = "button";
+    look.className = "look";
+    look.textContent = placeName(id, true);
+    if (state.trace && state.trace.id === id && cur) th.classList.add("trace");
+    if (state.lookAt && gridNode(id).kind === "socket" && (gridNode(state.lookAt).equip || state.lookAt) === (gridNode(id).equip || id)) th.classList.add("twin");
+    look.setAttribute("aria-label", `Show the trains at ${placeName(id)}`);
+    look.disabled = !cur || state.running;
+    look.addEventListener("click", () => showAt(id));
+    th.append(look);
+    head.append(th);
+  }
+  const body = table.createTBody();
+  const rows = (runs, cls) => runs.forEach((r, ri) => {
+    const row = body.insertRow();
+    if (cls) row.className = cls;
+    const th = document.createElement("th");
+    th.scope = "row";
+    th.innerHTML = `<i style="background:${TRAIN[r.train]}"></i>${tname(r.train)}${cls ? ' <span class="sr-only">last run</span>' : ""}`;
+    row.append(th);
+    const upto = cls ? Infinity : filled[r.train];
+    const seen = r.record.slice(0, upto + 1);
+    const otherRun = runs[1 - ri];
+    const otherSeen = otherRun.record.slice(0, (cls ? Infinity : filled[otherRun.train]) + 1);
+    for (const id of s.order) {
+      const td = row.insertCell();
+      const rec = seen.find(q => q.id === id);
+      if (!rec) {
+        const passes = r.record.some(q => q.id === id);
+        td.className = "empty";
+        td.textContent = passes ? "·" : "–";
+        td.setAttribute("aria-label", `${r.train} ${passes ? "has not reached" : "does not pass"} ${placeName(id)}`);
+        continue;
+      }
+      const stopNo = r.record.indexOf(rec);
+      td.innerHTML = htmlIcon(rec.sign) + (stopNo ? `<sup class="stopno" aria-hidden="true">${stopNo}</sup>` : "");
+      if (!cls && state.readCells?.some(c => c.train === r.train && c.id === id)) td.classList.add("read");
+      const twin = state.lookAt && (gridNode(state.lookAt).equip || state.lookAt) === (gridNode(id).equip || id) && gridNode(id).kind === "socket";
+      if (twin) td.classList.add("twin");
+      const o = otherSeen.find(q => q.id === id);
+      if (o && o.sign === rec.sign && id !== "depot") td.classList.add("same");
+      const c = Object.values(r.checks).find(k => k.at === id);
+      if (c) td.classList.add(c.hit ? "hit" : "miss");
+      const tr = state.trace;
+      if (!cls && tr && tr.train === r.train && tr.id === id) { td.classList.add("trace"); td.innerHTML = `${htmlIcon(tr.in)}<span class="arrow" aria-hidden="true">→</span>${htmlIcon(tr.out)}`; }
+      td.setAttribute("aria-label", `${tname(r.train)}, ${stopNo ? `stop ${stopNo}` : "departure"}, ${placeName(id)}: ${NAME[rec.sign] || rec.sign}${c ? (c.hit ? ", match" : ", no match") : ""}`);
+    }
+  });
+  if (cur) rows(cur.runs, "");
+  if (last) rows(last.runs, "last");
+}
+
+function findTrace(runs) {
+  for (const r of runs) for (const c of Object.values(r.checks)) if (!c.hit) {
+    const upto = r.record.findIndex(q => q.id === c.at);
+    // A reader that tried and failed (no answer, or nothing recorded there) explains the miss better than an older change.
+    for (let i = upto; i > 0; i--) { const nt = r.record[i].note; if (nt && ("replies" in nt || "missing" in nt)) return { train: r.train, id: r.record[i].id, in: r.record[i - 1].sign, out: r.record[i].sign, unchanged: true }; }
+    for (let i = upto; i > 0; i--) if (r.record[i].sign !== r.record[i - 1].sign && gridNode(r.record[i].id).kind === "socket")
+      return { train: r.train, id: r.record[i].id, in: r.record[i - 1].sign, out: r.record[i].sign };
+    return null;
+  }
+  return null;
+}
+function drawTrace() {
+  $("board").querySelectorAll(".trace-ring").forEach(n => n.remove());
+  const tr = state.trace;
+  if (!tr || !svc().grid) return;
+  const n = gridNode(tr.id);
+  const ring = document.createElement("div");
+  ring.className = "trace-ring";
+  ring.style.left = `${100 * n.x / W}%`;
+  ring.style.top = `${100 * (n.y - 52) / H}%`;
+  ring.setAttribute("aria-hidden", "true");
+  $("board").append(ring);
+}
+function gridVerdict(runs, sc) {
+  state.trace = sc === total() ? null : findTrace(runs);
+  drawTrace();
+  const fb = $("feedback");
+  const same = runs[0].up === runs[1].up;
+  if (sc === total()) {
+    fb.className = "reason win";
+    fb.innerHTML = same ? `<strong>All ${total()} checks matched.</strong>`
+      : `<strong>All ${total()} checks matched.</strong> After inspection both cars carried ★, and the branch each train took still kept them apart until the merge.`;
+    return fb;
+  }
+  fb.className = "reason lose";
+  const misses = [];
+  for (const r of runs) {
+    if (r.stopped) {
+      const held = r.record.at(-1).held;
+      const ask = r.record.find(q => q.note && "replies" in q.note);
+      if (ask) misses.push(`${tname(r.train)}'s request ${ask.note.replies ? `matched ${ask.note.replies} tickets, so nobody answered` : "matched no ticket"}`);
+      misses.push(`${tname(r.train)} was ${held ? "held at" : "turned away at"} the ${placeName(r.stopped).toLowerCase()} carrying ${htmlIcon(r.record.at(-1).sign)}`);
+      continue;
+    }
+    const ask = r.record.find(q => q.note && "replies" in q.note);
+    if (ask && Object.values(r.checks).some(c => !c.hit)) misses.push(`${tname(r.train)}'s request ${ask.note.replies ? `matched ${ask.note.replies} tickets, so nobody answered` : "matched no ticket"}`);
+    for (const [gid, c] of Object.entries(r.checks)) if (!c.hit && gridNode(c.at)?.quay) misses.push(`${tname(r.train)} ended at the ${placeName(c.at).toLowerCase()}`);
+  }
+  for (const r of runs) if (!r.stopped) for (const [gid, c] of Object.entries(r.checks)) if (!c.hit && !gridNode(c.at)?.quay)
+    misses.push(`${tname(r.train)} reached ${gid === "insp" ? "the " + placeName(c.at).toLowerCase() : gridGroup(gid)?.at ? gridGroup(gid).at.replace(/^at /, "") : "the " + (gridGroup(gid)?.label.toLowerCase() || "terminus")} carrying ${htmlIcon(c.shown)}`);
+  const fork = same && !svc().layer ? ` Both trains took the ${runs[0].up ? "viaduct" : "river"} branch at the points.` : "";
+  const tr = state.trace;
+  const why = !tr ? "" : tr.unchanged ? ` The ${placeName(tr.id).toLowerCase()} left ${tname(tr.train)}'s sign at ${htmlIcon(tr.out)}.`
+    : ` ${tname(tr.train)}'s sign last changed at the ${placeName(tr.id).toLowerCase()}: ${htmlIcon(tr.in)} in, ${htmlIcon(tr.out)} out.`;
+  fb.innerHTML = `<strong>${sc} of ${total()} checks matched.</strong> ${misses.join(", ")}.${fork}${why}`;
+  return fb;
+}
+
+// Train placement on the grid: follow the polyline through the nodes it visits, turning on bends.
+function gridPoints(record) {
+  const N = svc().nodes, way = svc().way || GRID_WAY;
+  const first = N[record[0].id], last = N[record.at(-1).id];
+  const pts = [{ x: -70, y: first.y }];
+  record.forEach((rec, i) => {
+    if (i) for (const [x, y] of way[`${record[i - 1].id}>${rec.id}`] || []) pts.push({ x, y });
+    pts.push({ x: N[rec.id].x, y: N[rec.id].y, i });
+  });
+  if (!record.at(-1).stopped) pts.push(last.exit ? { x: last.exit[0], y: last.exit[1] } : { x: 1000, y: last.y });
+  let d = 0;
+  pts.forEach((p, k) => { if (k) d += Math.hypot(p.x - pts[k - 1].x, p.y - pts[k - 1].y); p.d = d; });
+  return pts;
+}
+function pointAt(pts, d) {
+  let k = 1;
+  while (k < pts.length - 1 && pts[k].d < d) k++;
+  const a = pts[k - 1], b = pts[k];
+  const f = Math.min(1, Math.max(0, (d - a.d) / Math.max(1, b.d - a.d)));
+  return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, angle: Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI };
+}
+// drawTrains lays a train out at the rail origin; on the grid we then move and turn it.
+function placeGridTrains(list) {
+  drawTrains(list.map(([t, , sign, dist]) => [t, dist, sign]));
+  [...$("trains").children].forEach((g, k) => {
+    const pos = list[k][1];
+    const back = Math.abs(pos.angle) > 90;
+    const a = back ? pos.angle - 180 * Math.sign(pos.angle || 1) : pos.angle;
+    g.setAttribute("transform", `translate(${pos.x.toFixed(1)} ${pos.y.toFixed(1)}) rotate(${a.toFixed(1)}) scale(${back ? -.72 : .72} .72)`);
+  });
+}
+function placeGridTrain(t, pos, sign, dist) { placeGridTrains([[t, pos, sign, dist]]); }
+
+function rollGrid(r, onEvent) {
+  const pts = gridPoints(r.record);
+  const events = pts.filter(p => p.i !== undefined && p.i > 0);
+  let sign = r.record[0].sign;
+  if (reduced.matches) {
+    for (const e of events) sign = onEvent(e.i, e.x);
+    placeGridTrain(r.train, pointAt(pts, pts.at(-1).d), sign, 0);
+    return Promise.resolve();
+  }
+  return new Promise(done => {
+    const start = performance.now();
+    let next = 0, lastPuff = 0;
+    const end = pts.at(-1).d;
+    const frame = now => {
+      const d = Math.min(end, (now - start) * SPEED);
+      while (next < events.length && d >= events[next].d) { sign = onEvent(events[next].i, events[next].x); next += 1; }
+      const pos = pointAt(pts, d);
+      placeGridTrain(r.train, pos, sign, d);
+      if (now - lastPuff > 110) { puffs.push({ x: pos.x + 12, y: pos.y - 36, born: now }); if (!smokeLoop) smokeLoop = requestAnimationFrame(drawSmoke); sfx.chuff(); lastPuff = now; }
+      d < end ? requestAnimationFrame(frame) : done();
+    };
+    requestAnimationFrame(frame);
+  });
+}
+
+// Recorder table: one column per place; A and B rows for this run, faded rows for the last run.
+function drawStrip(filled = { A: Infinity, B: Infinity }) {
+  if (svc().grid) return drawGridStrip(filled);
+  const s = svc();
+  const ids = ["depot", ...s.route.map(p => p.id)];
+  const cur = state.current[state.service];
+  const last = state.last[state.service];
+  const cable = state.cable[state.service];
+  const table = $("strip");
+  table.replaceChildren();
+  const cap = document.createElement("caption");
+  cap.className = "sr-only";
+  cap.textContent = "The sign each car carried at each point on the line";
+  table.append(cap);
+  const head = table.createTHead().insertRow();
+  head.append(document.createElement("td"));
+  ids.forEach((id, i) => {
+    const th = document.createElement("th");
+    th.scope = "col";
+    const look = document.createElement("button");
+    look.type = "button";
+    look.className = "look";
+    look.textContent = placeName(id);
+    look.setAttribute("aria-label", `Show the trains at ${placeName(id)}`);
+    look.disabled = !cur || state.running;
+    look.addEventListener("click", () => showAt(id));
+    th.append(look);
+    if (cable && (cable.from === id || cable.to === id)) {
+      const tag = document.createElement("span");
+      tag.className = "cable-tag";
+      tag.textContent = cable.from === id ? "telegraph reads" : "telegraph restores";
+      th.append(tag);
+    }
+    head.append(th);
+  });
+  const body = table.createTBody();
+  const addRows = (runs, cls, label) => {
+    runs.forEach((r, ri) => {
+      const row = body.insertRow();
+      if (cls) row.className = cls;
+      const th = document.createElement("th");
+      th.scope = "row";
+      th.innerHTML = `<i style="background:${TRAIN[r.train]}"></i>${r.train}${label ? ` <span class="sr-only">${label}</span>` : ""}`;
+      row.append(th);
+      r.record.forEach((rec, ci) => {
+        const td = row.insertCell();
+        const shown = cls || ci <= filled[r.train];
+        if (!shown) { td.className = "empty"; td.textContent = "·"; return; }
+        td.innerHTML = htmlIcon(rec.sign);
+        const other = runs[1 - ri].record[ci];
+        const otherShown = cls || ci <= filled[runs[1 - ri].train];
+        if (otherShown && other.sign === rec.sign && rec.id !== "depot") td.classList.add("same");
+        const check = r.checks[rec.id];
+        if (check) {
+          td.classList.add(check.hit ? "hit" : "miss");
+          td.setAttribute("aria-label", `${r.train} at ${placeName(rec.id)}: showed ${NAME[check.shown]}, ${check.hit ? "match" : "no match"}`);
+        } else td.setAttribute("aria-label", `${r.train} at ${placeName(rec.id)}: ${rec.restored ? "restored to " : ""}${NAME[rec.sign]}`);
+        if (rec.restored) td.classList.add("cable");
+      });
+    });
+  };
+  if (cur) addRows(cur.runs, "", "");
+  if (last) addRows(last.runs, "last", "last run");
+  if (!cur) {
+    const row = body.insertRow();
+    const td = row.insertCell();
+    td.colSpan = ids.length + 1;
+    td.className = "empty";
+    td.textContent = "No run yet";
+  }
+}
+
+function showAt(id) {
+  const cur = state.current[state.service];
+  if (!cur) return;
+  if (svc().grid) {
+    state.lookAt = id;
+    drawStrip();
+    const n = gridNode(id);
+    const here = cur.runs.map(r => [r, r.record.find(q => q.id === id)]).filter(([, q]) => q);
+    placeGridTrains(here.map(([r, q], k) => [r.train, { x: n.x + 40 - k * 0, y: n.y - (here.length > 1 && k === 0 ? 46 : 0), angle: 0 }, q.sign, n.x]));
+    $("rec-note").innerHTML = `${placeName(id)}: ` + (here.length ? here.map(([r, q]) => `${tname(r.train)} carried ${htmlIcon(q.sign)}`).join(", ") : "neither train passes here") + ".";
+    return;
+  }
+  const X = xs();
+  const idx = ["depot", ...svc().route.map(p => p.id)].indexOf(id);
+  drawTrains(cur.runs.map((r, i) => [r.train, X[id] + 60, r.record[idx].sign, i ? 0 : -64]));
+  $("rec-note").textContent = `${placeName(id)}: A carried ${NAME[cur.runs[0].record[idx].sign]}, B carried ${NAME[cur.runs[1].record[idx].sign]}.`;
+}
+
+// Gate arms pivot on their post; the SVG transform attribute renders reliably where CSS rotation on SVG does not.
+function openGate(t) {
+  const arm = $(`gate-${t}`);
+  if (arm) arm.setAttribute("transform", `rotate(-70 ${arm.getAttribute("x")} ${Number(arm.getAttribute("y")) + 4})`);
+}
+function closeGates() { document.querySelectorAll(".gate-arm").forEach(a => a.removeAttribute("transform")); }
+
+function total(id = state.service) { return SERVICES[id].route.filter(p => p.kind === "check").reduce((n, p) => n + checkTrains(p).length, 0); }
+const perfect = runs => score(runs) === total();
+function score(runs) { return runs.reduce((n, r) => n + Object.values(r.checks).filter(c => c.hit).length, 0); }
+
+function verdict(runs, sc) {
+  if (svc().grid) return gridVerdict(runs, sc);
+  const fb = $("feedback");
+  const s = svc();
+  const cable = state.cable[state.service];
+  const reader = s.route.find(p => p.reader);
+  const ids = ["depot", ...s.route.map(p => p.id)];
+  const firstSame = ids.findIndex((id, i) => i > 0 && runs[0].record[i].sign === runs[1].record[i].sign);
+  const readerHits = runs.filter(r => r.checks[reader.id].hit).length;
+  const lower = id => (/^s\d$/.test(id) || id === "depot" ? "" : "the ") + placeName(id).toLowerCase();
+  let html;
+  if (sc === total()) {
+    fb.className = "reason win";
+    html = !cable ? `<strong>All ${total()} checks matched, with the telegraph closed.</strong> The two trains never carried the same sign.`
+      : `<strong>All ${total()} checks matched.</strong> From ${lower(ids[firstSame])} on the cars carried the same sign, and at ${lower(cable.to)} the telegraph gave them back what they carried at ${lower(cable.from)}.`;
+  } else {
+    fb.className = "reason lose";
+    if (cable && readerHits < 2) {
+      const idx = ids.indexOf(cable.to);
+      const got = runs.map(r => NAME[r.record[idx].sign]).join(" and ");
+      html = `<strong>${sc} of ${total()} checks matched.</strong> At ${lower(cable.to)} the telegraph restored what the cars carried at ${lower(cable.from)}: ${got}. The ${reader.label.toLowerCase()} wanted something else.`;
+    } else if (firstSame > 0 && readerHits < 2) {
+      html = `<strong>${sc} of ${total()} checks matched.</strong> From ${lower(ids[firstSame])} on, A and B carried the same sign, and the ${reader.label.toLowerCase()} needs them different.`;
+    } else {
+      html = `<strong>${sc} of ${total()} checks matched.</strong> The recorder shows what each car carried into each check.`;
+    }
+  }
+  fb.innerHTML = html;
+  return fb;
+}
+
+async function dispatch() {
+  const serviceId = state.service;
+  const s = svc();
+  state.running = true;
+  if (state.current[serviceId]) state.last[serviceId] = state.current[serviceId];
+  const runs = run(serviceId, state.signals[serviceId], state.cable[serviceId]);
+  const pinned = s.nights && state.current[serviceId]?.nights && !perfect(state.current[serviceId].nights[state.night[serviceId]]);
+  const replayed = state.night[serviceId];
+  state.current[serviceId] = { runs };
+  $("feedback").textContent = "";
+  $("feedback").className = "reason";
+  $("rec-note").textContent = pinned ? `Replaying night ${state.night[serviceId] + 1} first, the night that failed last time.` : "Recording this run.";
+  closeGates();
+  refreshControls();
+  const X = xs();
+  const ids = ["depot", ...s.route.map(p => p.id)];
+  const filled = { A: -1, B: -1 };
+  const wire = drawWire();
+  $("board").classList.add("running");
+  const readLines = [];
+  drawReadout([]);
+  if (s.grid) for (const r of runs) {
+    sfx.whistle();
+    filled[r.train] = 0;
+    drawStrip(filled);
+    await rollGrid(r, (i, x) => {
+      const id = r.record[i].id;
+      const check = Object.values(r.checks).find(c => c.at === id);
+      const n = gridNode(id);
+      if (r.record[i].note && ("answered" in r.record[i].note || "replies" in r.record[i].note || "restored" in r.record[i].note || "missing" in r.record[i].note)) {
+        const line = readerLine(r);
+        if (line) { readLines.push(line); drawReadout(readLines); state.readCells = readLines.filter(l => l.cell).map(l => ({ train: l.train, id: l.cell })); }
+      }
+      const ans = r.record[i].note?.answered;
+      if (ans) { const o = Object.values(svc().nodes).find(q => q.office === ans); if (o) { flash(o.x, o.y - 30, o.x); sfx.click(); } }
+      if (r.record[i].note?.restored) sfx.click();
+      if (r.record[i].sign !== r.record[i - 1].sign) { flash(n.x, n.y - 16, n.x - 50); sfx.clank(); }
+      if (check) (check.hit ? sfx.chime : sfx.thud)();
+      filled[r.train] = i;
+      drawStrip(filled);
+      if (check && (id === "term" || gridNode(id).terminal) && check.hit) openGate(r.train);
+      return r.record[i].sign;
+    });
+  }
+  else for (const r of runs) {
+    sfx.whistle();
+    filled[r.train] = 0;
+    drawStrip(filled);
+    const events = ids.slice(1).map((id, k) => ({ i: k + 1, at: X[id] + 24 }));
+    await rollThrough(r.train, r.record[0].sign, events, (i, x) => {
+      const check = r.checks[ids[i]];
+      if (r.record[i].restored) pulse(wire);
+      if (r.record[i].sign !== r.record[i - 1].sign) { flash(x); r.record[i].restored ? sfx.click() : sfx.clank(); }
+      if (check) (check.hit ? sfx.chime : sfx.thud)();
+      filled[r.train] = i;
+      drawStrip(filled);
+      if (check && s.route[i - 1].reader && check.hit) openGate(r.train);
+      return r.record[i].sign;
+    });
+  }
+  $("trains").replaceChildren();
+  $("board").classList.remove("running");
+  state.running = false;
+  let sc = score(runs), solved = sc === total(), fb;
+  if (s.nights) {
+    const all = nightsOf(serviceId).map(n => run(serviceId, state.signals[serviceId], state.cable[serviceId], n));
+    const passed = all.filter(perfect).length;
+    state.current[serviceId] = { runs, nights: all };
+    if (perfect(runs) && passed < 4) {
+      state.night[serviceId] = all.findIndex(r => !perfect(r));
+      state.current[serviceId].runs = all[state.night[serviceId]];
+      drawScenery(); drawWire();
+    }
+    const shown = state.current[serviceId].runs;
+    sc = score(shown);
+    solved = passed === 4;
+    $("st-score").textContent = `${passed} / 4 nights`;
+    fb = verdict(shown, sc);
+    const n = state.night[serviceId];
+    if (solved) { fb.className = "reason win"; fb.innerHTML = "<strong>Every night matched every check.</strong> The same signals work whichever signs the trains leave with."; }
+    else fb.innerHTML = `<strong>${passed} of 4 nights passed.</strong> Night ${n + 1} (${tname("A")} ${htmlIcon(nightsOf()[n].A)}, ${tname("B")} ${htmlIcon(nightsOf()[n].B)}) is pinned below: ` + fb.innerHTML.replace(/<\/?strong>/g, "");
+    if (pinned) {
+      const nowOk = perfect(all[replayed]);
+      const lead = `Night ${replayed + 1} ran first and ${nowOk ? "now passes" : "still fails"}.`;
+      fb.innerHTML = fb.innerHTML.replace(/^(<strong>.*?<\/strong>)/, `$1 ${lead}`);
+    }
+  } else {
+    $("st-score").textContent = `${sc} / ${total()}`;
+    fb = verdict(runs, sc);
+  }
+  progress(sc, fb, solved);
+  refreshControls();
+  syncReadout();
+  drawStrip();
+  drawChecks();
+  drawNights();
+  if (state.pendingTour) { const t = state.pendingTour; state.pendingTour = null; runTour(t); }
+  $("rec-note").textContent = "Shaded: A and B carried the same sign. Press a heading to see the trains there.";
+  $("dispatch").focus();
+}
+
+// Pieces a layout uses: every signal that is set, plus the telegraph cable (its restoring signal's own setting is ignored).
+function piecesUsed(id, signals = state.signals[id], cable = state.cable[id]) {
+  const sockets = SERVICES[id].route.filter(p => p.kind === "socket").map(p => p.id);
+  return sockets.filter(k => signals[k] && cable?.to !== k).length + (cable ? 1 : 0);
+}
+// The fewest pieces that win this level (every night, where the level has nights), found by trying every layout.
+const minCache = {};
+function fewestPieces(id) {
+  if (id in minCache) return minCache[id];
+  const s = SERVICES[id];
+  const sockets = s.route.filter(p => p.kind === "socket").map(p => p.id);
+  const cols = s.grid ? [] : ["depot", ...s.route.map(p => p.id)];
+  const cables = [null];
+  if (s.cable && state.cableOpen) for (const to of sockets) for (const from of cols.slice(0, cols.indexOf(to))) cables.push({ from, to });
+  const nights = s.nights ? nightsOf(id) : [s.depot];
+  let best = Infinity;
+  const optsOf = sk => (s.grid && s.nodes[sk]?.options) || s.options;
+  const leverSets = (s.levers || []).reduce((acc, l) => acc.flatMap(a => l.options.map(v => ({ ...a, [l.id]: v }))), [{}]);
+  const total = sockets.reduce((m, sk) => m * optsOf(sk).length, 1);
+  for (const cable of cables) for (const levers of leverSets) for (let n = 0; n < total; n++) {
+    let k = n; const sig = { ...levers };
+    for (const sk of sockets) { const o = optsOf(sk); sig[sk] = cable?.to === sk ? "" : o[k % o.length]; k = Math.floor(k / o.length); }
+    const used = piecesUsed(id, sig, cable);
+    if (used >= best) continue;
+    if (nights.every(d => { const r = run(id, sig, cable, d); return score(r) === r.reduce((m, t) => m + Object.keys(t.checks).length, 0); })) best = used;
+  }
+  minCache[id] = best;
+  return best;
+}
+function brassCheck(id, fb) {
+  const used = piecesUsed(id), min = fewestPieces(id);
+  const first = !state.offered[id];
+  if (used <= min) {
+    if (!state.brass[id]) {
+      state.brass[id] = true;
+      fb.innerHTML += first ? ` <span class="brass">★ Brass star.</span> No layout solves this with fewer pieces.` : ` <span class="brass">★ Brass star.</span> You took it down to ${min}, the fewest that works.`;
+    }
+  } else if (!state.brass[id]) {
+    state.offered[id] = true;
+    fb.innerHTML += ` <span class="brass-offer">Brass star challenge: can you take one ${state.cable[id] ? "piece" : "signal"} out?</span>`;
+  }
+}
+
+const SAVE_KEY = "signal-relay-progress-v1";
+function saveProgress() {
+  if (COURSE) return;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ unlocked: state.unlocked, done: state.done, brass: state.brass, toured: state.toured, cableOpen: state.cableOpen })); } catch { /* storage blocked: progress lasts for this visit */ }
+}
+function loadProgress() {
+  if (COURSE) return;
+  try {
+    const saved = JSON.parse(localStorage.getItem(SAVE_KEY));
+    if (!saved) return;
+    for (const k of ["unlocked", "done", "brass", "toured"]) Object.assign(state[k], saved[k] || {});
+    state.cableOpen = !!saved.cableOpen;
+  } catch { /* unreadable save: start fresh */ }
+}
+function progress(sc, fb, solved = sc === total()) {
+  const id = state.service;
+  if (solved && id !== "return") brassCheck(id, fb);
+  if (id === "return" && sc === 3 && !state.cableOpen) {
+    state.cableOpen = true;
+    fb.innerHTML += " The telegraph office has opened.";
+    drawScenery();
+    state.pendingTour = "cable";
+  }
+  if (solved && !state.done[id]) {
+    state.done[id] = true;
+    const next = CAMPAIGN[CAMPAIGN.indexOf(id) + 1];
+    if (CAMPAIGN.includes(id) && next && !state.unlocked[next]) { state.unlocked[next] = true; fb.innerHTML += ` ${SERVICES[next].title} is open.`; }
+    if (id === CHALLENGE_AFTER) CHALLENGES.forEach(k => { state.unlocked[k] = true; });
+    if (COURSE) $("explainer").open = true;
+  }
+  saveProgress();
+}
+
+function levelChip(id, n) {
+  const s = SERVICES[id];
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "chip" + (state.done[id] ? " done" : "") + (state.unlocked[id] ? "" : " locked");
+  b.setAttribute("aria-current", String(state.service === id));
+  b.disabled = !state.unlocked[id] || state.running;
+  const status = !state.unlocked[id] ? "locked" : state.brass[id] ? "solved, brass star" : state.done[id] ? "solved" : "open";
+  b.setAttribute("aria-label", `${n ? n + ". " : "Optional: "}${s.title}, ${status}`);
+  b.innerHTML = `${n ? `<span class="num">${n}</span>` : ""}<svg aria-hidden="true" viewBox="0 0 34 34"><use href="#${s.icon}"/></svg><span class="name">${s.title}</span>${n ? "" : '<span class="opt">optional</span>'}${!state.unlocked[id] ? '<span class="lock" aria-hidden="true">🔒</span>' : state.brass[id] ? '<span class="star" aria-hidden="true">★</span>' : state.done[id] ? '<span class="tick" aria-hidden="true">✓</span>' : ""}`;
+  b.addEventListener("click", () => { state.service = id; render(); });
+  const item = document.createElement("div");
+  item.setAttribute("role", "listitem");
+  item.className = "chip-item";
+  item.append(b);
+  return item;
+}
+function drawDesk() {
+  const row = $("carousel");
+  row.replaceChildren(...CAMPAIGN.map((id, i) => levelChip(id, i + 1)), ...CHALLENGES.map(id => levelChip(id, 0)));
+  const curChip = row.querySelector('[aria-current="true"]')?.parentElement;
+  if (curChip) row.scrollLeft = Math.max(0, curChip.offsetLeft - row.offsetLeft - (row.clientWidth - curChip.offsetWidth) / 2);
+  const scrolls = row.scrollWidth > row.clientWidth + 2;
+  $("car-prev").hidden = $("car-next").hidden = !scrolls;
+}
+
+function refreshControls() {
+  $("dispatch").disabled = state.running || state.touring;
+  $("reset").disabled = state.running || state.touring;
+  $("dispatch").textContent = state.current[state.service] ? "Run again" : "Dispatch trains";
+  drawSockets();
+  drawDesk();
+  const s = svc();
+  const cable = state.cable[state.service];
+  $("st-cable").textContent = !s.cable ? "office closed" : !state.cableOpen ? "locked" : cable ? `${placeName(cable.from)} to ${placeName(cable.to)}` : "on the reel";
+  $("st-cable-wrap").hidden = !s.cable;
+  $("howto-cable").hidden = !state.cableOpen || !svc().cable;
+}
+
+function afterChange() {
+  closePicker();
+  state.trace = null;
+  state.lookAt = null;
+  state.readCells = null;
+  drawReadout([]);
+  $("board").querySelectorAll(".trace-ring").forEach(n => n.remove());
+  $("st-score").textContent = "–";
+  $("feedback").textContent = "";
+  $("feedback").className = "reason";
+  closeGates();
+  drawWire();
+  refreshControls();
+  drawStrip();
+  drawChecks();
+  drawNights();
+  describe();
+}
+
+function describe() {
+  const s = svc();
+  if (s.desc) {
+    const d = depotOf();
+    const sig = s.route.filter(p => p.kind === "socket").map(p => `${placeName(p.id)} ${optionText(state.signals[state.service][p.id]).title}`);
+    const lev = (s.levers || []).map(l => l.labels[state.signals[state.service][l.id] || l.options[0]]);
+    const tix = d.tickets ? ` Tonight's tickets: ${d.tickets.map(k => `${placeName(k.office)} holds ${tname(k.train)}'s ${k.field}, ${NAME[k.reply]}`).join("; ")}.` : "";
+    $("map-desc").textContent = `${s.title}. Tonight ${tname("A")} leaves with ${NAME[d.A]} and ${tname("B")} with ${NAME[d.B]}. ${s.desc}${tix} Current settings: ${[...sig, ...lev].join("; ")}.`;
+    return;
+  }
+  if (s.layer === "market") {
+    const d = depotOf();
+    $("map-desc").textContent = `${s.title}. The mail train leaves its depot with ${NAME[d.A]}, passes the mail signal and the shared signal, then the market, which wants the opposite sign, the signal after the market, and home, which wants its own sign. The ferry leaves with ${NAME[d.B]}. At the points sun takes the bypass straight to the dock; moon takes the approach past the ferry approach signal and the shared signal. The dock wants the ferry's own sign. Signals: ` + s.route.filter(p => p.kind === "socket").map(p => `${placeName(p.id)} ${NAME[state.signals[state.service][p.id]]}`).join(", ") + ".";
+    return;
+  }
+  if (s.grid) {
+    $("map-desc").textContent = `${s.title}. Train A leaves with ${NAME[depotOf().A]}, train B with ${NAME[depotOf().B]}. A signal stands before the points. The points send moon down to the river branch and anything else up onto the viaduct. Each branch has two signals with an inspection shed between them that wants star. The branches merge, pass one more signal, and reach the terminus, which wants each train's own sign. Signals: ` + s.route.filter(p => p.kind === "socket").map(p => `${placeName(p.id)} ${NAME[state.signals[state.service][p.id]]}`).join(", ") + ".";
+    return;
+  }
+  const parts = s.route.map(p => {
+    if (p.kind === "socket") return `${placeName(p.id)} set to ${NAME[state.signals[state.service][p.id]]}`;
+    if (p.kind === "stamp") return `${p.label} gives A ${NAME[p.sign.A]} and B ${NAME[p.sign.B]}`;
+    return `${p.label} wants A ${NAME[wantSign(p, "A", depotOf())]} and B ${NAME[wantSign(p, "B", depotOf())]}`;
+  });
+  const cable = state.cable[state.service];
+  $("map-desc").textContent = `${s.title}. Train A leaves with ${NAME[depotOf().A]}, train B with ${NAME[depotOf().B]}. Then: ${parts.join("; ")}.` + (cable ? ` The telegraph restores at ${placeName(cable.to)} the sign each car carried at ${placeName(cable.from)}.` : "");
+}
+
+function drawChecks() {
+  const list = $("checks");
+  list.replaceChildren();
+  const cur = state.current[state.service];
+  for (const p of svc().route.filter(q => q.kind === "check")) for (const t of checkTrains(p)) {
+    const li = document.createElement("li");
+    const c = cur?.runs.find(r => r.train === t).checks[p.id];
+    li.className = c ? (c.hit ? "hit" : "miss") : "";
+    li.innerHTML = `<i style="background:${TRAIN[t]}"></i>${p.chip ? `${tname(t)} ${p.chip} ${htmlIcon(wantSign(p, t, depotOf()))}` : `${tname(t)} ${p.at || `at the ${p.label.toLowerCase()}`} shows ${wantPhrase(p, t, depotOf())}`}<span class="mark" aria-hidden="true">${c ? (c.hit ? "✓" : "×") : ""}</span>`;
+    li.setAttribute("aria-label", `${tname(t)} must show ${NAME[wantSign(p, t, depotOf())]} at the ${p.label.toLowerCase()}${c ? (c.hit ? ": matched" : ": not matched") : ""}`);
+    list.append(li);
+  }
+  $("recorder").hidden = !cur;
+}
+
+function nightPassed(i) { return state.current[state.service]?.nights ? perfect(state.current[state.service].nights[i]) : null; }
+function drawNights() {
+  const box = $("nights");
+  box.hidden = !svc().nights;
+  box.replaceChildren();
+  if (!svc().nights) return;
+  nightsOf().forEach((n, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "night";
+    const ok = nightPassed(i);
+    if (ok !== null) b.classList.add(ok ? "hit" : "miss");
+    b.setAttribute("aria-pressed", String(state.night[state.service] === i));
+    b.disabled = state.running || state.touring;
+    const pair = n.tickets ? ["A", "B"].map(t => { const k = n.tickets.find(q => q.train === t && q.field === "berth"); return `${tname(t)[0]}: ${placeName(k.office, true)}`; }).join(" · ")
+      : `${tname("A")} ${htmlIcon(n.A)} ${tname("B")} ${htmlIcon(n.B)}`;
+    b.innerHTML = `<span>Night ${i + 1}</span><span class="pair">${n.tickets ? "berths at " : ""}${pair}</span><span class="mark" aria-hidden="true">${ok === null ? "" : ok ? "✓" : "×"}</span>`;
+    const said = n.tickets ? `tickets: ${n.tickets.map(k => `${placeName(k.office)} holds ${tname(k.train)}'s ${k.field}, ${NAME[k.reply]}`).join("; ")}`
+      : `${tname("A")} leaves with ${NAME[n.A]}, ${tname("B")} with ${NAME[n.B]}`;
+    b.setAttribute("aria-label", `Night ${i + 1}: ${said}${ok === null ? "" : ok ? ", passed" : ", failed"}`);
+    b.addEventListener("click", () => {
+      state.night[state.service] = i;
+      const cur = state.current[state.service];
+      if (cur?.nights) cur.runs = cur.nights[i];
+      drawScenery(); drawWire(); syncReadout(); drawStrip(); drawChecks(); drawNights(); describe();
+      if (cur?.nights) $("st-score").textContent = `${cur.nights.filter(perfect).length} / 4 nights`;
+    });
+    box.append(b);
+  });
+}
+
+// Guided tour: a ring around each part of the line in turn, with one line of text.
+const TOURS = {
+  return: [
+    ["depot", "Two trains leave here, one after the other. Train A carries ☀ and train B carries ☾."],
+    ["junction", "At the junction, both trains must be carrying ★."],
+    ["terminus", "At the terminus, each train must be carrying the sign it left with: A ☀, B ☾."],
+    ["s1", "Signals change the sign on every car that passes. Tap one to choose what it does, then press Dispatch."],
+  ],
+  harbor: [
+    ["harbor", "The harbor replaces each car's sign with a berth: A gets ⚓ and B gets the bell."],
+    ["clearance", "Clearance wants ★ from both trains."],
+    ["docks", "Each dock gate wants its own train's berth back."],
+  ],
+  express: [
+    ["junction", "Tonight the junction wants each train to show the other train's sign: A ☾, B ☀."],
+    ["terminus", "At the terminus each train shows its own sign again."],
+    ["office", "The telegraph office is closed, so the cars have to carry everything."],
+  ],
+  mirror: [
+    ["depot", "From now on the departure signs change from night to night. The night tabs above the line list all four."],
+    ["junction", "The junction wants each train to show the opposite of the sign it left with."],
+    ["terminus", "The terminus wants each train's own sign back. One set of signals has to work on every night."],
+  ],
+  nightReturn: [
+    ["junction", "Every train must show ★ at the junction, on every night."],
+    ["terminus", "At the terminus each train must show the sign it left with, whatever that was tonight."],
+  ],
+  crossing: [
+    ["junction", "The junction wants the opposite sign."],
+    ["inspection", "Inspection then wants ★ from every train."],
+    ["terminus", "And the terminus wants each train's own sign back, on all four nights."],
+  ],
+  fairground: [
+    ["exDepot", "The excursion crosses the covered bridge to the hill pavilion, then has to come home."],
+    ["S", "The bridge signal works in both directions. Any train that crosses the bridge passes it."],
+    ["R", "The return points are yours to set: back over the bridge, or round the scenic bypass."],
+    ["pDepot", "The parcels train crosses the bridge once on its way to the office."],
+  ],
+  canal: [
+    ["P1", "These points send ☾ one way and everything else the other. You can reverse the rule."],
+    ["hiLock", "Each lock admits only one sign. A train carrying anything else is turned away."],
+    ["P2", "At the end, the quay points send each train to a quay by the sign it carries. Each train must end at the quay marked with the sign it left with."],
+  ],
+  ferry: [
+    ["iDepot", "The island train reaches the harbor on its first stop. The valley train gets there on its fourth."],
+    ["harbor", "Tonight the harbor gives each train a berth, ⚓ or the bell. Customs then wants ★."],
+    ["R", "The reader signal can restore an earlier sign, by place or by stop number. The berth points read whatever the car carries."],
+  ],
+  exchange: [
+    ["harbor", "Berths are now tickets held by three offices. Their windows show tonight's tickets."],
+    ["R", "The reader sends a request to the exchange: which office, which train, which kind of ticket. Exactly one match answers."],
+    ["BP", "The berth points send ⚓ east and the bell west, and hold anything else. Watch the second train arrive."],
+  ],
+  market: [
+    ["mDepot", "The mail train leaves here. It must show the opposite sign at the market and its own sign at home."],
+    ["fDepot", "The ferry leaves here. At the points ☀ takes the bypass to the dock, and ☾ takes the approach."],
+    ["c", "This signal is shared. It changes the mail, and any ferry that comes up the approach."],
+    ["dock", "The dock wants the ferry's own sign. The signals are already set; dispatch and watch the nights."],
+  ],
+  viaducts: [
+    ["depot", "A grid railway. Two trains still leave here, and the signs still change from night to night."],
+    ["fork", "The points sort trains by the sign they carry: ☀ and ★ go up onto the viaduct, ☾ goes down by the river."],
+    ["inN", "Each branch has an inspection shed. Every train must pass inspection carrying ★."],
+    ["term", "The terminus wants each train's own sign back, on all four nights. There is no telegraph on this map."],
+  ],
+  cable: [
+    ["office", "The telegraph office is open. It keeps a record of what every car carried at each point on the line."],
+    ["s2", "Press a signal and pick a point under Telegraph. That signal gives every car back the sign it carried there."],
+  ],
+};
+function tourSpot(at) {
+  if (svc().grid) {
+    const N = svc().nodes;
+    if (N[at]?.kind === "depot" && at !== "depot") return [N[at].x, N[at].y - 62, 56];
+    if (N[at]?.terminal) return [N[at].x, N[at].y - 72, 52];
+    if (at === "depot") return [N.depot.x, LENS_Y - 18 - (LINE - N.depot.y) + 14, 70];
+    if (at === "fork") return [N.fork.x - 22, N.fork.y + 63, 52];
+    if (at === "term") return [N.term.x, LENS_Y + 33 - (LINE - N.term.y), 56];
+    if (N[at].kind === "check") return [N[at].x, N[at].y - 60, 60];
+    return [N[at].x, N[at].y - 52, 50];
+  }
+  const X = xs();
+  if (at === "depot") return [X.depot, LENS_Y - 18, 74];
+  if (at === "office") return [X[svc().route.find(p => p.reader).id] - 20, 84, 66];
+  const p = svc().route.find(q => q.id === at);
+  if (p.kind === "socket") return [X[at], LENS_Y + 10, 54];
+  if (p.kind === "stamp") return [X[at] - 10, LENS_Y + 22, 60];
+  return [X[at], LENS_Y + 33, 58];
+}
+function runTour(name) {
+  const steps = TOURS[name];
+  if (!steps || COURSE && name !== "return" && name !== "cable") return;
+  state.touring = true;
+  refreshControls();
+  let i = 0;
+  const layer = document.createElement("div");
+  layer.className = "coach";
+  $("board").append(layer);
+  const show = () => {
+    const [at, text] = steps[i];
+    layer.replaceChildren();
+    if (at === "recorder") {
+      $("recorder").hidden = false;
+      $("recorder").classList.add("spot");
+      $("recorder").scrollIntoView({ block: "nearest", behavior: reduced.matches ? "auto" : "smooth" });
+    }
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.setAttribute("role", "dialog");
+    bubble.setAttribute("aria-live", "polite");
+    if (at !== "recorder") {
+      const [x, y, r] = tourSpot(at);
+      const ring = document.createElement("div");
+      ring.className = "ring";
+      ring.style.left = `${100 * x / W}%`;
+      ring.style.top = `${100 * y / H}%`;
+      ring.style.width = ring.style.height = `${(200 * r / W).toFixed(2)}%`;
+      ring.style.height = "auto";
+      ring.style.aspectRatio = "1";
+      layer.append(ring);
+      const below = y < H * .45;
+      bubble.style.left = `${Math.min(78, Math.max(22, 100 * x / W))}%`;
+      bubble.style.top = `${100 * (below ? y + r + 14 : y - r - 14) / H}%`;
+      bubble.classList.add(below ? "below" : "above");
+    } else {
+      layer.classList.add("dim-only");
+      bubble.style.left = "50%";
+      bubble.style.top = "auto";
+      bubble.style.bottom = "16px";
+      bubble.classList.add("above");
+    }
+    const glyphs = { "☀": "sun", "☾": "moon", "★": "star", "⚓": "anchor" };
+    const pretty = text.replace(/[☀☾★⚓]/g, g => htmlIcon(glyphs[g])).replace("the bell", htmlIcon("bell"));
+    bubble.innerHTML = `<p>${pretty}</p><div class="bubble-actions"><span>${i + 1} of ${steps.length}</span>${i < steps.length - 1 ? '<button type="button" class="skip">Skip</button>' : ""}<button type="button" class="next primary">${i < steps.length - 1 ? "Next" : "Got it"}</button></div>`;
+    layer.append(bubble);
+    bubble.querySelector(".next").addEventListener("click", () => { i += 1; i < steps.length ? show() : end(); });
+    bubble.querySelector(".skip")?.addEventListener("click", end);
+    bubble.querySelector(".next").focus({ preventScroll: true });
+  };
+  const end = () => {
+    layer.remove();
+    $("recorder").classList.remove("spot");
+    state.touring = false;
+    state.toured[name] = true;
+    saveProgress();
+    drawChecks();
+    refreshControls();
+    (name === "cable" ? document.querySelector(".plug") : $("board").querySelector(".socket"))?.focus();
+  };
+  show();
+}
+
+function render() {
+  const s = svc();
+  $("prompt").innerHTML = s.prompt;
+  const first = state.service === "return";
+  document.querySelectorAll(".howto > p:not(#howto-cable)").forEach(el => { if (!el.querySelector("#replay-tour")) el.hidden = !first; });
+  $("local-help").hidden = first || !s.help;
+  $("local-help").innerHTML = s.help || "";
+  $("rec-note").textContent = state.current[state.service] ? "Shaded: A and B carried the same sign. Press a heading to see the trains there." : "Dispatch to record what each car carries.";
+  drawScenery();
+  $("trains").replaceChildren();
+  const cur = state.current[state.service];
+  $("st-score").textContent = !cur ? "–" : cur.nights ? `${cur.nights.filter(perfect).length} / 4 nights` : `${score(cur.runs)} / ${total()}`;
+  $("feedback").textContent = "";
+  state.trace = null; state.lookAt = null;
+  $("board").querySelectorAll(".trace-ring").forEach(n => n.remove());
+  drawWire();
+  refreshControls();
+  syncReadout();
+  drawStrip();
+  drawChecks();
+  drawNights();
+  describe();
+  if (state.service === "return" && !state.toured.return) runTour("return");
+}
+
+
+// The level row wraps around: past the last level it returns to the first, and back from the first to the last.
+function stepCarousel(dir) {
+  const row = $("carousel");
+  const max = row.scrollWidth - row.clientWidth;
+  const step = Math.max(160, row.clientWidth * .7);
+  let next = row.scrollLeft + dir * step;
+  if (dir > 0 && row.scrollLeft >= max - 2) next = 0;
+  else if (dir < 0 && row.scrollLeft <= 2) next = max;
+  row.scrollTo({ left: Math.min(max, Math.max(0, next)), behavior: reduced.matches ? "auto" : "smooth" });
+}
+$("car-prev").addEventListener("click", () => stepCarousel(-1));
+$("car-next").addEventListener("click", () => stepCarousel(1));
+$("carousel").addEventListener("keydown", e => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  const chips = [...$("carousel").querySelectorAll(".chip:not(:disabled)")];
+  const i = chips.indexOf(document.activeElement);
+  if (i < 0) return;
+  e.preventDefault();
+  const j = (i + (e.key === "ArrowRight" ? 1 : -1) + chips.length) % chips.length;
+  chips[j].focus();
+  chips[j].scrollIntoView({ block: "nearest", inline: "nearest" });
+});
+window.addEventListener("resize", () => drawDesk());
+
+$("dispatch").addEventListener("click", () => { sfx.start(); dispatch(); });
+$("sound").addEventListener("click", () => {
+  const on = sfx.toggle();
+  $("sound").setAttribute("aria-pressed", String(on));
+  $("sound").lastChild.textContent = on ? "Sound on" : "Sound off";
+});
+$("replay-tour").addEventListener("click", () => { if (!state.running && !state.touring) runTour(state.service); });
+$("reset").addEventListener("click", () => { state.signals[state.service] = { s1: "", s2: "", s3: "" }; afterChange(); });
+loadProgress();
+render();
+</script>
+</body>
+</html>
