@@ -237,12 +237,12 @@
     <p class="kicker">5 · Think</p>
     <h2 tabindex="-1">The example shows only the answer, and the model answers <em>27</em>.</h2>
     <div class="qa-box" id="h-prompt"></div>
-    <p class="head" style="margin:12px 0 4px">The model's reply, one box per forward pass</p>
-    <div class="toks-out" id="h-out" role="group" aria-label="The model's reply. Select the answer to see what it reads."></div>
+    <p class="head" style="margin:12px 0 4px">Illustrative reply, one word or symbol per box</p>
+    <div class="toks-out" id="h-out" role="group" aria-label="Illustrative reply. Select the answer to see which steps came before it."></div>
     <p class="look" id="h-look" aria-live="polite"></p>
     <p class="verdict" id="h-verdict" aria-live="polite"></p>
-    <p class="aside" id="h-aside">The first answer token has to carry the whole calculation.</p>
-    <p class="changed" id="h-changed" hidden><b>What changed</b>Written steps become input, so later forward passes look back at them instead of recomputing. Ending the prompt with <em>Let's think step by step</em> gets similar reasoning with no examples.</p>
+    <p class="aside" id="h-aside">The reply gives an answer without writing any intermediate calculation.</p>
+    <p class="changed" id="h-changed" hidden><b>What changed</b>Written steps are available as context when the model generates the answer. Ending the prompt with <em>Let's think step by step</em> gets similar reasoning with no examples.</p>
     <div class="act"><button type="button" class="go" id="h-go">Show worked steps in the example<small>chain-of-thought prompting</small></button><button type="button" class="again" id="h-again" hidden>Show only the answer again</button></div>
     <p class="dag">The tennis-ball example and its worked steps are the lecture's. The apple problem and both replies are illustrative.</p>
   </section>
@@ -327,8 +327,14 @@
       var tl=document.createElement("span");tl.className="tile"+(any?" bad":"");tl.textContent=any?"✗":"✓";box.appendChild(tl);if(any)hit++}
     $("s-thead").innerHTML="20 sampled replies of "+n.toLocaleString("en-US")+" tokens: <b>"+hit+"</b> contain a nonsense token";
     box.setAttribute("aria-label",hit+" of 20 replies contain a nonsense token");
-    if(t===1)verdict("s-verdict",hit>=5?"problem":"",hit>=5?"One token in a thousand is enough: most long replies hit nonsense.":"Short replies mostly escape. Try 1000 tokens.");
-    else{verdict("s-verdict","fixed","Lower temperature moves mass onto Harrisburg and starves the nonsense token.");$("s-changed").hidden=false;$("s-aside").hidden=true}
+    $("s-changed").hidden=t===1;
+    $("s-aside").hidden=t!==1;
+    if(t===1){
+      var chance=Math.round(-Math.expm1(n*Math.log1p(-qn))*100);
+      verdict("s-verdict","problem","With the same chance at each draw, about "+chance+"% of "+n.toLocaleString("en-US")+"-token replies contain at least one nonsense token.");
+    }else{
+      verdict("s-verdict","fixed","Lower temperature gives the nonsense token less probability at each draw.");
+    }
   }
   cellWire($("s-cell"),sarg,sharpRun);sharpRun();
 
@@ -384,11 +390,11 @@
     $("w-print").textContent=DNAME[warg.decoder]+": a reply starts as an answer "+Math.round(ch*100)+"% of the time. Five replies:";
     if(two)everTwo=true;
     if(two){verdict("w-verdict","fixed","With two worked examples, "+DNAME[warg.decoder].toLowerCase()+" starts "+nAns+" of 5 replies with an answer.");$("w-changed").hidden=false;$("w-aside").hidden=true}
-    else{verdict("w-verdict","problem",warg.decoder==="sample"?"Sampling sometimes answers, by luck. Every sharper decoder answers less.":"Every decoder picks from the same bars, and most of their mass starts another instruction.");$("w-changed").hidden=true;$("w-aside").hidden=false}}
+    else{verdict("w-verdict","problem",warg.decoder==="sample"?"Sampling sometimes starts with an answer. Try holding the decoder fixed and adding worked examples.":"These bars show the effect of the decoder. The model’s probabilities stay the same until the prompt changes.");$("w-changed").hidden=true;$("w-aside").hidden=false}}
   $("w-ex").innerHTML="<b>exemplars</b><div>Explain rain to a 6-year-old in a few sentences.<br>→ Clouds are full of tiny drops of water. When the drops get big and heavy, they fall down as rain.<sup>†</sup></div><div>Explain the seasons to a 6-year-old in a few sentences.<br>→ The Earth leans a little as it goes around the sun, so for part of the year your home gets more sunshine.<sup>†</sup></div>";
   cellWire($("w-cell"),warg,showRun);showRun();
 
-  /* 5 · Think: chain of thought (2.2 S4). Each word box stands for one forward pass. */
+  /* 5 · Think: chain of thought (2.2 S4). Word boxes show the context available before the answer. */
   var Q2="Q: The cafeteria had 23 apples. If they used 20 to make lunch and bought 6 more, how many apples do they have?";
   var EX_A="Q: Roger has 5 tennis balls. He buys 2 more cans of tennis balls. Each can has 3 tennis balls. How many tennis balls does he have now?";
   var cot=false;
@@ -397,15 +403,15 @@
     $("h-prompt").innerHTML="<div>"+EX_A+"</div><div class=\"a\">A: "+(cot?"Roger started with 5 balls. 2 cans of 3 tennis balls each is 6 tennis balls. 5 + 6 = 11. The answer is 11.":"The answer is 11.")+"</div><div>"+Q2+"</div><div class=\"a\">A:</div>";
     var words=(cot?OUT.cot:OUT.plain).split(" "),box=$("h-out");box.replaceChildren();var ansIdx=words.length-1;
     words.forEach(function(w,i){var b=document.createElement(i===ansIdx?"button":"span");b.className="tk"+(i===ansIdx?" ans":"");b.textContent=w;b.dataset.i=i;
-      if(i===ansIdx){b.type="button";b.setAttribute("aria-label","Answer token "+w+". Show what it reads.");b.addEventListener("click",function(){thinkLook(words)})}
+      if(i===ansIdx){b.type="button";b.setAttribute("aria-label","Answer "+w+" Show the earlier steps.");b.addEventListener("click",function(){thinkLook(words)})}
       box.appendChild(b)});
-    $("h-look").innerHTML="Select the answer box to see what it reads.";
-    if(!cot)verdict("h-verdict","problem","The answer gets one forward pass, so it has to do 23 − 20 + 6 all at once. It gets 27.");
-    else verdict("h-verdict","fixed","The answer comes after "+ansIdx+" forward passes, and the model wrote 3 down before it needed it.")}
+    $("h-look").innerHTML="Select the answer box to see what was written before it.";
+    if(!cot)verdict("h-verdict","problem","27 is the wrong answer for this problem.");
+    else verdict("h-verdict","fixed","The reply writes down 3 apples before adding the 6 new apples.")}
   function thinkLook(words){var box=$("h-out");box.querySelectorAll(".tk").forEach(function(e){e.classList.remove("hl")});
-    if(!cot){$("h-look").innerHTML="<b>27</b> reads only the question: <b>23</b>, <b>20</b> and <b>6</b>. No step is written down for it to use.";return}
-    var n=0;words.forEach(function(w,i){if((w==="3"||w==="6")&&i>8){box.children[i].classList.add("hl");n++}});
-    $("h-look").innerHTML="<b>9</b> reads the <b>3</b> and <b>6</b> the model already wrote (highlighted), so it only has to add 3 + 6.";}
+    if(!cot){$("h-look").innerHTML="The question gives 23, 20 and 6. The reply has written no intermediate value before <b>27</b>.";return}
+    words.forEach(function(w,i){if((w==="3"||w==="6")&&i>8)box.children[i].classList.add("hl")});
+    $("h-look").innerHTML="The written <b>3</b> and <b>6</b> are already in the reply when the model generates <b>9</b>.";}
   $("h-go").addEventListener("click",function(){cot=true;thinkDraw();$("h-go").hidden=true;$("h-again").hidden=false;$("h-changed").hidden=false;$("h-aside").hidden=true});
   $("h-again").addEventListener("click",function(){cot=false;thinkDraw();$("h-go").hidden=false;$("h-again").hidden=true;$("h-changed").hidden=true;$("h-aside").hidden=false;$("h-go").focus()});
   thinkDraw();
