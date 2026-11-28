@@ -30,6 +30,13 @@ functions transfer beyond notebook examples; an experiment record checkpoint ask
 needs to check the run; and later checkpoints ask for a claim, its evidence and caveat, followed by the
 design of a next experiment. Accuracy itself is never a requirement.
 
+## Demos
+
+Interactives built for the courses but not yet placed in one. Each opens in the browser.
+
+- [Where does the point land in the image?](demos/camera_tilt/README.md): tilt a camera and watch one point move in
+  its picture, in a 3D and a 2D version. Planned for Module 3, Lecture 1.
+
 ## Lab runtime notes
 
 - **Lab 1** runs on a CPU. Learners implement four short functions, choose two tokenizers, and

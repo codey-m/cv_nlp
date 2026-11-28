@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where does the point land in the image? (3D proof of concept)</title>
+<!--
+  Demo, 2026-11-26. Not wired into any course yet; lives in CV_NLP_Labs/demos/camera_tilt until it is.
+  Two cameras, kept apart on purpose:
+    viewCam   the learner's camera. OrbitControls moves it. It changes what they see, never a measurement.
+    modelCam  the camera in the lesson, an orthographic camera tilted by theta. Only the tilt slider moves it.
+  Measurement: project() below, Module 3 Lecture 1: x = X, y = cos(theta) Y - sin(theta) Z + y0.
+  Check: modelCam's own projection of P is compared with project(); the result is in data-projection-check on <body>.
+  Frame inferred from that equation, to confirm against the lecture's axes figure: X right, Y up, Z toward the camera.
+  three.js r186 (MIT) loads from the shared, pinned copy at ../../widgets/lib/three-r186 (WP-18), never a CDN. ES modules
+  do not load from file://, so review this widget from its Pages link or a local server.
+-->
+<script type="importmap">{"imports":{"three":"../../widgets/lib/three-r186/three.module.min.js"}}</script>
+<style>
+  *{box-sizing:border-box}
+  :root{--ink:#182632;--mute:#374858;--line:#c2ced6;--wash:#f3f7fa;--accent:#963817;--cam:#243946}
+  body{margin:0;background:#fff;color:var(--ink);font:1rem/1.55 system-ui,sans-serif}
+  main{max-width:60rem;margin:0 auto;padding:clamp(1rem,4vw,2rem)}
+  h1{font-size:clamp(1.4rem,3vw,2rem);line-height:1.2;margin:0 0 .6rem;text-wrap:balance}
+  .prompt{max-width:64ch;margin:0 0 1rem;color:var(--mute)}
+  .views{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:1rem}
+  figure{margin:0;border:1px solid var(--line);border-radius:.75rem;overflow:hidden;background:#fff}
+  #stage{width:100%;background:var(--wash)}
+  #view{position:relative;width:100%;aspect-ratio:4/3}
+  #view canvas{display:block;width:100%;height:100%}
+  #fallback{display:none;color:var(--mute)}
+  #fallback p{margin:0;padding:.8rem .9rem}
+  svg{display:block;width:100%;height:auto;background:var(--wash)}
+  figcaption{padding:.6rem .9rem .8rem;font-size:.95rem}
+  figcaption b{display:block;font-size:1.05rem}
+  .controls{display:flex;flex-wrap:wrap;gap:.3rem .8rem;align-items:center;padding:.6rem .9rem;background:#fff;border-top:1px solid var(--line)}
+  .controls.below{border-top:0}
+  .controls label{font-weight:700}
+  .controls input[type=range]{flex:1 1 9rem;min-width:7rem;accent-color:var(--accent)}
+  .controls span{font-variant-numeric:tabular-nums;min-width:2.5em}
+  :focus-visible{outline:3px solid #1d5fb4;outline-offset:2px}
+  .readout{margin:.6rem 0;padding:.7rem .9rem;border:1px solid var(--line);border-radius:.6rem;font-variant-numeric:tabular-nums}
+  .readout p{margin:.15rem 0}
+  details{margin-top:.8rem}
+  table{border-collapse:collapse;font-variant-numeric:tabular-nums}
+  th,td{padding:.3rem .7rem;border-bottom:1px solid var(--line);text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  .sr{position:absolute;left:-9999px}
+  svg text{font:13px system-ui,sans-serif;fill:var(--ink)}
+  @media (max-width:40rem){.views{grid-template-columns:1fr}#image{max-width:15rem;margin:0 auto}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Where does the point land in the image?</h1>
+  <p class="prompt">The camera starts level. The marked point P is 2 units above the ground, 1 unit to the right and 1 unit toward the camera. Before you move anything, decide: as the camera tilts down, will the image of P move up, move down, or stay where it is? Then tilt the camera and check. Drag the scene to look at it from any side. That never changes the picture.</p>
+
+  <div class="views">
+    <figure>
+      <div id="stage">
+        <div id="view"><canvas id="gl" role="img" tabindex="0" aria-labelledby="scene-label" aria-describedby="scene-help"></canvas></div>
+        <div class="controls" id="controls">
+          <label for="tilt">Camera tilt below level</label>
+          <input id="tilt" type="range" min="0" max="70" step="1" value="0" aria-describedby="out-status">
+          <span id="tilt-value" aria-hidden="true">0°</span>
+        </div>
+      </div>
+      <div id="fallback"><p>The 3D view could not start in this browser. A side view, the image and the numbers below still work.</p><svg id="side" viewBox="0 -34 360 314" role="img" aria-labelledby="scene-label"></svg></div>
+      <figcaption><b>The scene</b>The dark camera takes the picture. The tilted square is its camera plane, with a unit ruler. P's image is where the dashed line from P meets that plane. Drag to turn the scene, or use the arrow keys when it has focus.<span id="scene-help" class="sr">Arrow keys turn the scene. The tilt slider is below the scene.</span><span id="scene-label" class="sr"></span></figcaption>
+    </figure>
+    <figure>
+      <svg id="image" viewBox="0 0 200 280" role="img" aria-labelledby="image-label"></svg>
+      <figcaption><b>The image</b>The camera's picture, with x₀ and y₀ set to zero so O sits at the image origin. The teal dot is O. The orange dot is P.<span id="image-label" class="sr"></span></figcaption>
+    </figure>
+  </div>
+
+  <div class="readout">
+    <p id="out-formula"></p>
+    <p id="out-move"></p>
+  </div>
+  <p id="out-status" class="sr" role="status"></p>
+
+  <details>
+    <summary>Where P lands at 0°, 20°, 45° and 70°, as a table</summary>
+    <table>
+      <caption class="sr">Image position of P for four tilts</caption>
+      <thead><tr><th scope="col">Tilt</th><th scope="col">x</th><th scope="col">y</th></tr></thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </details>
+</main>
+
+<script type="module">
+import * as THREE from "three";
+import {OrbitControls} from "../../widgets/lib/three-r186/OrbitControls.js";
+
+const P = {X: 1, Y: 2, Z: 1}, y0 = 0;
+const rad = d => d * Math.PI / 180;
+const project = (pt, deg) => ({x: pt.X, y: Math.cos(rad(deg)) * pt.Y - Math.sin(rad(deg)) * pt.Z + y0});
+const f2 = v => (Math.abs(v) < 0.005 ? 0 : v).toFixed(2).replace("-", "−");
+const NS = "http://www.w3.org/2000/svg";
+const svgEl = (tag, attrs, parent, text) => {
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  if (parent) parent.appendChild(n);
+  return n;
+};
+
+/* ---------- The image panel (SVG, always available) ---------- */
+const image = document.getElementById("image");
+const IS = 40, IX = 100, IY = 140;
+const ix = x => IX + IS * x, iy = y => IY - IS * y;
+for (let u = -2; u <= 3; u++) {
+  svgEl("line", {x1: 8, y1: iy(u), x2: 192, y2: iy(u), stroke: u === 0 ? "#9fb2bf" : "#dbe4ea", "stroke-width": 1}, image);
+  svgEl("text", {x: 12, y: iy(u) - 3, "font-size": 11}, image, String(u).replace("-", "−"));
+}
+
+// The image's own axes, lowercase and green as on the lecture slide.
+{
+  const ax = svgEl("g", {stroke: "#2f8f2f", fill: "#2f8f2f", "stroke-width": 2.5}, image);
+  svgEl("line", {x1: 14, y1: 266, x2: 14, y2: 240}, ax);
+  svgEl("path", {d: "M14 234 9 244H19Z", stroke: "none"}, ax);
+  svgEl("line", {x1: 14, y1: 266, x2: 40, y2: 266}, ax);
+  svgEl("path", {d: "M46 266 36 261V271Z", stroke: "none"}, ax);
+  svgEl("text", {x: 20, y: 238, "font-style": "italic", "font-size": 15, stroke: "none", fill: "#2f8f2f"}, ax, "y");
+  svgEl("text", {x: 48, y: 271, "font-style": "italic", "font-size": 15, stroke: "none", fill: "#2f8f2f"}, ax, "x");
+}
+const imgDyn = svgEl("g", {}, image);
+function drawImage(q) {
+  imgDyn.replaceChildren();
+  svgEl("line", {x1: ix(0), y1: iy(0), x2: ix(0), y2: iy(q.y), stroke: "#963817", "stroke-width": 2, "stroke-dasharray": "4 3"}, imgDyn);
+  svgEl("line", {x1: ix(0), y1: iy(q.y), x2: ix(q.x), y2: iy(q.y), stroke: "#963817", "stroke-width": 1, "stroke-dasharray": "2 3"}, imgDyn);
+  svgEl("circle", {cx: ix(0), cy: iy(0), r: 6, fill: "#1b6d74"}, imgDyn);
+  svgEl("circle", {cx: ix(q.x), cy: iy(q.y), r: 7, fill: "#963817"}, imgDyn);
+  svgEl("text", {x: ix(0) - 16, y: iy(0) + 16}, imgDyn, "O");
+  svgEl("text", {x: ix(q.x) + 10, y: iy(q.y) + 4}, imgDyn, "P");
+}
+
+/* ---------- The 3D scene ---------- */
+const H = 2.5;                       // half-size of the model camera's view and of the camera plane
+const stage = document.getElementById("view");
+const canvas = document.getElementById("gl");
+let renderer = null, scene, viewCam, controls, modelCam, camBody, planeGroup, ray, rayEnd, pDot;
+
+function makeLabel(text, color = "#182632") {
+  const c = document.createElement("canvas"); c.width = 256; c.height = 128;
+  const g = c.getContext("2d");
+  g.font = "700 76px system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+  g.lineWidth = 12; g.strokeStyle = "#f3f7fa"; g.strokeText(text, 128, 66);
+  g.fillStyle = color; g.fillText(text, 128, 66);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({map: t, depthTest: false, transparent: true}));
+  s.scale.set(1.3, 0.65, 1); s.renderOrder = 10; return s;
+}
+function makeDot(color, hollow) {
+  const c = document.createElement("canvas"); c.width = c.height = 64;
+  const g = c.getContext("2d");
+  g.beginPath(); g.arc(32, 32, 26, 0, 7);
+  if (hollow) { g.fillStyle = "#fff"; g.fill(); g.lineWidth = 9; g.strokeStyle = color; g.stroke(); }
+  else { g.fillStyle = color; g.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({map: t, depthTest: false, transparent: true, sizeAttenuation: false}));
+  s.scale.set(0.045, 0.045, 1); s.renderOrder = 9; return s;
+}
+const line = (pts, color, dashed) => {
+  const geo = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(...p)));
+  const mat = dashed ? new THREE.LineDashedMaterial({color, dashSize: .12, gapSize: .08}) : new THREE.LineBasicMaterial({color});
+  const l = new THREE.Line(geo, mat); if (dashed) l.computeLineDistances(); return l;
+};
+
+function buildScene() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color("#f3f7fa");
+
+  // Ground and the walk from O to P.
+  const grid = new THREE.GridHelper(8, 8, 0x526677, 0x8fa3b1); scene.add(grid);
+  scene.add(line([[0, 0, 0], [P.X, 0, 0], [P.X, 0, P.Z], [P.X, P.Y, P.Z]], 0x526677, true));
+  // World axes at O.
+  const ax = (to, color, name) => { scene.add(line([[0, 0, 0], to], color)); const l = makeLabel(name, "#" + color.toString(16).padStart(6, "0")); l.position.set(...to.map(v => v * 1.08)); scene.add(l); };
+  ax([3.6, 0, 0], 0x1d5fb4, "X"); ax([0, 3.6, 0], 0x1b6d74, "Y"); ax([0, 0, 3.6], 0x7a4a9a, "Z");
+  const level = line([[0, 0, 0], [0, 0, 5]], 0x526677, true); scene.add(level);
+
+  // O and P.
+  const o = makeDot("#1b6d74"); scene.add(o);
+  const oLabel = makeLabel("O", "#1b6d74"); oLabel.position.set(-.35, .3, 0); scene.add(oLabel);
+  pDot = makeDot("#963817"); pDot.position.set(P.X, P.Y, P.Z); scene.add(pDot);
+  const pLabel = makeLabel("P", "#963817"); pLabel.position.set(P.X + .55, P.Y + .25, P.Z); scene.add(pLabel);
+
+  // Model camera: an orthographic camera, plus a body to show where it is.
+  modelCam = new THREE.OrthographicCamera(-H, H, H, -H, 0.1, 30);
+  camBody = new THREE.Group();
+  const part = (geo, color) => {
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color}));
+    const e = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({color: 0xdbe4ea}));
+    m.add(e); return m;
+  };
+  camBody.add(part(new THREE.BoxGeometry(.6, .42, .55), 0x243946));
+  const lens = part(new THREE.CylinderGeometry(.14, .2, .3, 20).rotateX(Math.PI / 2), 0x5b7385);
+  lens.position.z = .42; camBody.add(lens);
+  const finder = part(new THREE.BoxGeometry(.2, .12, .22), 0x37505f);
+  finder.position.set(-.12, .27, -.08); camBody.add(finder);
+  scene.add(camBody);
+  const camLabel = makeLabel("camera", "#243946"); camLabel.position.set(0, .7, 0); camBody.add(camLabel);
+
+  // Camera plane through O, perpendicular to the viewing direction, with a unit ruler on its left edge.
+  planeGroup = new THREE.Group();
+  planeGroup.add(new THREE.Mesh(new THREE.PlaneGeometry(2 * H, 2 * H),
+    new THREE.MeshBasicMaterial({color: 0x9dbdce, transparent: true, opacity: .28, side: THREE.DoubleSide, depthWrite: false})));
+  const pts = [[-H, -H, 0], [H, -H, 0], [H, H, 0], [-H, H, 0], [-H, -H, 0]];
+  planeGroup.add(line(pts, 0x243946));
+  for (let k = -2; k <= 2; k++) planeGroup.add(line([[-H, k, 0], [-H + (k === 0 ? .35 : .2), k, 0]], 0x243946));
+  planeGroup.add(line([[-H, 0, 0], [H, 0, 0]], 0x9fb2bf));
+  scene.add(planeGroup);
+
+  // The ray from P to its image, and the image itself.
+  ray = line([[0, 0, 0], [1, 1, 1]], 0x963817, true); scene.add(ray);
+  rayEnd = makeDot("#963817", true); scene.add(rayEnd);
+
+  // The learner's camera.
+  viewCam = new THREE.PerspectiveCamera(40, 4 / 3, 0.1, 100);
+  controls = new OrbitControls(viewCam, canvas);
+  canvas.style.touchAction = "pan-y";   // horizontal drags turn the scene; vertical drags still scroll the page
+  controls.enablePan = false; controls.minDistance = 7; controls.maxDistance = 26;
+  controls.minPolarAngle = 0.15; controls.maxPolarAngle = Math.PI / 2 - 0.02;
+  controls.addEventListener("change", draw);
+  setView("start");
+}
+
+const VIEWS = {start: [7, 4.2, 9], side: [-12, 1.6, 0.6]};
+function setView(name) {
+  viewCam.position.set(...VIEWS[name]); controls.target.set(0, 0.9, 0.6); controls.update(); draw();
+}
+function turn(dir) {
+  const off = viewCam.position.clone().sub(controls.target), sph = new THREE.Spherical().setFromVector3(off);
+  const st = rad(15);
+  if (dir === "left") sph.theta -= st; if (dir === "right") sph.theta += st;
+  if (dir === "up") sph.phi = Math.max(.15, sph.phi - st); if (dir === "down") sph.phi = Math.min(Math.PI / 2 - .02, sph.phi + st);
+  viewCam.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph)); controls.update(); draw();
+}
+
+function poseScene(deg) {
+  const t = rad(deg), c = Math.cos(t), s = Math.sin(t);
+  modelCam.position.set(0, 5 * s, 5 * c);
+  modelCam.up.set(0, c, -s);
+  modelCam.lookAt(0, 0, 0);
+  modelCam.updateMatrixWorld(true); modelCam.updateProjectionMatrix();
+  camBody.position.copy(modelCam.position); camBody.up.copy(modelCam.up); camBody.lookAt(0, 0, 0);
+  planeGroup.quaternion.copy(modelCam.quaternion);
+  const q = project(P, deg);
+  // The image of P on the plane: O + x * right + y * up, with the right and up of the model camera.
+  const right = new THREE.Vector3(1, 0, 0), up = new THREE.Vector3(0, c, -s);
+  const end = right.multiplyScalar(q.x).add(up.multiplyScalar(q.y));
+  const arr = ray.geometry.attributes.position;
+  arr.setXYZ(0, P.X, P.Y, P.Z); arr.setXYZ(1, end.x, end.y, end.z); arr.needsUpdate = true; ray.computeLineDistances();
+  rayEnd.position.copy(end);
+  // The model camera's own projection of P must match the lecture equation.
+  const ndc = new THREE.Vector3(P.X, P.Y, P.Z).project(modelCam);
+  return {q, err: Math.hypot(ndc.x * H - q.x, ndc.y * H - q.y)};
+}
+
+function draw() { if (renderer) renderer.render(scene, viewCam); }
+function resize() {
+  if (!renderer) return;
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(w, h, false);
+  viewCam.aspect = w / h; viewCam.updateProjectionMatrix(); draw();
+}
+
+
+/* ---------- Side view, used only when WebGL is unavailable ---------- */
+const side = document.getElementById("side");
+const SS = 40, SOX = 130, SOY = 140;
+const swx = Z => SOX + SS * Z, swy = Y => SOY - SS * Y;
+svgEl("line", {x1: swx(-3), y1: swy(0), x2: swx(4.4), y2: swy(0), stroke: "#526677", "stroke-width": 2}, side);
+const sideDyn = svgEl("g", {}, side);
+function drawSide(deg) {
+  const t = rad(deg), c = Math.cos(t), s = Math.sin(t), q = project(P, deg), g = sideDyn;
+  g.replaceChildren();
+  const ux = -s, uy = -c;
+  svgEl("line", {x1: swx(0) - ux * SS * 3.2, y1: swy(0) - uy * SS * 3.2, x2: swx(0) + ux * SS * 3.2, y2: swy(0) + uy * SS * 3.2, stroke: "#243946", "stroke-width": 2.5}, g);
+  const foot = {x: swx(0) + ux * SS * q.y, y: swy(0) + uy * SS * q.y};
+  svgEl("line", {x1: swx(P.Z), y1: swy(P.Y), x2: foot.x, y2: foot.y, stroke: "#963817", "stroke-width": 2, "stroke-dasharray": "5 4"}, g);
+  svgEl("circle", {cx: foot.x, cy: foot.y, r: 5, fill: "#fff", stroke: "#963817", "stroke-width": 2.5}, g);
+  svgEl("circle", {cx: swx(P.Z), cy: swy(P.Y), r: 6, fill: "#963817"}, g);
+  svgEl("circle", {cx: swx(0), cy: swy(0), r: 5, fill: "#1b6d74"}, g);
+  svgEl("text", {x: swx(P.Z) + 9, y: swy(P.Y) - 6}, g, "P");
+  svgEl("text", {x: swx(0) - 18, y: swy(0) + 16}, g, "O");
+  const cam = svgEl("g", {transform: `translate(${swx(0) + SS * 3.4 * c} ${swy(0) - SS * 3.4 * s}) rotate(${180 - deg})`, fill: "#243946"}, g);
+  svgEl("rect", {x: -33, y: -13, width: 27, height: 26, rx: 3}, cam);
+  svgEl("path", {d: "M-6 -6 1 -10V10L-6 6Z"}, cam);
+}
+let fallbackOn = false;
+function enterFallback() {
+  if (fallbackOn) return; fallbackOn = true; renderer = null;
+  document.getElementById("view").style.display = "none";
+  document.getElementById("fallback").style.display = "block";
+  const c = document.getElementById("controls"); c.classList.add("below");
+  document.getElementById("fallback").appendChild(c);
+  document.querySelector("#stage").parentElement.querySelector("figcaption").firstChild.nextSibling.textContent = "The camera takes the picture. The long line is its camera plane. P's image is where the dashed line from P meets it.";
+  document.body.dataset.projectionCheck = "no webgl";
+  update(false);
+}
+
+/* ---------- Page wiring ---------- */
+const slider = document.getElementById("tilt");
+const start = project(P, 0);
+let maxErr = 0;
+
+function update(announce) {
+  const deg = +slider.value;
+  let q;
+  if (renderer) { const r = poseScene(deg); q = r.q; maxErr = Math.max(maxErr, r.err); document.body.dataset.projectionCheck = maxErr < 1e-9 ? "ok" : "FAIL " + maxErr; draw(); }
+  else { q = project(P, deg); if (fallbackOn) drawSide(deg); }
+  drawImage(q);
+  document.getElementById("tilt-value").textContent = deg + "°";
+  slider.setAttribute("aria-valuetext", deg + " degrees");
+  document.getElementById("out-formula").textContent =
+    `x = X = ${f2(P.X)}   y = cos ${deg}° × ${f2(P.Y)} − sin ${deg}° × ${f2(P.Z)} = ${f2(q.y)}`;
+  const d = q.y - start.y;
+  document.getElementById("out-move").textContent = Math.abs(d) < 0.005
+    ? "P's image has not moved from where it was with the camera level."
+    : `P's image has moved ${d < 0 ? "down" : "up"} by ${f2(Math.abs(d))} since the camera was level. Its sideways position has not changed.`;
+  const above = q.y > 0.005 ? "above" : q.y < -0.005 ? "below" : "level with";
+  const label = `At ${deg} degrees of tilt, P's image is ${f2(Math.abs(q.y)).replace("−", "")} ${above} the image of O, and ${f2(q.x)} to the right.`;
+  document.getElementById("scene-label").textContent = `3D scene with the camera tilted ${deg} degrees below level. ${label}`;
+  document.getElementById("image-label").textContent = label;
+  if (announce) document.getElementById("out-status").textContent = label;
+}
+
+slider.addEventListener("input", () => update(false));
+slider.addEventListener("change", () => update(true));
+canvas.addEventListener("keydown", e => {
+  const dir = {ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down"}[e.key];
+  if (dir && renderer) { e.preventDefault(); turn(dir); }
+});
+
+const body = document.getElementById("table-body");
+[0, 20, 45, 70].forEach(deg => {
+  const q = project(P, deg), tr = document.createElement("tr");
+  tr.innerHTML = `<th scope="row">${deg}°</th><td>${f2(q.x)}</td><td>${f2(q.y)}</td>`; body.appendChild(tr);
+});
+
+try {
+  renderer = new THREE.WebGLRenderer({canvas, antialias: true});
+  buildScene();
+  new ResizeObserver(resize).observe(stage);
+  resize();
+  canvas.addEventListener("webglcontextlost", e => { e.preventDefault(); enterFallback(); });
+  addEventListener("pagehide", () => { controls.dispose(); renderer && renderer.dispose(); });
+} catch (e) {
+  enterFallback();
+}
+update(false);
+</script>
+</body>
+</html>

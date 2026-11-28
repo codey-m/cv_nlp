@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where does the point land in the image?</title>
+<!--
+  Demo, 2026-11-26. Not wired into any course yet; lives in CV_NLP_Labs/demos/camera_tilt until it is.
+  Model: Module 3 Lecture 1 deck, "World to image coordinates": x = X, y = cos(theta) Y - sin(theta) Z + y0.
+  Frame inferred from that equation, to confirm against the lecture's axes figure: X right, Y up, Z toward the camera, image y up.
+  The side view, the image and the readout all call project(); nothing else computes a position.
+-->
+<style>
+  *{box-sizing:border-box}
+  :root{--ink:#182632;--mute:#374858;--line:#c2ced6;--wash:#f3f7fa;--accent:#963817;--cam:#243946;--p:#963817;--o:#1b6d74}
+  body{margin:0;background:#fff;color:var(--ink);font:1rem/1.55 system-ui,sans-serif}
+  main{max-width:56rem;margin:0 auto;padding:clamp(1rem,4vw,2rem)}
+  h1{font-size:clamp(1.4rem,3vw,2rem);line-height:1.2;margin:0 0 .6rem;text-wrap:balance}
+  .prompt{max-width:62ch;margin:0 0 1rem;color:var(--mute)}
+  .views{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:1rem}
+  figure{margin:0;border:1px solid var(--line);border-radius:.75rem;overflow:hidden}
+  svg{display:block;width:100%;height:auto;background:var(--wash)}
+  figcaption{padding:.6rem .9rem .8rem;font-size:.95rem}
+  figcaption b{display:block;font-size:1.05rem}
+  .controls{margin:1rem 0 .6rem;display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center}
+  .controls label{font-weight:700}
+  input[type=range]{flex:1 1 14rem;min-width:10rem;accent-color:var(--accent)}
+  button{font:inherit;padding:.35rem .8rem;border:1px solid var(--cam);background:#fff;color:var(--cam);border-radius:.4rem;cursor:pointer}
+  button:hover{background:#e8eff3}
+  :focus-visible{outline:3px solid #1d5fb4;outline-offset:2px}
+  .readout{margin:.4rem 0;padding:.7rem .9rem;border:1px solid var(--line);border-radius:.6rem;font-variant-numeric:tabular-nums}
+  .readout p{margin:.15rem 0}
+  details{margin-top:.8rem}
+  table{border-collapse:collapse;font-variant-numeric:tabular-nums}
+  th,td{padding:.3rem .7rem;border-bottom:1px solid var(--line);text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  .sr{position:absolute;left:-9999px}
+  text{font:13px system-ui,sans-serif;fill:var(--ink)}
+  @media (max-width:40rem){.views{grid-template-columns:1fr}#image{max-width:15rem;margin:0 auto}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Where does the point land in the image?</h1>
+  <p class="prompt">The camera starts level. The marked point P is 2 units above the ground, 1 unit to the right and 1 unit toward the camera. Before you move anything, decide: as the camera tilts down, will the image of P move up, move down, or stay where it is? Then tilt the camera and check.</p>
+
+  <div class="views">
+    <figure>
+      <svg id="world" viewBox="0 -34 360 314" role="img" aria-labelledby="world-label"></svg>
+      <figcaption><b>The world, from the side</b>Ground on the left, the camera swings about the origin O. The camera plane is the long line through O. P's image is where the dashed line from P meets it.<span id="world-label" class="sr"></span></figcaption>
+    </figure>
+    <figure>
+      <svg id="image" viewBox="0 0 200 280" role="img" aria-labelledby="image-label"></svg>
+      <figcaption><b>The image</b>The camera's picture, with x₀ and y₀ set to zero so O sits at the image origin. The teal dot is O. The orange dot is P.<span id="image-label" class="sr"></span></figcaption>
+    </figure>
+  </div>
+
+  <div class="controls">
+    <label for="tilt">Camera tilt below level</label>
+    <input id="tilt" type="range" min="0" max="70" step="1" value="0" aria-describedby="out-status">
+    <span id="tilt-value" aria-hidden="true">0°</span>
+    <span role="group" aria-label="Preset tilts">
+      <button type="button" data-t="0">0°</button>
+      <button type="button" data-t="20">20°</button>
+      <button type="button" data-t="45">45°</button>
+      <button type="button" data-t="70">70°</button>
+    </span>
+  </div>
+
+  <div class="readout">
+    <p id="out-formula"></p>
+    <p id="out-move"></p>
+  </div>
+  <p id="out-status" class="sr" role="status"></p>
+
+  <details>
+    <summary>Where P lands at 0°, 20°, 45° and 70°, as a table</summary>
+    <table>
+      <caption class="sr">Image position of P for four tilts</caption>
+      <thead><tr><th scope="col">Tilt</th><th scope="col">x</th><th scope="col">y</th></tr></thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </details>
+</main>
+
+<script>
+(() => {
+  // World point P and the origin O. Y is height, Z is distance toward the camera, y0 is the image origin offset.
+  const P = {X: 1, Y: 2, Z: 1}, y0 = 0;
+  const rad = d => d * Math.PI / 180;
+  // The one projection. Lecture 1: x = X, y = cos(theta) Y - sin(theta) Z + y0.
+  const project = (pt, deg) => ({x: pt.X, y: Math.cos(rad(deg)) * pt.Y - Math.sin(rad(deg)) * pt.Z + y0});
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs, parent, text) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (text != null) n.textContent = text;
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+  const f2 = v => (Math.abs(v) < 0.005 ? 0 : v).toFixed(2).replace("-", "−");
+
+  // Side view: screen x grows with Z, screen y shrinks with Y.
+  const S = 40, OX = 130, OY = 140;
+  const wx = Z => OX + S * Z, wy = Y => OY - S * Y;
+  const world = document.getElementById("world");
+  const gDyn = el("g", {}, null);
+
+  el("line", {x1: wx(-3), y1: wy(0), x2: wx(4.4), y2: wy(0), stroke: "#526677", "stroke-width": 2}, world);
+  el("rect", {x: wx(-3), y: wy(0), width: S * 7.4, height: 10, fill: "#e0e9ef", stroke: "none"}, world);
+  el("text", {x: wx(-2.9), y: wy(0) + 24}, world, "ground");
+  world.appendChild(gDyn);
+
+  const image = document.getElementById("image");
+  const IS = 40, IX = 100, IY = 140;
+  const ix = x => IX + IS * x, iy = y => IY - IS * y;
+  for (let u = -2; u <= 3; u++) {
+    el("line", {x1: 8, y1: iy(u), x2: 192, y2: iy(u), stroke: u === 0 ? "#9fb2bf" : "#dbe4ea", "stroke-width": 1}, image);
+    el("text", {x: 12, y: iy(u) - 3, "font-size": 11}, image, String(u).replace("-", "−"));
+  }
+
+// The image's own axes, lowercase and green as on the lecture slide.
+{
+  const ax = el("g", {stroke: "#2f8f2f", fill: "#2f8f2f", "stroke-width": 2.5}, image);
+  el("line", {x1: 14, y1: 266, x2: 14, y2: 240}, ax);
+  el("path", {d: "M14 234 9 244H19Z", stroke: "none"}, ax);
+  el("line", {x1: 14, y1: 266, x2: 40, y2: 266}, ax);
+  el("path", {d: "M46 266 36 261V271Z", stroke: "none"}, ax);
+  el("text", {x: 20, y: 238, "font-style": "italic", "font-size": 15, stroke: "none", fill: "#2f8f2f"}, ax, "y");
+  el("text", {x: 48, y: 271, "font-style": "italic", "font-size": 15, stroke: "none", fill: "#2f8f2f"}, ax, "x");
+}
+  const imgDyn = el("g", {}, image);
+
+  function draw(deg) {
+    const t = rad(deg), c = Math.cos(t), s = Math.sin(t);
+    // Image-plane direction u in (Y,Z): (cos, -sin). Screen vector: (-s, -c) per unit.
+    const ux = -s, uy = -c;
+    const q = project(P, deg);
+    gDyn.replaceChildren();
+    const g = gDyn;
+    // Camera plane with unit ticks.
+    el("line", {x1: wx(0) - ux * S * 3.2, y1: wy(0) - uy * S * 3.2, x2: wx(0) + ux * S * 3.2, y2: wy(0) + uy * S * 3.2,
+      stroke: "#243946", "stroke-width": 2.5}, g);
+    for (let k = -3; k <= 3; k++) {
+      const px = wx(0) + ux * S * k, py = wy(0) + uy * S * k;
+      el("circle", {cx: px, cy: py, r: k === 0 ? 4 : 2.2, fill: k === 0 ? "#1b6d74" : "#243946"}, g);
+    }
+    // Rays, parallel to the camera's direction, from P and from O onto the plane.
+    const foot = {x: wx(0) + ux * S * q.y, y: wy(0) + uy * S * q.y};
+    el("line", {x1: wx(P.Z), y1: wy(P.Y), x2: foot.x, y2: foot.y, stroke: "#963817", "stroke-width": 2, "stroke-dasharray": "5 4"}, g);
+    el("circle", {cx: foot.x, cy: foot.y, r: 5, fill: "#fff", stroke: "#963817", "stroke-width": 2.5}, g);
+    el("circle", {cx: wx(P.Z), cy: wy(P.Y), r: 6, fill: "#963817"}, g);
+    el("text", {x: wx(P.Z) + 9, y: wy(P.Y) - 6}, g, "P");
+    el("text", {x: wx(0) - 18, y: wy(0) + 16}, g, "O");
+    // Camera, behind the plane along the viewing direction, aimed at O.
+    const cx = wx(0) + S * 3.4 * c, cy = wy(0) - S * 3.4 * s;
+    const cam = el("g", {transform: `translate(${cx} ${cy}) rotate(${180 - deg})`, fill: "#243946"}, g);
+    el("rect", {x: -33, y: -13, width: 27, height: 26, rx: 3}, cam);
+    el("path", {d: "M-6 -6 1 -10V10L-6 6Z"}, cam);
+    el("line", {x1: cx, y1: cy, x2: wx(0), y2: wy(0), stroke: "#963817", "stroke-width": 1.5, opacity: .5}, g);
+    // Level reference and angle.
+    el("line", {x1: wx(0), y1: wy(0), x2: wx(3.4), y2: wy(0), stroke: "#526677", "stroke-width": 1.5, "stroke-dasharray": "5 5"}, g);
+    el("text", {x: wx(1.5), y: wy(0) - 6, "font-size": 12}, g, deg + "°");
+
+    // Image.
+    imgDyn.replaceChildren();
+    el("line", {x1: ix(0), y1: iy(0), x2: ix(0), y2: iy(q.y), stroke: "#963817", "stroke-width": 2, "stroke-dasharray": "4 3"}, imgDyn);
+    el("line", {x1: ix(0), y1: iy(q.y), x2: ix(q.x), y2: iy(q.y), stroke: "#963817", "stroke-width": 1, "stroke-dasharray": "2 3"}, imgDyn);
+    el("circle", {cx: ix(0), cy: iy(0), r: 6, fill: "#1b6d74"}, imgDyn);
+    el("circle", {cx: ix(q.x), cy: iy(q.y), r: 7, fill: "#963817"}, imgDyn);
+    el("text", {x: ix(0) - 16, y: iy(0) + 16}, imgDyn, "O");
+    el("text", {x: ix(q.x) + 10, y: iy(q.y) + 4}, imgDyn, "P");
+    return q;
+  }
+
+  const slider = document.getElementById("tilt");
+  const start = project(P, 0);
+  const fmt = (deg, q) => `x = X = ${f2(P.X)}   y = cos ${deg}° × ${f2(P.Y)} − sin ${deg}° × ${f2(P.Z)} = ${f2(q.y)}`;
+
+  function render(announce) {
+    const deg = +slider.value, q = draw(deg);
+    document.getElementById("tilt-value").textContent = deg + "°";
+    slider.setAttribute("aria-valuetext", deg + " degrees");
+    document.getElementById("out-formula").textContent = fmt(deg, q);
+    const d = q.y - start.y;
+    const move = Math.abs(d) < 0.005 ? "P's image has not moved from where it was with the camera level."
+      : `P's image has moved ${d < 0 ? "down" : "up"} by ${f2(Math.abs(d))} since the camera was level. Its sideways position has not changed.`;
+    document.getElementById("out-move").textContent = move;
+    const above = q.y > 0.005 ? "above" : q.y < -0.005 ? "below" : "level with";
+    const label = `At ${deg} degrees of tilt, P's image is ${f2(Math.abs(q.y)).replace("−","")} ${above} the image of O, and ${f2(q.x)} to the right.`;
+    document.getElementById("world-label").textContent = `Side view with the camera tilted ${deg} degrees below level. ${label}`;
+    document.getElementById("image-label").textContent = label;
+    if (announce) document.getElementById("out-status").textContent = label;
+  }
+  slider.addEventListener("input", () => render(false));
+  slider.addEventListener("change", () => render(true));
+  document.querySelectorAll("[data-t]").forEach(b => b.addEventListener("click", () => {
+    slider.value = b.dataset.t; render(true);
+  }));
+  const body = document.getElementById("table-body");
+  [0, 20, 45, 70].forEach(deg => {
+    const q = project(P, deg), tr = el("tr", {}, body);
+    el("th", {scope: "row"}, tr, deg + "°"); el("td", {}, tr, f2(q.x)); el("td", {}, tr, f2(q.y));
+  });
+  render(false);
+  window.__project = project;
+})();
+</script>
+</body>
+</html>
