@@ -65,7 +65,7 @@
           <span id="tilt-value" aria-hidden="true">0°</span>
         </div>
       </div>
-      <div id="fallback"><p>The 3D view could not start in this browser. A side view, the image and the numbers below still work.</p><svg id="side" viewBox="0 -34 360 314" role="img" aria-labelledby="scene-label"></svg></div>
+      <div id="fallback"><p>The 3D view could not start here. A side view, the image and the numbers below still work.</p><svg id="side" viewBox="0 -34 360 314" role="img" aria-labelledby="scene-label"></svg></div>
       <figcaption><b>The scene</b>The dark camera takes the picture. The tilted square is its camera plane, with a unit ruler. P's image is where the dashed line from P meets that plane. Drag to turn the scene, or use the arrow keys when it has focus.<span id="scene-help" class="sr">Arrow keys turn the scene. The tilt slider is below the scene.</span><span id="scene-label" class="sr"></span></figcaption>
     </figure>
     <figure>
@@ -91,8 +91,9 @@
 </main>
 
 <script type="module">
-import * as THREE from "three";
-import {OrbitControls} from "../../widgets/lib/three-r186/OrbitControls.js";
+// Three.js is imported inside the try block below, so a missing or blocked library falls back to the 2D side
+// view instead of stopping the whole page (a failed static import would prevent every line here from running).
+let THREE, OrbitControls;
 
 const P = {X: 1, Y: 2, Z: 1}, y0 = 0;
 const rad = d => d * Math.PI / 180;
@@ -343,6 +344,8 @@ const body = document.getElementById("table-body");
 });
 
 try {
+  THREE = await import("three");
+  ({OrbitControls} = await import("../../widgets/lib/three-r186/OrbitControls.js"));
   renderer = new THREE.WebGLRenderer({canvas, antialias: true});
   buildScene();
   new ResizeObserver(resize).observe(stage);
