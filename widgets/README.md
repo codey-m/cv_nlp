@@ -9,10 +9,10 @@ the lesson.
 | Widget | Where | What it shows |
 | --- | --- | --- |
 | [Letter Merge](https://codey-m.github.io/cv_nlp/widgets/widget-letter-merge.html) | Unit 1 overview | Choosing a piece to reuse in a new word |
-| [Signal Relay](https://codey-m.github.io/cv_nlp/widgets/widget-signal-relay.html) | Unit 2 overview | One car carrying a sign down the line, and a telegraph that reads back |
 | [Robot Theatre](https://codey-m.github.io/cv_nlp/widgets/widget-separate-by-hand.html) | Unit 1, Lec. 1: Tokenization & BoW Classifiers | A director that reads words but not their order |
 | [Where the probability goes](https://codey-m.github.io/cv_nlp/widgets/widget-where-the-probability-goes.html) | Unit 1, Lec. 2: Count based language models |  |
 | [What text survives?](https://codey-m.github.io/cv_nlp/widgets/unit-summary-what-text-survives.html) | Unit 1, Lec. 2: Count based language models | Unit 1 synthesis: what text survives? |
+| [Signal Relay (course)](https://codey-m.github.io/cv_nlp/widgets/widget-signal-relay.html) | Unit 2 overview | Carrying a sign down the line |
 | [Order and visibility](https://codey-m.github.io/cv_nlp/widgets/widget-order-and-visibility.html) | Unit 2, Lec. 4: Attention and transformers |  |
 | [How context reaches a prediction](https://codey-m.github.io/cv_nlp/widgets/unit-summary-how-context-reaches-prediction.html) | Unit 2, Lec. 4: Attention and transformers | Unit 2 synthesis: how context reaches a prediction |
 
@@ -44,7 +44,7 @@ catalogs link to each other through example pairings.
 
 ## Review tips
 
-- Each widget is one self-contained HTML file. It makes no network requests, so a downloaded copy works too.
+- Most widgets are one self-contained HTML file with no network requests, so a downloaded copy works too. A widget that needs a library (a 3D view, for example) loads it from `lib/` on this site, so review it from its link above.
 - In the course each widget sits in a column about 880 pixels wide. Narrow the browser window to that width to see the layout learners get.
 
 ## How this folder works

@@ -57,7 +57,10 @@ main { max-width: 1240px; margin: auto; padding: 28px 24px 56px; }
 
 .board { position: relative; margin: 4px 0 0; border-block: 1px solid var(--rule); }
 .board > svg { display: block; width: 100%; height: auto; }
-.board.running .socket, .board.running .lever { visibility: hidden; }
+.board.running .lever { visibility: hidden; }
+.board.running .socket:disabled { opacity: 1; cursor: default; }
+.board.running .socket:not(.set) { border-style: solid; border-color: #2b2f31; background: #2b2f31; }
+.board.running .socket:not(.set) .plus { visibility: hidden; }
 .lever { position: absolute; z-index: 2; transform: translate(-50%, -50%); min-height: 34px; padding: 4px 10px; font-size: 12px; font-weight: 600; border: 2px solid #b5523b; background: #fffaf0; color: #5a2a20; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
 .slot-label { align-self: center; min-width: 52px; font-size: 12px; font-weight: 700; color: var(--muted); }
 .socket { box-shadow: 0 0 0 4px #2b2f31, 0 0 18px 4px rgba(255, 220, 150, .55); }
@@ -250,7 +253,7 @@ body.course .explainer > summary { display: none; }
       </nav>
       <div class="gamestatus">
         <span>Checks matched: <b id="st-score">–</b></span>
-        <span id="st-cable-wrap">Telegraph cable: <b id="st-cable"></b></span>
+        <span id="st-cable-wrap">Telegraph link: <b id="st-cable"></b></span>
       </div>
       <p class="gameprompt" id="prompt"></p>
       <div class="board" id="board">
@@ -287,7 +290,7 @@ body.course .explainer > summary { display: none; }
       <p><strong>The recorder</strong> keeps what each car carried at every point. Shaded columns are where A and B carried the same sign. Press a column heading to see the trains there.</p>
       <div id="local-help" hidden></div>
       <p><button type="button" id="replay-tour" class="linkish">Take the tour</button></p>
-      <p id="howto-cable" hidden><strong>The telegraph</strong> can restore an earlier sign. Press a signal and pick a point under Telegraph: that signal gives every car back the sign it carried there. There is one cable, so only one signal can restore.</p>
+      <p id="howto-cable" hidden><strong>The telegraph</strong> can restore an earlier sign. Press a signal and pick a point under Telegraph: that signal gives every car back the sign it carried there. There is one link, so only one signal can restore.</p>
     </aside>
   </div>
 
@@ -719,7 +722,7 @@ function drawScenery() {
     if (p.kind === "stamp") drawHarbor(g, p, x);
     if (p.kind === "check") drawCheck(g, p, x);
   }
-  if (svc().cable) drawOffice(g, X[svc().route.find(p => p.reader).id] - 20);
+  if (svc().cable) drawOffice(g);
   if (svc().nights) el("rect", { y: 120, width: W, height: H - 120, fill: "#1d2747", opacity: .28, "pointer-events": "none" }, g);
 }
 
@@ -909,7 +912,7 @@ function openPicker(id, x) {
       const on = cable?.to === id && cable.from === from;
       b.setAttribute("aria-pressed", String(on));
       b.setAttribute("aria-label", `Restore at ${placeName(id)} the sign each car carried at ${placeName(from)}`);
-      const say = () => { box.querySelector(".pick-desc").innerHTML = `<b>Restore:</b> every car gets back the sign it carried at ${placeName(from).toLowerCase()}. The telegraph has one cable, so this moves it here.`; };
+      const say = () => { box.querySelector(".pick-desc").innerHTML = `<b>Restore:</b> every car gets back the sign it carried at ${placeName(from).toLowerCase()}. The telegraph has one link, so this moves it here.`; };
       b.addEventListener("focus", say);
       b.addEventListener("pointerenter", say);
       b.addEventListener("click", () => {
@@ -996,19 +999,31 @@ function drawCheck(g, p, x) {
   el("text", { x, y: H - 12, class: "lbl" }, g, p.label);
 }
 
-function drawOffice(g, ox) {
+function drawOffice(g) {
+  // A small office with a radio mast on a knoll in the far hills, behind the near hills so nothing in front is covered.
   const open = state.cableOpen;
-  const y = 112;
-  el("rect", { x: ox + 26, y: y - 64, width: 10, height: 22, fill: "#7a4a3a" }, g);
-  if (open) for (let i = 0; i < 3; i++) el("circle", { cx: ox + 31 + i * 4, cy: y - 72 - i * 9, r: 4 + i * 2, fill: "#fff", opacity: .55 - i * .15, class: "chimney" }, g);
-  el("rect", { x: ox - 46, y: y - 40, width: 92, height: 50, fill: open ? "#c7774f" : "#a9a094" }, g);
-  for (let i = 0; i < 5; i++) el("path", { d: `M${ox - 46} ${y - 32 + i * 9}h92`, stroke: open ? "#b0623f" : "#968d82", "stroke-width": 1 }, g);
-  el("path", { d: `M${ox - 54} ${y - 38} l54 -26 54 26Z`, fill: "#4f5e43" }, g);
-  for (const wx of [-36, -12]) el("rect", { x: ox + wx, y: y - 28, width: 16, height: 18, rx: 2, fill: open ? "#ffe7a8" : "#7e858b", stroke: "#f4efe2", "stroke-width": 2 }, g);
-  el("circle", { cx: ox + 26, cy: y - 14, r: 15, fill: "#fffaf0", stroke: "#8a560a", "stroke-width": 3 }, g);
-  el("circle", { cx: ox + 26, cy: y - 14, r: 6, fill: "#c27c0e" }, g);
-  el("path", { d: `M${ox - 50} ${y + 10} h100`, stroke: "#7d6a4f", "stroke-width": 4 }, g);
-  el("text", { x: ox, y: y - 74, class: "lbl" }, g, open ? "Telegraph office" : "Telegraph office, closed");
+  const KX = 716, KY = 166, KS = 0.48;
+  const back = el("g", {});
+  const anchor = [...g.children].find(n => n.getAttribute("fill") === "#a6bb94");
+  g.insertBefore(back, anchor || null);
+  el("path", { d: `M${KX - 48} 176 C${KX - 30} 146 ${KX + 40} 144 ${KX + 66} 172 L${KX + 66} 190 L${KX - 48} 190Z`, fill: "#9fb487" }, back);
+  const k = el("g", { transform: `translate(${KX} ${KY - 6}) scale(${KS})` }, back);
+  el("rect", { x: -46, y: -40, width: 92, height: 50, fill: open ? "#c7774f" : "#a9a094" }, k);
+  for (let i = 0; i < 5; i++) el("path", { d: `M-46 ${-32 + i * 9}h92`, stroke: open ? "#b0623f" : "#968d82", "stroke-width": 1 }, k);
+  el("path", { d: "M-54 -38 l54 -26 54 26Z", fill: "#4f5e43" }, k);
+  for (const wx of [-36, -12]) el("rect", { x: wx, y: -28, width: 16, height: 18, rx: 2, fill: open ? "#ffe7a8" : "#7e858b", stroke: "#f4efe2", "stroke-width": 2 }, k);
+  el("rect", { x: 14, y: -28, width: 18, height: 38, fill: "#5a3d2b" }, k);
+  // Lattice radio mast against the wall; its beacon lights when the office opens.
+  const mx = 62, top = -150, foot = 10, half = 16;
+  el("path", { d: `M${mx - half} ${foot} L${mx} ${top} L${mx + half} ${foot}`, fill: "none", stroke: "#3d3a35", "stroke-width": 4, "stroke-linejoin": "round" }, k);
+  for (let i = 1; i < 6; i++) {
+    const y1 = foot - (foot - top) * (i - 1) / 6, y2 = foot - (foot - top) * i / 6;
+    const w1 = half * (1 - (i - 1) / 6), w2 = half * (1 - i / 6);
+    el("path", { d: `M${mx - w1} ${y1} L${mx + w2} ${y2} M${mx + w1} ${y1} L${mx - w2} ${y2} M${mx - w2} ${y2} H${mx + w2}`, stroke: "#3d3a35", "stroke-width": 2.4 }, k);
+  }
+  for (const [y, w] of [[top + 26, 22], [top + 50, 16]]) el("path", { d: `M${mx - w} ${y} H${mx + w}`, stroke: "#3d3a35", "stroke-width": 3, "stroke-linecap": "round" }, k);
+  el("circle", { cx: mx, cy: top - 6, r: 7, fill: open ? "#e0543a" : "#8b9196", stroke: "#fff", "stroke-width": 2 }, k);
+  el("text", { x: KX, y: KY - 50, class: "lbl" }, back, open ? "Telegraph office" : "Telegraph office, closed");
 }
 
 function cablePoint(id) {
@@ -1016,20 +1031,9 @@ function cablePoint(id) {
   return id === "depot" ? [X.depot + 62, LENS_Y - 20] : [X[id], LINE - 62];
 }
 function drawWire() {
-  const g = $("wires");
-  g.replaceChildren();
-  const cable = state.cable[state.service];
-  if (!cable || !svc().cable) return null;
-  const X = xs();
-  const ox = X[svc().route.find(p => p.reader).id] - 20 + 26;
-  const [fx, fy] = cablePoint(cable.from);
-  const tx = X[cable.to], ty = LENS_Y - 30;
-  const d = `M${fx} ${fy} C${fx} 10, ${ox} 10, ${ox} 98 C${ox} 30, ${tx} 30, ${tx} ${ty}`;
-  el("path", { d, class: "wire-shadow" }, g);
-  el("path", { d, class: "wire" }, g);
-  el("circle", { cx: fx, cy: fy, r: 7, fill: "#c27c0e", stroke: "#fff", "stroke-width": 2 }, g);
-  el("circle", { cx: tx, cy: ty, r: 7, fill: "#c27c0e", stroke: "#fff", "stroke-width": 2 }, g);
-  return d;
+  // The telegraph is a radio link now, so no wire is drawn; the restoring signal shows its restore face.
+  $("wires").replaceChildren();
+  return null;
 }
 
 function drawSockets() {
@@ -2140,7 +2144,7 @@ function refreshControls() {
   drawDesk();
   const s = svc();
   const cable = state.cable[state.service];
-  $("st-cable").textContent = !s.cable ? "office closed" : !state.cableOpen ? "locked" : cable ? `${placeName(cable.from)} to ${placeName(cable.to)}` : "on the reel";
+  $("st-cable").textContent = !s.cable ? "office closed" : !state.cableOpen ? "locked" : cable ? `${placeName(cable.from)} to ${placeName(cable.to)}` : "unused";
   $("st-cable-wrap").hidden = !s.cable;
   $("howto-cable").hidden = !state.cableOpen || !svc().cable;
 }
@@ -2321,7 +2325,7 @@ function tourSpot(at) {
   }
   const X = xs();
   if (at === "depot") return [X.depot, LENS_Y - 18, 74];
-  if (at === "office") return [X[svc().route.find(p => p.reader).id] - 20, 84, 66];
+  if (at === "office") return [728, 130, 48];
   const p = svc().route.find(q => q.id === at);
   if (p.kind === "socket") return [X[at], LENS_Y + 10, 54];
   if (p.kind === "stamp") return [X[at] - 10, LENS_Y + 22, 60];
